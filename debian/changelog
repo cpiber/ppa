@@ -1,0 +1,23 @@
+iverilog (11.0ppa3~focal) focal; urgency=medium
+
+  * Fix depends
+
+ -- Constantin Piber <cp.piber@gmail.com>  Wed, 04 Nov 2020 14:17:14 +0100
+
+iverilog (11.0ppa3) bionic; urgency=medium
+
+  * Build with bionic
+
+ -- Constantin Piber <cp.piber@gmail.com>  Wed, 04 Nov 2020 14:11:50 +0100
+
+iverilog (11.0ppa2) focal; urgency=medium
+
+  * Fix build deps
+
+ -- Constantin Piber <cp.piber@gmail.com>  Wed, 04 Nov 2020 13:36:48 +0100
+
+iverilog (11.0ppa1-1) focal; urgency=medium
+
+  * Initial release v11.0
+
+ -- Constantin Piber <cp.piber@gmail.com>  Wed, 04 Nov 2020 12:32:42 +0100
