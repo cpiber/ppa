@@ -1,7 +1,7 @@
 #ifndef IVL_netmisc_H
 #define IVL_netmisc_H
 /*
- * Copyright (c) 1999-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,11 +41,11 @@ class netsarray_t;
 extern NetScope* symbol_search(const LineInfo*li,
                                Design*des,
 			       NetScope*start,
-                               pform_name_t path,
+                               const pform_name_t&path,
 			       NetNet*&net,       /* net/reg */
 			       const NetExpr*&par,/* parameter/expr */
 			       NetEvent*&eve,     /* named event */
-			       const NetExpr*&ex1, const NetExpr*&ex2);
+			       ivl_type_t&par_type);
 
 inline NetScope* symbol_search(const LineInfo*li,
                                Design*des,
@@ -55,8 +55,8 @@ inline NetScope* symbol_search(const LineInfo*li,
 			       const NetExpr*&par,/* parameter/expr */
 			       NetEvent*&eve      /* named event */)
 {
-      const NetExpr*ex1, *ex2;
-      return symbol_search(li, des, start, path, net, par, eve, ex1, ex2);
+      ivl_type_t par_type;
+      return symbol_search(li, des, start, path, net, par, eve, par_type);
 }
 
 /*

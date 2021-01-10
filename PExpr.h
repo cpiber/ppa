@@ -1,7 +1,7 @@
 #ifndef IVL_PExpr_H
 #define IVL_PExpr_H
 /*
- * Copyright (c) 1998-2019 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2021 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -181,7 +181,8 @@ class PExpr : public LineInfo {
         // structural net that can have multiple drivers. This is
         // used to test whether an input port connection can be
         // collapsed to a single wire.
-      virtual bool is_collapsible_net(Design*des, NetScope*scope) const;
+      virtual bool is_collapsible_net(Design*des, NetScope*scope,
+                                      NetNet::PortType port_type) const;
 
 	// This method returns true if that expression is the same as
 	// this expression. This method is used for comparing
@@ -230,7 +231,7 @@ class PEAssignPattern : public PExpr {
 class PEConcat : public PExpr {
 
     public:
-      PEConcat(const list<PExpr*>&p, PExpr*r =0);
+      explicit PEConcat(const list<PExpr*>&p, PExpr*r =0);
       ~PEConcat();
 
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
@@ -256,7 +257,8 @@ class PEConcat : public PExpr {
 					 NetScope*scope,
 					 bool is_cassign,
 					 bool is_force) const;
-      virtual bool is_collapsible_net(Design*des, NetScope*scope) const;
+      virtual bool is_collapsible_net(Design*des, NetScope*scope,
+                                      NetNet::PortType port_type) const;
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
 				     bool bidirectional_flag) const;
@@ -279,7 +281,7 @@ class PEConcat : public PExpr {
 class PEEvent : public PExpr {
 
     public:
-      enum edge_t {ANYEDGE, POSEDGE, NEGEDGE, POSITIVE};
+      enum edge_t {ANYEDGE, POSEDGE, NEGEDGE, EDGE, POSITIVE};
 
 	// Use this constructor to create events based on edges or levels.
       PEEvent(edge_t t, PExpr*e);
@@ -377,7 +379,8 @@ class PEIdent : public PExpr {
 
       verinum* eval_const(Design*des, NetScope*sc) const;
 
-      virtual bool is_collapsible_net(Design*des, NetScope*scope) const;
+      virtual bool is_collapsible_net(Design*des, NetScope*scope,
+                                      NetNet::PortType port_type) const;
 
       const PPackage* package() const { return package_; }
 
@@ -404,10 +407,6 @@ class PEIdent : public PExpr {
 	// flag is set to *false*.
       bool calculate_parts_(Design*, NetScope*, long&msb, long&lsb, bool&defined) const;
       NetExpr* calculate_up_do_base_(Design*, NetScope*, bool need_const) const;
-      bool calculate_param_range_(Design*, NetScope*,
-				  const NetExpr*msb_ex, long&msb,
-				  const NetExpr*lsb_ex, long&lsb,
-				  long length) const;
 
       bool calculate_up_do_width_(Design*, NetScope*, unsigned long&wid) const;
 
@@ -447,37 +446,32 @@ class PEIdent : public PExpr {
 				    NetScope*scope,
 				    const NetExpr*par,
 				    NetScope*found_in,
-				    const NetExpr*par_msb,
-				    const NetExpr*par_lsb,
+				    ivl_type_t par_type,
 				    unsigned expr_wid,
                                     unsigned flags) const;
       NetExpr*elaborate_expr_param_bit_(Design*des,
 					NetScope*scope,
 					const NetExpr*par,
 					NetScope*found_in,
-					const NetExpr*par_msb,
-					const NetExpr*par_lsb,
+					ivl_type_t par_type,
                                         bool need_const) const;
       NetExpr*elaborate_expr_param_part_(Design*des,
 					 NetScope*scope,
 					 const NetExpr*par,
 					 NetScope*found_in,
-					 const NetExpr*par_msb,
-					 const NetExpr*par_lsb,
+					 ivl_type_t par_type,
 				         unsigned expr_wid) const;
       NetExpr*elaborate_expr_param_idx_up_(Design*des,
 					   NetScope*scope,
 					   const NetExpr*par,
 					   NetScope*found_in,
-					   const NetExpr*par_msb,
-					   const NetExpr*par_lsb,
+					   ivl_type_t par_type,
                                            bool need_const) const;
       NetExpr*elaborate_expr_param_idx_do_(Design*des,
 					   NetScope*scope,
 					   const NetExpr*par,
 					   NetScope*found_in,
-					   const NetExpr*par_msb,
-					   const NetExpr*par_lsb,
+					   ivl_type_t par_type,
                                            bool need_const) const;
       NetExpr*elaborate_expr_net(Design*des,
 				 NetScope*scope,
@@ -941,11 +935,12 @@ class PECallFunction : public PExpr {
       NetExpr*elaborate_expr_method_(Design*des, NetScope*scope,
 				     unsigned expr_wid,
 				     bool add_this_flag = false) const;
-#if 0
-      NetExpr*elaborate_expr_string_method_(Design*des, NetScope*scope) const;
-      NetExpr*elaborate_expr_enum_method_(Design*des, NetScope*scope,
-					  unsigned expr_wid) const;
-#endif
+      NetExpr*elaborate_expr_method_net_(Design*des, NetScope*scope,
+					 NetNet*net, unsigned expr_wid) const;
+      NetExpr*elaborate_expr_method_par_(Design*des, NetScope*scope,
+					 const NetExpr *par, ivl_type_t par_type,
+					 unsigned expr_wid) const;
+
 
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope,
                                 unsigned expr_wid,

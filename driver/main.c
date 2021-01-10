@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -184,7 +184,7 @@ int verbose_flag = 0;
 FILE *fp;
 
 char line[MAXSIZE];
-char tmp[MAXSIZE];
+char tmp[MAXSIZE+24];
 
 static char ivl_root[MAXSIZE];
 
@@ -382,7 +382,6 @@ static int t_preprocess_only(void)
 	    snprintf(tmp, sizeof tmp, " > \"%s\"", opath);
 	    cmd = realloc(cmd, ncmd+strlen(tmp)+1);
 	    strcpy(cmd+ncmd, tmp);
-	    ncmd += strlen(tmp);
       }
 
       if (verbose_flag)
@@ -483,7 +482,6 @@ static int t_compile(void)
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
       strcpy(cmd+ncmd, tmp);
-      ncmd += rc;
 
 
       if (verbose_flag)
@@ -1379,7 +1377,7 @@ int main(int argc, char **argv)
 
 	    cfreset(fp, command_filename);
 	    rc = cfparse();
-	    if (rc != 0) {
+	    if (rc != 0 || command_file_errors > 0) {
 		  fprintf(stderr, "%s: parsing failed in base command "
 		          "file %s.\n", argv[0], command_filename);
 		  return 1;

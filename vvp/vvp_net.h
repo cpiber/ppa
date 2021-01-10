@@ -1,7 +1,7 @@
 #ifndef IVL_vvp_net_H
 #define IVL_vvp_net_H
 /*
- * Copyright (c) 2004-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -674,7 +674,7 @@ class vvp_vector2_t {
 	// is true and there are X or Z bits, then the result becomes
 	// a NaN value. If enable_NaN is false then X or Z bits are
 	// converted to 0 as per the standard Verilog rules.
-      vvp_vector2_t(const vvp_vector4_t&that, bool allow_NaN = false);
+      explicit vvp_vector2_t(const vvp_vector4_t&that, bool allow_NaN = false);
 	// Make from a native long and a specified width.
       vvp_vector2_t(unsigned long val, unsigned wid);
 	// Make with the width, and filled with 1 or 0 bits.
@@ -1050,20 +1050,20 @@ template <class T> class vvp_sub_pointer_t {
       vvp_sub_pointer_t(T*ptr__, unsigned port__)
       {
 	    bits_ = reinterpret_cast<uintptr_t> (ptr__);
-	    assert( (bits_  &  3) == 0 );
-	    assert( (port__ & ~3) == 0 );
+	    assert( (bits_  &  UINTPTR_C(3)) == 0 );
+	    assert( (port__ & ~UINTPTR_C(3)) == 0 );
 	    bits_ |= port__;
       }
 
       ~vvp_sub_pointer_t() { }
 
       T* ptr()
-      { return reinterpret_cast<T*> (bits_ & ~3UL); }
+      { return reinterpret_cast<T*> (bits_ & ~UINTPTR_C(3)); }
 
       const T* ptr() const
-      { return reinterpret_cast<const T*> (bits_ & ~3UL); }
+      { return reinterpret_cast<const T*> (bits_ & ~UINTPTR_C(3)); }
 
-      unsigned  port() const { return bits_ & 3; }
+      unsigned  port() const { return bits_ & UINTPTR_C(3); }
 
       bool nil() const { return bits_ == 0; }
 
@@ -1564,7 +1564,7 @@ class vvp_wide_fun_core : public vvp_net_fun_t {
       virtual void recv_real_from_inputs(unsigned port);
 
       friend class vvp_wide_fun_t;
-      void dispatch_vec4_from_input_(unsigned port, vvp_vector4_t bit);
+      void dispatch_vec4_from_input_(unsigned port, const vvp_vector4_t&bit);
       void dispatch_real_from_input_(unsigned port, double bit);
 
     private:
@@ -1606,12 +1606,12 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 inline void vvp_send_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val, vvp_context_t context)
 {
       while (class vvp_net_t*cur = ptr.ptr()) {
-	    vvp_net_ptr_t next = cur->port[ptr.port()];
+	    vvp_net_ptr_t next_val = cur->port[ptr.port()];
 
 	    if (cur->fun)
 		  cur->fun->recv_vec4(ptr, val, context);
 
-	    ptr = next;
+	    ptr = next_val;
       }
 }
 
@@ -1625,24 +1625,24 @@ extern void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
 inline void vvp_send_string(vvp_net_ptr_t ptr, const std::string&val, vvp_context_t context)
 {
       while (vvp_net_t*cur = ptr.ptr()) {
-	    vvp_net_ptr_t next = cur->port[ptr.port()];
+	    vvp_net_ptr_t next_val = cur->port[ptr.port()];
 
 	    if (cur->fun)
 		  cur->fun->recv_string(ptr, val, context);
 
-	    ptr = next;
+	    ptr = next_val;
       }
 }
 
 inline void vvp_send_object(vvp_net_ptr_t ptr, vvp_object_t val, vvp_context_t context)
 {
       while (vvp_net_t*cur = ptr.ptr()) {
-	    vvp_net_ptr_t next = cur->port[ptr.port()];
+	    vvp_net_ptr_t next_val = cur->port[ptr.port()];
 
 	    if (cur->fun)
 		  cur->fun->recv_object(ptr, val, context);
 
-	    ptr = next;
+	    ptr = next_val;
       }
 }
 
@@ -1670,12 +1670,12 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 			     vvp_context_t context)
 {
       while (class vvp_net_t*cur = ptr.ptr()) {
-	    vvp_net_ptr_t next = cur->port[ptr.port()];
+	    vvp_net_ptr_t next_val = cur->port[ptr.port()];
 
 	    if (cur->fun)
 		  cur->fun->recv_vec4_pv(ptr, val, base, wid, vwid, context);
 
-	    ptr = next;
+	    ptr = next_val;
       }
 }
 
@@ -1683,12 +1683,12 @@ inline void vvp_send_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&val,
 			     unsigned base, unsigned wid, unsigned vwid)
 {
       while (class vvp_net_t*cur = ptr.ptr()) {
-	    vvp_net_ptr_t next = cur->port[ptr.port()];
+	    vvp_net_ptr_t next_val = cur->port[ptr.port()];
 
 	    if (cur->fun)
 		  cur->fun->recv_vec8_pv(ptr, val, base, wid, vwid);
 
-	    ptr = next;
+	    ptr = next_val;
       }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -197,6 +197,19 @@ const vvp_fun_edge::edge_t vvp_edge_negedge
       | VVP_EDGE(BIT4_1,BIT4_Z)
       | VVP_EDGE(BIT4_X,BIT4_0)
       | VVP_EDGE(BIT4_Z,BIT4_0)
+      ;
+
+const vvp_fun_edge::edge_t vvp_edge_edge
+      = VVP_EDGE(BIT4_0,BIT4_1)
+      | VVP_EDGE(BIT4_1,BIT4_0)
+      | VVP_EDGE(BIT4_0,BIT4_X)
+      | VVP_EDGE(BIT4_X,BIT4_0)
+      | VVP_EDGE(BIT4_0,BIT4_Z)
+      | VVP_EDGE(BIT4_Z,BIT4_0)
+      | VVP_EDGE(BIT4_X,BIT4_1)
+      | VVP_EDGE(BIT4_1,BIT4_X)
+      | VVP_EDGE(BIT4_Z,BIT4_1)
+      | VVP_EDGE(BIT4_1,BIT4_Z)
       ;
 
 const vvp_fun_edge::edge_t vvp_edge_none    = 0;
@@ -627,6 +640,18 @@ void vvp_fun_anyedge_sa::recv_string(vvp_net_ptr_t port, const std::string&bit,
       }
 }
 
+/*
+ * An anyedge receiving an object should do nothing with it, but should
+ * trigger waiting threads.
+ */
+void vvp_fun_anyedge_sa::recv_object(vvp_net_ptr_t port, vvp_object_t,
+				     vvp_context_t)
+{
+      run_waiting_threads_(threads_);
+      vvp_net_t*net = port.ptr();
+      net->send_vec4(vvp_vector4_t(), 0);
+}
+
 vvp_fun_anyedge_aa::vvp_fun_anyedge_aa()
 {
       context_scope_ = vpip_peek_context_scope();
@@ -963,7 +988,7 @@ void compile_event(char*label, char*type, unsigned argc, struct symb_s*argv)
 	    return;
       }
 
-      if (strcmp(type,"edge") == 0) {
+      if (strcmp(type,"anyedge") == 0) {
 
 	    free(type);
 
@@ -975,20 +1000,22 @@ void compile_event(char*label, char*type, unsigned argc, struct symb_s*argv)
 
       } else {
 
-	    vvp_fun_edge::edge_t edge = vvp_edge_none;
+	    vvp_fun_edge::edge_t edge_type = vvp_edge_none;
 
 	    if (strcmp(type,"posedge") == 0)
-		  edge = vvp_edge_posedge;
+		  edge_type = vvp_edge_posedge;
 	    else if (strcmp(type,"negedge") == 0)
-		  edge = vvp_edge_negedge;
+		  edge_type = vvp_edge_negedge;
+	    else if (strcmp(type,"edge") == 0)
+		  edge_type = vvp_edge_edge;
 
 	    assert(argc <= 4);
 	    free(type);
 
             if (vpip_peek_current_scope()->is_automatic()) {
-                  fun = new vvp_fun_edge_aa(edge);
+                  fun = new vvp_fun_edge_aa(edge_type);
             } else {
-                  fun = new vvp_fun_edge_sa(edge);
+                  fun = new vvp_fun_edge_sa(edge_type);
             }
 
       }

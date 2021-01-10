@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -224,7 +224,7 @@ void NetPins::set_default_dir(Link::DIR d)
        default_dir_ = d;
 }
 
-bool NetPins::is_linked(void)
+bool NetPins::is_linked(void) const
 {
       bool linked_flag = false;
       if (pins_ == NULL) return false;
@@ -2974,7 +2974,12 @@ DelayType NetTaskDef::delay_type(bool print_delay) const
 
 DelayType NetUTask::delay_type(bool print_delay) const
 {
-      return task()->task_def()->delay_type(print_delay);
+	// Is this a void function call in a final block?
+      if (task()->type() == NetScope::FUNC) {
+	    return NO_DELAY;
+      } else {
+	    return task()->task_def()->delay_type(print_delay);
+      }
 }
 
 static bool do_expr_event_match(const NetExpr*expr, const NetEvWait*evwt)
@@ -3184,7 +3189,6 @@ bool NetBlock::check_synth(ivl_process_type_t pr_type,
       for (const NetProc*cur = proc_first(); cur; cur = proc_next(cur)) {
 	    result |= cur->check_synth(pr_type, scope);
       }
-      scope = save_scope;
       return result;
 }
 

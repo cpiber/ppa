@@ -42,6 +42,7 @@
 # include  "netdarray.h"
 # include  "netparray.h"
 # include  "netqueue.h"
+# include  "netscalar.h"
 # include  "util.h"
 # include  "ivl_assert.h"
 
@@ -198,7 +199,7 @@ static void elaborate_sig_classes(Design*des, NetScope*scope,
 {
       for (map<perm_string,PClass*>::const_iterator cur = classes.begin()
 		 ; cur != classes.end() ; ++ cur) {
-	    netclass_t*use_class = scope->find_class(cur->second->pscope_name());
+	    netclass_t*use_class = scope->find_class(des, cur->second->pscope_name());
 	    use_class->elaborate_sig(des, cur->second);
       }
 }
@@ -578,10 +579,10 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	      // source code for the definition may be:
 	      //   function new(...);
 	      //   endfunction
-	      // In this case, the "@" port is the synthetic "this"
-	      // argument and we also use it as a return value at the
-	      // same time.
-	    ret_sig = scope->find_signal(perm_string::literal("@"));
+	      // In this case, the "@" port (THIS_TOKEN) is the synthetic
+	      // "this" argument and we also use it as a return value at
+	      // the same time.
+	    ret_sig = scope->find_signal(perm_string::literal(THIS_TOKEN));
 	    ivl_assert(*this, ret_sig);
 
 	    if (debug_elaborate)
@@ -1133,7 +1134,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  continue;
 	    }
 
-	      // Cannot handle dynamic arrays of arrays yet.
+	      // Cannot handle dynamic arrays/queues of arrays yet.
 	    ivl_assert(*this, netdarray==0);
 
 	    long index_l, index_r;
@@ -1231,7 +1232,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    const netenum_t*use_enum = base_type_scope->find_enumeration_for_name(des, sample_name->name);
 
 	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: Create signal " << wtype
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "Create signal " << wtype
 		       << " enumeration "
 		       << name_ << " in scope " << scope_path(scope)
 		       << " with packed_dimensions=" << packed_dimensions
@@ -1245,14 +1247,29 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       } else if (netdarray) {
 
 	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: Create signal " << wtype
-		       << " dynamic array "
-		       << name_ << " in scope " << scope_path(scope) << endl;
+	          cerr << get_fileline() << ": " << __func__ << ": "
+		       << "Create signal " << wtype
+		       << " dynamic array " << name_
+		       << " in scope " << scope_path(scope) << endl;
 	    }
 
 	    ivl_assert(*this, packed_dimensions.empty());
 	    ivl_assert(*this, unpacked_dimensions.empty());
 	    sig = new NetNet(scope, name_, wtype, netdarray);
+
+      } else if (dynamic_cast<string_type_t*>(set_data_type_)) {
+
+	    // Signal declared as: string foo;
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "Create signal " << wtype
+		       << " string "
+		       << name_ << " in scope " << scope_path(scope)
+		       << endl;
+	    }
+
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions,
+			     &netstring_t::type_string);
 
       } else if (parray_type_t*parray_type = dynamic_cast<parray_type_t*>(set_data_type_)) {
 	      // The pform gives us a parray_type_t for packed arrays
@@ -1278,7 +1295,9 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       } else {
 	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: Create signal " << wtype;
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "Create signal " << wtype
+		       << " data_type=" << data_type_;
 		  if (!get_scalar()) {
 			cerr << " " << packed_dimensions;
 		  }
@@ -1290,7 +1309,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    if (use_data_type == IVL_VT_NO_TYPE) {
 		  use_data_type = IVL_VT_LOGIC;
 		  if (debug_elaborate) {
-			cerr << get_fileline() << ": debug: "
+			cerr << get_fileline() << ": " << __func__ << ": "
 			     << "Signal " << name_
 			     << " in scope " << scope_path(scope)
 			     << " defaults to data type " << use_data_type << endl;

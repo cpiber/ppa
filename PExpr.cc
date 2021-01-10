@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2020 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2021 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -31,8 +31,8 @@
 # include  <typeinfo>
 
 PExpr::PExpr()
+: expr_type_(IVL_VT_NO_TYPE)
 {
-      expr_type_   = IVL_VT_NO_TYPE;
       expr_width_  = 0;
       min_width_   = 0;
       signed_flag_ = false;
@@ -72,7 +72,7 @@ NetNet* PExpr::elaborate_bi_net(Design*, NetScope*) const
       return 0;
 }
 
-bool PExpr::is_collapsible_net(Design*, NetScope*) const
+bool PExpr::is_collapsible_net(Design*, NetScope*, NetNet::PortType) const
 {
       return false;
 }
@@ -434,11 +434,10 @@ bool PEIdent::has_aa_term(Design*des, NetScope*scope) const
 {
       NetNet*       net = 0;
       const NetExpr*par = 0;
+      ivl_type_t    par_type;
       NetEvent*     eve = 0;
 
-      const NetExpr*ex1, *ex2;
-
-      scope = symbol_search(this, des, scope, path_, net, par, eve, ex1, ex2);
+      scope = symbol_search(this, des, scope, path_, net, par, eve, par_type);
 
       if (scope)
             return scope->is_auto();

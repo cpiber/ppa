@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -105,8 +105,8 @@ inline const char*dlerror(void)
 #endif
 
 ivl_scope_s::ivl_scope_s()
+: func_type(IVL_VT_NO_TYPE)
 {
-      func_type = IVL_VT_NO_TYPE;
       func_signed = false;
       func_width = 0;
 }
@@ -506,26 +506,19 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 	    ivl_parameter_t cur_par = &scop->param[idx];
 	    cur_par->basename = cur_pit->first;
             cur_par->local = cur_pit->second.local_flag;
-	      /* Either both the MSB and LSB expressions are provided or
-	       * neither are provided. */
-	    if (cur_pit->second.msb) {
-		  assert(cur_pit->second.lsb);
-		  /* The MSB and LSB expressions must be integral constants. */
-		  const NetEConst *msbc =
-		         dynamic_cast<const NetEConst*>(cur_pit->second.msb);
-		  const NetEConst *lsbc =
-		         dynamic_cast<const NetEConst*>(cur_pit->second.lsb);
-		  assert(msbc);
-		  assert(lsbc);
-		  cur_par->msb = msbc->value().as_long();
-		  cur_par->lsb = lsbc->value().as_long();
-	    } else {
-		  assert(! cur_pit->second.lsb);
-		  cur_par->msb = cur_pit->second.val->expr_width() - 1;
-		  assert(cur_par->msb >= 0);
-		  cur_par->lsb = 0;
+	    calculate_param_range(cur_pit->second,
+				  cur_pit->second.ivl_type,
+				  cur_par->msb, cur_par->lsb,
+				  cur_pit->second.val->expr_width());
+
+	    if (cur_pit->second.ivl_type == 0) {
+		  cerr << "?:?: internal error: "
+		       << "No type for parameter " << cur_pit->first
+		       << " in scope " << net->fullname() << "?" << endl;
 	    }
-	    cur_par->signed_flag = cur_pit->second.signed_flag;
+	    assert(cur_pit->second.ivl_type);
+
+	    cur_par->signed_flag = cur_pit->second.ivl_type->get_signed();
 	    cur_par->scope = scop;
 	    FILE_NAME(cur_par, &(cur_pit->second));
 
@@ -921,6 +914,7 @@ void dll_target::event(const NetEvent*net)
       obj->nany = 0;
       obj->nneg = 0;
       obj->npos = 0;
+      obj->nedg = 0;
 
       if (net->nprobe() >= 1) {
 
@@ -936,10 +930,13 @@ void dll_target::event(const NetEvent*net)
 		      case NetEvProbe::POSEDGE:
 			obj->npos += pr->pin_count();
 			break;
+		      case NetEvProbe::EDGE:
+			obj->nedg += pr->pin_count();
+			break;
 		  }
 	    }
 
-	    unsigned npins = obj->nany + obj->nneg + obj->npos;
+	    unsigned npins = obj->nany + obj->nneg + obj->npos + obj->nedg;
 	    obj->pins = (ivl_nexus_t*)calloc(npins, sizeof(ivl_nexus_t));
 
       } else {
@@ -2599,7 +2596,6 @@ void dll_target::signal(const NetNet*net)
       obj->discipline = net->get_discipline();
 
       obj->array_dimensions_ = net->unpacked_dimensions();
-      assert(obj->array_dimensions_ == net->unpacked_dimensions());
 
       switch (net->port_type()) {
 
@@ -2678,6 +2674,18 @@ void dll_target::signal(const NetNet*net)
 
       obj->nattr = net->attr_cnt();
       obj->attr = fill_in_attributes(net);
+
+      // Special case: IVL_VT_QUEUE objects don't normally show up in the
+      // network,  but can in certain special cases. In these cases, it is the
+      // object itself and not the array elements that is in the network. of
+      // course, only do this if there is at least one link to this signal.
+      if (obj->net_type->base_type()==IVL_VT_QUEUE && net->is_linked()) {
+	    const Nexus*nex = net->pin(0).nexus();
+	    ivl_nexus_t tmp = nexus_sig_make(obj, 0);
+	    tmp->nexus_ = nex;
+	    tmp->name_ = 0;
+	    nex->t_cookie(tmp);
+      }
 
 	/* Get the nexus objects for all the pins of the signal. If
 	   the signal has only one pin, then write the single
@@ -2841,14 +2849,14 @@ void dll_target::test_version(const char*target_name)
 	    return;
       }
 
-      target_query_f target_query = (target_query_f)ivl_dlsym(dll_, LU "target_query" TU);
-      if (target_query == 0) {
+      target_query_f targ_query = (target_query_f)ivl_dlsym(dll_, LU "target_query" TU);
+      if (targ_query == 0) {
 	    cerr << "Target " << target_name
 		 << " has no version hooks." << endl;
 	    return;
       }
 
-      const char*version_string = (*target_query) ("version");
+      const char*version_string = (*targ_query) ("version");
       if (version_string == 0) {
 	    cerr << "Target " << target_name
 		 << " has no version string" << endl;

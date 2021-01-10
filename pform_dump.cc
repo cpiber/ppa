@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -99,7 +99,7 @@ ostream& operator<< (ostream&out, const name_component_t&that)
 ostream& operator<< (ostream&o, const pform_name_t&that)
 {
       pform_name_t::const_iterator cur;
-      if (that.size() == 0) {
+      if (that.empty()) {
 	    o << "<nil>";
 	    return o;
       }
@@ -165,6 +165,22 @@ void data_type_t::pform_dump(ostream&out, unsigned indent) const
       out << setw(indent) << "" << typeid(*this).name() << endl;
 }
 
+ostream& data_type_t::debug_dump(ostream&out) const
+{
+      out << typeid(*this).name();
+      return out;
+}
+
+ostream& atom2_type_t::debug_dump(ostream&out) const
+{
+      if (signed_flag)
+	    out << "signed-";
+      else
+	    out << "unsigned-";
+      out << "int(" << type_code << ")";
+      return out;
+}
+
 void void_type_t::pform_dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "void" << endl;
@@ -175,6 +191,19 @@ void parray_type_t::pform_dump(ostream&out, unsigned indent) const
       out << setw(indent) << "" << "Packed array " << "[...]"
 	  << " of:" << endl;
       base_type->pform_dump(out, indent+4);
+}
+
+ostream& real_type_t::debug_dump(ostream&out) const
+{
+      switch (type_code_) {
+	  case REAL:
+	    out << "real";
+	    break;
+	  case SHORTREAL:
+	    out << "shortreal";
+	    break;
+      }
+      return out;
 }
 
 void struct_type_t::pform_dump(ostream&out, unsigned indent) const
@@ -211,6 +240,25 @@ void vector_type_t::pform_dump(ostream&fd, unsigned indent) const
 	    }
       }
       fd << endl;
+}
+
+ostream& vector_type_t::debug_dump(ostream&fd) const
+{
+      if (signed_flag)
+	    fd << "signed ";
+      if (!pdims.get()) {
+	    fd << "/* vector_type_t nil */";
+	    return fd;
+      }
+
+      for (list<pform_range_t>::iterator cur = pdims->begin()
+		 ; cur != pdims->end() ; ++cur) {
+	    fd << "[";
+	    if (cur->first)  fd << *(cur->first);
+	    if (cur->second) fd << ":" << *(cur->second);
+	    fd << "]";
+      }
+      return fd;
 }
 
 void class_type_t::pform_dump(ostream&out, unsigned indent) const
@@ -357,6 +405,9 @@ void PEEvent::dump(ostream&out) const
 	    break;
 	  case PEEvent::NEGEDGE:
 	    out << "negedge ";
+	    break;
+	  case PEEvent::EDGE:
+	    out << "edge ";
 	    break;
 	  case PEEvent::POSITIVE:
 	    out << "positive ";
@@ -538,7 +589,7 @@ void PWire::dump(ostream&out, unsigned ind) const
 	    out << " scalar";
       }
       if (set_data_type_) {
-	    out << " set_data_type_=" << typeid(*set_data_type_).name();
+	    out << " set_data_type_=" << *set_data_type_;
       }
 
       if (discipline_) {
@@ -1389,14 +1440,12 @@ void LexicalScope::dump_parameters_(ostream&out, unsigned indent) const
       typedef map<perm_string,param_expr_t*>::const_iterator parm_iter_t;
       for (parm_iter_t cur = parameters.begin()
 		 ; cur != parameters.end() ; ++ cur ) {
-	    out << setw(indent) << "" << "parameter "
-                << (*cur).second->type << " ";
-	    if ((*cur).second->signed_flag)
-		  out << "signed ";
-	    if ((*cur).second->msb)
-		  out << "[" << *(*cur).second->msb << ":"
-		      << *(*cur).second->lsb << "] ";
-	    out << (*cur).first << " = ";
+	    out << setw(indent) << "" << "parameter ";
+	    if (cur->second->data_type)
+	          cur->second->data_type->debug_dump(out);
+	    else
+		  out << "(nil type)";
+	    out << " " << (*cur).first << " = ";
 	    if ((*cur).second->expr)
 		  out << *(*cur).second->expr;
 	    else
@@ -1439,9 +1488,10 @@ void LexicalScope::dump_localparams_(ostream&out, unsigned indent) const
       for (parm_iter_t cur = localparams.begin()
 		 ; cur != localparams.end() ; ++ cur ) {
 	    out << setw(indent) << "" << "localparam ";
-	    if ((*cur).second->msb)
-		  out << "[" << *(*cur).second->msb << ":"
-		      << *(*cur).second->lsb << "] ";
+	    if (cur->second->data_type) {
+		  cur->second->data_type->debug_dump(out);
+		  out << " ";
+	    }
 	    out << (*cur).first << " = ";
 	    if ((*cur).second->expr)
 		  out << *(*cur).second->expr << ";" << endl;
@@ -1544,9 +1594,11 @@ void Module::dump_specparams_(ostream&out, unsigned indent) const
       for (parm_iter_t cur = specparams.begin()
 		 ; cur != specparams.end() ; ++ cur ) {
 	    out << setw(indent) << "" << "specparam ";
-	    if ((*cur).second->msb)
-		  out << "[" << *(*cur).second->msb << ":"
-		      << *(*cur).second->lsb << "] ";
+	    if (cur->second->data_type)
+		  cur->second->data_type->debug_dump(out);
+	    else
+		  out << "(nil type)";
+
 	    out << (*cur).first << " = ";
 	    if ((*cur).second->expr)
 		  out << *(*cur).second->expr << ";" << endl;

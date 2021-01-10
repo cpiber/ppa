@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -320,9 +320,7 @@ void sync_cb::run_run()
       if (cur->cb_data.cb_rtn != 0) {
 	    assert(vpi_mode_flag == VPI_MODE_NONE);
 	    vpi_mode_flag = sync_flag? VPI_MODE_ROSYNC : VPI_MODE_RWSYNC;
-	    vpip_cur_task = dynamic_cast<__vpiSysTaskCall*>(cur->cb_data.obj);
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    vpip_cur_task = 0;
 	    vpi_mode_flag = VPI_MODE_NONE;
       }
 
@@ -514,7 +512,9 @@ void vpiEndOfCompile(void) {
       while (EndOfCompile) {
 	    cur = EndOfCompile;
 	    EndOfCompile = dynamic_cast<simulator_callback*>(cur->next);
-	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    if (cur->cb_data.cb_rtn != 0) {
+	        (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    }
 	    delete cur;
       }
 
@@ -534,7 +534,9 @@ void vpiStartOfSim(void) {
       while (StartOfSimulation) {
 	    cur = StartOfSimulation;
 	    StartOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
-	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    if (cur->cb_data.cb_rtn != 0) {
+	        (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    }
 	    delete cur;
       }
 
@@ -553,10 +555,12 @@ void vpiPostsim(void) {
       while (EndOfSimulation) {
 	    cur = EndOfSimulation;
 	    EndOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
-	      /* Only set the time if it is not NULL. */
-	    if (cur->cb_data.time)
-	          vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
-	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    if (cur->cb_data.cb_rtn != 0) {
+	        /* Only set the time if it is not NULL. */
+	        if (cur->cb_data.time)
+	            vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
+	        (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    }
 	    delete cur;
       }
 
@@ -577,7 +581,9 @@ void vpiNextSimTime(void)
       while (NextSimTime) {
 	    cur = NextSimTime;
 	    NextSimTime = dynamic_cast<simulator_callback*>(cur->next);
-	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    if (cur->cb_data.cb_rtn != 0) {
+	        (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    }
 	    delete cur;
       }
 
@@ -685,7 +691,8 @@ void callback_execute(struct __vpiCallback*cur)
 	  case vpiScaledRealTime: {
 	    cur->cb_data.time->real =
 	         vpip_time_to_scaled_real(schedule_simtime(),
-	             (__vpiScope *) vpi_handle(vpiScope, cur->cb_data.obj));
+	             static_cast<__vpiScope *>(vpi_handle(vpiScope,
+	                                                  cur->cb_data.obj)));
 	    break;
 	  }
 	  case vpiSuppressTime:

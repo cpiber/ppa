@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -108,6 +108,18 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		 << *pin(1) << endl;
 	    des->errors += 1;
 	    return;
+      }
+
+      if (lval->enumeration()) {
+	    if (! rval_expr->enumeration()) {
+		  cerr << get_fileline() << ": error: "
+		          "This assignment requires an explicit cast." << endl;
+		  des->errors += 1;
+	    } else if (! lval->enumeration()->matches(rval_expr->enumeration())) {
+		  cerr << get_fileline() << ": error: "
+		          "Enumeration type mismatch in assignment." << endl;
+		  des->errors += 1;
+	    }
       }
 
       NetNet*rval = rval_expr->synthesize(des, scope, rval_expr);
@@ -1434,8 +1446,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    assert(prts_vector_width % instance.size() == 0);
 
 	    if (!prts.empty() && (prts[0]->port_type() == NetNet::PINPUT)
-                && prts[0]->pin(0).nexus()->drivers_present()
-                && pins[idx]->is_collapsible_net(des, scope)) {
+	        && prts[0]->pin(0).nexus()->drivers_present()
+	        && pins[idx]->is_collapsible_net(des, scope,
+	                                         prts[0]->port_type())) {
                   prts[0]->port_type(NetNet::PINOUT);
 
 		  cerr << pins[idx]->get_fileline() << ": warning: input port "
@@ -1443,9 +1456,10 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    }
 
 	    if (!prts.empty() && (prts[0]->port_type() == NetNet::POUTPUT)
-                && (prts[0]->type() != NetNet::REG)
-                && prts[0]->pin(0).nexus()->has_floating_input()
-                && pins[idx]->is_collapsible_net(des, scope)) {
+	        && (prts[0]->type() != NetNet::REG)
+	        && prts[0]->pin(0).nexus()->has_floating_input()
+	        && pins[idx]->is_collapsible_net(des, scope,
+	                                         prts[0]->port_type())) {
                   prts[0]->port_type(NetNet::PINOUT);
 
 		  cerr << pins[idx]->get_fileline() << ": warning: output port "
@@ -1457,7 +1471,11 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // that connects to the port.
 
 	    NetNet*sig = 0;
-	    NetNet::PortType ptype = prts[0]->port_type();
+	    NetNet::PortType ptype;
+	    if (prts.empty())
+		   ptype = NetNet::NOT_A_PORT;
+	    else
+		   ptype = prts[0]->port_type();
 	    if (prts.empty() || (ptype == NetNet::PINPUT)) {
 
 		    // Special case: If the input port is an unpacked
@@ -1773,7 +1791,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			  /* This may not be correct! */
 			as_signed = prts[0]->get_signed() && sig->get_signed();
 			break;
-		      case NetNet::PREF:
+		    case NetNet::PREF:
 			ivl_assert(*this, 0);
 			break;
 		    default:
@@ -2160,6 +2178,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 		       << "port of " << udp->name_
 		       << " is " << udp->ports[0] << "." << endl;
 		  des->errors += 1;
+		  return;
 	    } else {
 		  connect(sig->pin(0), net->pin(0));
 	    }
@@ -2628,9 +2647,8 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 			cerr << get_fileline() << ": PAssign::elaborate: "
 			     << "lv->word() = <nil>" << endl;
 	    }
-	    ivl_type_t use_lv_type = lv_net_type;
 	    ivl_assert(*this, lv->word());
-	    use_lv_type = utype->element_type();
+	    ivl_type_t use_lv_type = utype->element_type();
 
 	    ivl_assert(*this, use_lv_type);
 	    rv = elaborate_rval_(des, scope, use_lv_type);
@@ -2640,7 +2658,10 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    rv = elaborate_rval_(des, scope, lv_net_type, lv->expr_type(), count_lval_width(lv));
       }
 
-      if (rv == 0) return 0;
+      if (rv == 0) {
+	    delete lv;
+	    return 0;
+      }
       assert(rv);
 
       if (count_) assert(event_);
@@ -2990,6 +3011,25 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 
       for (unsigned idx = 0 ;  idx < list_.size() ;  idx += 1) {
 	    assert(list_[idx]);
+
+	      // Detect the error that a super.new() statement is in the
+	      // midst of a block. Report the error. Continue on with the
+	      // elaboration so that other errors might be found.
+	    if (PChainConstructor*supernew = dynamic_cast<PChainConstructor*> (list_[idx])) {
+	          if (debug_elaborate) {
+		        cerr << get_fileline() << ": PBlock::elaborate: "
+			     << "Found super.new statement, idx=" << idx << ", "
+			     << " at " << supernew->get_fileline() << "."
+			     << endl;
+		  }
+		  if (idx > 0) {
+		        des->errors += 1;
+			cerr << supernew->get_fileline() << ": error: "
+			     << "super.new(...) must be the first statement in a block."
+			     << endl;
+		  }
+	    }
+
 	    NetProc*tmp = list_[idx]->elaborate(des, nscope);
 	      // If the statement fails to elaborate, then simply
 	      // ignore it. Presumably, the elaborate for the
@@ -3254,7 +3294,7 @@ NetProc* PChainConstructor::elaborate(Design*des, NetScope*scope) const
 
 	// Need the "this" variable for the current constructor. We're
 	// going to pass this to the chained constructor.
-      NetNet*var_this = scope->find_signal(perm_string::literal("@"));
+      NetNet*var_this = scope->find_signal(perm_string::literal(THIS_TOKEN));
 
 	// If super.new is an implicit constructor, then there are no
 	// arguments (other than "this" to worry about, so make a
@@ -3524,8 +3564,10 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	      // For SystemVerilog this may be a few other things.
 	    if (gn_system_verilog()) {
 		  NetProc *tmp;
-		    // This could be a method attached to a signal?
-		  tmp = elaborate_method_(des, scope);
+		    // This could be a method attached to a signal
+		    // or defined in this object?
+		  bool try_implicit_this = scope->get_class_scope() && path_.size() == 1;
+		  tmp = elaborate_method_(des, scope, try_implicit_this);
 		  if (tmp) return tmp;
 		    // Or it could be a function call ignoring the return?
 		  tmp = elaborate_function_(des, scope);
@@ -3567,6 +3609,9 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	/* Handle non-automatic tasks with no parameters specially. There is
            no need to make a sequential block to hold the generated code. */
       if ((parm_count == 0) && !task->is_auto()) {
+	      // Check if a task call is allowed in this context.
+	    test_task_calls_ok_(des, scope);
+
 	    NetUTask*cur = new NetUTask(task);
 	    cur->set_line(*this);
 	    return cur;
@@ -3701,6 +3746,38 @@ NetProc* PCallTask::elaborate_queue_method_(Design*des, NetScope*scope,
       return sys;
 }
 
+/*
+ * This is used for array/queue function methods called as tasks.
+ */
+NetProc* PCallTask::elaborate_method_func_(NetScope*scope,
+                                           NetNet*net,
+                                           ivl_variable_type_t type,
+                                           unsigned width,
+                                           bool signed_flag,
+					   perm_string method_name,
+                                           const char*sys_task_name) const
+{
+      cerr << get_fileline() << ": warning: method function '"
+           << method_name << "' is being called as a task." << endl;
+
+	// Generate the function.
+      NetESFunc*sys_expr = new NetESFunc(sys_task_name, type, width, 1);
+      sys_expr->set_line(*this);
+      NetESignal*arg = new NetESignal(net);
+      arg->set_line(*net);
+      sys_expr->parm(0, arg);
+	// Create a L-value that matches the function return type.
+      NetNet*tmp;
+      netvector_t*tmp_vec = new netvector_t(type, width-1, 0, signed_flag);
+      tmp = new NetNet(scope, scope->local_symbol(), NetNet::REG, tmp_vec);
+      tmp->set_line(*this);
+      NetAssign_*lv = new NetAssign_(tmp);
+	// Generate an assign to the fake L-value.
+      NetAssign*cur = new NetAssign(lv, sys_expr);
+      cur->set_line(*this);
+      return cur;
+}
+
 NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
                                       bool add_this_flag) const
 {
@@ -3710,13 +3787,13 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 
       NetNet *net;
       const NetExpr *par;
+      ivl_type_t par_type = 0;
       NetEvent *eve;
-      const NetExpr *ex1, *ex2;
 
 	/* Add the implicit this reference when requested. */
       if (add_this_flag) {
 	    assert(use_path.empty());
-	    use_path.push_front(name_component_t(perm_string::literal("@")));
+	    use_path.push_front(name_component_t(perm_string::literal(THIS_TOKEN)));
       }
 
 	// There is no signal to search for so this cannot be a method.
@@ -3726,19 +3803,51 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	// resolve to a class object. Note that the "this" symbol
 	// (internally represented as "@") is handled by there being a
 	// "this" object in the instance scope.
-      symbol_search(this, des, scope, use_path,
-		    net, par, eve, ex1, ex2);
+      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
 
       if (net == 0)
 	    return 0;
 
-	// Is this a delete method for dynamic arrays?
-      if (net->darray_type() && method_name=="delete") {
-	    return elaborate_sys_task_method_(des, scope, net, method_name,
-					      "$ivl_darray_method$delete");
+	// Is this a delete method for dynamic arrays or queues?
+      if (net->darray_type()) {
+	    if (method_name=="delete")
+		  return elaborate_sys_task_method_(des, scope, net, method_name,
+		                                    "$ivl_darray_method$delete");
+	    else if (method_name=="size")
+		    // This returns an int. It could be removed, but keep for now.
+		  return elaborate_method_func_(scope, net,
+		                                IVL_VT_BOOL, 32,
+		                                true, method_name,
+		                                "$size");
+	    else if (method_name=="reverse") {
+		  cerr << get_fileline() << ": sorry: 'reverse()' "
+		          "array sorting method is not currently supported."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    } else if (method_name=="sort") {
+		  cerr << get_fileline() << ": sorry: 'sort()' "
+		          "array sorting method is not currently supported."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    } else if (method_name=="rsort") {
+		  cerr << get_fileline() << ": sorry: 'rsort()' "
+		          "array sorting method is not currently supported."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    } else if (method_name=="shuffle") {
+		  cerr << get_fileline() << ": sorry: 'shuffle()' "
+		          "array sorting method is not currently supported."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
       }
 
       if (net->queue_type()) {
+	    const netdarray_t*use_darray = net->darray_type();
 	    if (method_name == "push_back")
 		  return elaborate_queue_method_(des, scope, net, method_name,
 						 "$ivl_queue_method$push_back");
@@ -3748,12 +3857,24 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	    else if (method_name == "insert")
 		  return elaborate_queue_method_(des, scope, net, method_name,
 						 "$ivl_queue_method$insert");
+	    else if (method_name == "pop_front")
+		  return elaborate_method_func_(scope, net,
+		                                use_darray->element_base_type(),
+		                                use_darray->element_width(),
+		                                false, method_name,
+		                                "$ivl_queue_method$pop_front");
+	    else if (method_name == "pop_back")
+		  return elaborate_method_func_(scope, net,
+		                                use_darray->element_base_type(),
+		                                use_darray->element_width(),
+		                                false, method_name,
+		                                "$ivl_queue_method$pop_back");
       }
 
       if (const netclass_t*class_type = net->class_type()) {
 	    NetScope*task = class_type->method_from_name(method_name);
 	    if (task == 0) {
-		  cerr << get_fileline() << ": internal error: "
+		  cerr << get_fileline() << ": error: "
 		       << "Can't find task " << method_name
 		       << " in class " << class_type->get_name() << endl;
 		  des->errors += 1;
@@ -3779,7 +3900,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
  * If during elaboration we determine (for sure) that we are calling a
  * task (and not just a void function) then this method tests if that
  * task call is allowed in the current context. If so, return true. If
- * not, print and error message and return false;
+ * not, print an error message and return false;
  */
 bool PCallTask::test_task_calls_ok_(Design*des, NetScope*scope) const
 {
@@ -3835,7 +3956,14 @@ NetProc* PCallTask::elaborate_void_function_(Design*des, NetScope*scope,
 		 << endl;
       }
 
-      ivl_assert(*this, dscope->elab_stage() >= 3);
+	// If we haven't already elaborated the function, do so now.
+	// This allows elaborate_build_call_ to elide the function call
+	// if the function body is empty.
+      if (dscope->elab_stage() < 3) {
+	    const PFunction*pfunc = dscope->func_pform();
+	    ivl_assert(*this, pfunc);
+	    pfunc->elaborate(des, dscope);
+      }
       return elaborate_build_call_(des, scope, dscope, 0);
 }
 
@@ -3884,8 +4012,13 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	   task, all the assignments, etc. Just return a no-op. */
 
       if (const NetBlock*tp = dynamic_cast<const NetBlock*>(def->proc())) {
-	    if (tp->proc_first() == 0)
+	    if (tp->proc_first() == 0) {
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PCallTask::elaborate_build_call_: "
+			     << "Eliding call to empty task " << task->basename() << endl;
+		  }
 		  return block;
+	    }
       }
 
         /* If this is an automatic task, generate a statement to
@@ -4558,6 +4691,11 @@ cerr << endl;
 		case PEEvent::NEGEDGE:
 		  pr = new NetEvProbe(scope, scope->local_symbol(), ev,
 				      NetEvProbe::NEGEDGE, pins);
+		  break;
+
+		case PEEvent::EDGE:
+		  pr = new NetEvProbe(scope, scope->local_symbol(), ev,
+				      NetEvProbe::EDGE, pins);
 		  break;
 
 		case PEEvent::ANYEDGE:
@@ -5261,14 +5399,18 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
       }
       assert(def);
 
-      ivl_assert(*this, statement_);
-      NetProc*st = statement_->elaborate(des, scope);
-      if (st == 0) {
-	    cerr << statement_->get_fileline() << ": error: Unable to elaborate "
-		  "statement in function " << scope->basename() << "." << endl;
-            scope->is_const_func(true); // error recovery
-	    des->errors += 1;
-	    return;
+      NetProc*st;
+      if (statement_ == 0) {
+	    st = new NetBlock(NetBlock::SEQU, 0);
+      } else {
+	    st = statement_->elaborate(des, scope);
+	    if (st == 0) {
+		  cerr << statement_->get_fileline() << ": error: Unable to elaborate "
+			  "statement in function " << scope->basename() << "." << endl;
+		  scope->is_const_func(true); // error recovery
+		  des->errors += 1;
+		  return;
+	    }
       }
 
 	// Handle any variable initialization statements in this scope.
@@ -5900,7 +6042,7 @@ static void elaborate_classes(Design*des, NetScope*scope,
 {
       for (map<perm_string,PClass*>::const_iterator cur = classes.begin()
 		 ; cur != classes.end() ; ++ cur) {
-	    netclass_t*use_class = scope->find_class(cur->second->pscope_name());
+	    netclass_t*use_class = scope->find_class(des, cur->second->pscope_name());
 	    use_class->elaborate(des, cur->second);
 
 	    if (use_class->test_for_missing_initializers()) {
@@ -6657,18 +6799,18 @@ static void check_timescales()
 	    if (some_explicit && some_implicit)
 		  break;
       }
-      map<perm_string,PPackage*>::iterator pkg;
+      vector<PPackage*>::iterator pkg;
       if (gn_system_verilog() && !(some_explicit && some_implicit)) {
 	    for (pkg = pform_packages.begin(); pkg != pform_packages.end(); ++pkg) {
-		  const PPackage*pp = (*pkg).second;
+		  const PPackage*pp = *pkg;
 		  check_timescales(some_explicit, some_implicit, pp);
 		  if (some_explicit && some_implicit)
 			break;
 	    }
       }
       if (gn_system_verilog() && !(some_explicit && some_implicit)) {
-	    for (unsigned idx = 0; idx < pform_units.size(); idx += 1) {
-		  const PPackage*pp = pform_units[idx];
+	    for (pkg = pform_units.begin(); pkg != pform_units.end(); ++pkg) {
+		  const PPackage*pp = *pkg;
 		    // We don't need a timescale if the compilation unit
 		    // contains no items outside a design element.
 		  if (pp->parameters.empty() &&
@@ -6719,15 +6861,15 @@ static void check_timescales()
 	    return;
 
       for (pkg = pform_packages.begin(); pkg != pform_packages.end(); ++pkg) {
-	    PPackage*pp = (*pkg).second;
+	    PPackage*pp = *pkg;
 	    if (pp->has_explicit_timescale())
 		  continue;
-	    cerr << "       :   -- package " << (*pkg).first
+	    cerr << "       :   -- package " << pp->pscope_name()
 		 << " declared here: " << pp->get_fileline() << endl;
       }
 
-      for (unsigned idx = 0; idx < pform_units.size(); idx += 1) {
-	    PPackage*pp = pform_units[idx];
+      for (pkg = pform_units.begin(); pkg != pform_units.end(); ++pkg) {
+	    PPackage*pp = *pkg;
 	    if (pp->has_explicit_timescale())
 		  continue;
 
@@ -6783,8 +6925,9 @@ Design* elaborate(list<perm_string>roots)
 	// Elaborate the compilation unit scopes. From here on, these are
 	// treated as an additional set of packages.
       if (gn_system_verilog()) {
-	    for (i = 0; i < pform_units.size(); i += 1) {
-		  PPackage*unit = pform_units[i];
+	    for (vector<PPackage*>::iterator pkg = pform_units.begin()
+		       ; pkg != pform_units.end() ; ++pkg) {
+		  PPackage*unit = *pkg;
 		  NetScope*scope = des->make_package_scope(unit->pscope_name(), 0, true);
 		  scope->set_line(unit);
 		  scope->add_imports(&unit->explicit_imports);
@@ -6795,6 +6938,7 @@ Design* elaborate(list<perm_string>roots)
 
 		  pack_elems[i].pack = unit;
 		  pack_elems[i].scope = scope;
+		  i += 1;
 
 		  unit_scopes[unit] = scope;
 	    }
@@ -6805,20 +6949,19 @@ Design* elaborate(list<perm_string>roots)
 	// in SystemVerilog, packages are not allowed to refer to
 	// the compilation unit scope, but the VHDL preprocessor
 	// assumes they can.
-      for (map<perm_string,PPackage*>::iterator pac = pform_packages.begin()
-		 ; pac != pform_packages.end() ; ++ pac) {
+      for (vector<PPackage*>::iterator pkg = pform_packages.begin()
+		 ; pkg != pform_packages.end() ; ++pkg) {
+	    PPackage*pack = *pkg;
+	    NetScope*unit_scope = unit_scopes[pack->parent_scope()];
+	    NetScope*scope = des->make_package_scope(pack->pscope_name(), unit_scope, false);
+	    scope->set_line(pack);
+	    scope->add_imports(&pack->explicit_imports);
+	    set_scope_timescale(des, scope, pack);
 
-	    ivl_assert(*pac->second, pac->first == pac->second->pscope_name());
-	    NetScope*unit_scope = unit_scopes[pac->second->parent_scope()];
-	    NetScope*scope = des->make_package_scope(pac->first, unit_scope, false);
-	    scope->set_line(pac->second);
-	    scope->add_imports(&pac->second->explicit_imports);
-	    set_scope_timescale(des, scope, pac->second);
-
-	    elaborator_work_item_t*es = new elaborate_package_t(des, scope, pac->second);
+	    elaborator_work_item_t*es = new elaborate_package_t(des, scope, pack);
 	    des->elaboration_work_list.push_back(es);
 
-	    pack_elems[i].pack = pac->second;
+	    pack_elems[i].pack = pack;
 	    pack_elems[i].scope = scope;
 	    i += 1;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2018 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -74,6 +74,7 @@ void event_s::single_step_display(void)
 struct event_time_s {
       event_time_s() {
 	    count_time_events += 1;
+	    delay = 0;
 	    start = 0;
 	    active = 0;
 	    inactive = 0;
@@ -894,7 +895,7 @@ void schedule_propagate_vector(vvp_net_t*net,
 void schedule_assign_array_word(vvp_array_t mem,
 				unsigned word_addr,
 				unsigned off,
-				vvp_vector4_t val,
+				const vvp_vector4_t&val,
 				vvp_time64_t delay)
 {
       struct assign_array_word_s*cur = new struct assign_array_word_s;
@@ -926,7 +927,7 @@ void schedule_set_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
       schedule_event_(cur, 0, SEQ_ACTIVE);
 }
 
-void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+void schedule_set_vector(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 {
       struct assign_vector8_event_s*cur = new struct assign_vector8_event_s;
       cur->ptr = ptr;
@@ -942,7 +943,7 @@ void schedule_set_vector(vvp_net_ptr_t ptr, double bit)
       schedule_event_(cur, 0, SEQ_ACTIVE);
 }
 
-void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+void schedule_init_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&bit)
 {
       struct assign_vector4_event_s*cur = new struct assign_vector4_event_s(bit);
       cur->ptr = ptr;
@@ -951,7 +952,7 @@ void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       schedule_init_event(cur);
 }
 
-void schedule_init_vector(vvp_net_ptr_t ptr, vvp_vector8_t bit)
+void schedule_init_vector(vvp_net_ptr_t ptr, const vvp_vector8_t&bit)
 {
       struct assign_vector8_event_s*cur = new struct assign_vector8_event_s;
       cur->ptr = ptr;

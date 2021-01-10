@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -110,6 +110,7 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
       switch (lv_type) {
 	  case IVL_VT_DARRAY:
 	  case IVL_VT_QUEUE:
+	  case IVL_VT_CLASS:
 	      // For these types, use a different elab_and_eval that
 	      // uses the lv_net_type. We should eventually transition
 	      // all the types to this new form.
@@ -126,12 +127,6 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 	  case IVL_VT_VOID:
 	  case IVL_VT_NO_TYPE:
 	    ivl_assert(*expr, 0);
-	    break;
-	  case IVL_VT_CLASS:
-	    cerr << expr->get_fileline() << ": sorry: "
-		 << "I do not know how to elaborate r-value as IVL_VT_CLASS." << endl;
-	    des->errors += 1;
-	    return 0;
 	    break;
       }
 
@@ -281,6 +276,13 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
       ivl_variable_type_t l_type =  left_->expr_type();
       ivl_variable_type_t r_type = right_->expr_type();
+
+      if (l_type == IVL_VT_CLASS || r_type == IVL_VT_CLASS) {
+	    cerr << get_fileline() << ": error: "
+	         << "Class/null is not allowed with the '"
+	         << human_readable_op(op_) << "' operator." << endl;
+	    des->errors += 1;
+      }
 
       if (l_type == IVL_VT_REAL || r_type == IVL_VT_REAL)
 	    expr_type_ = IVL_VT_REAL;
@@ -627,6 +629,34 @@ unsigned PEBComp::test_width(Design*des, NetScope*scope, width_mode_t&)
 		 << r_width_ << " bits." << endl;
       }
 
+      switch (op_) {
+	case 'e': /* == */
+	case 'n': /* != */
+	case 'E': /* === */
+	case 'N': /* !== */
+	      // FIXME: A class variable/array inside a class is not
+	      //        reported correctly so this cannot be used.
+#if 0
+	    if ((l_type == IVL_VT_CLASS || r_type == IVL_VT_CLASS) &&
+	        l_type != r_type) {
+		  cerr << get_fileline() << ": error: "
+		       << "Both arguments ("<< l_type << ", " << r_type
+		       << ") must be class/null for '"
+		       << human_readable_op(op_) << "' operator." << endl;
+		  des->errors += 1;
+	    }
+#endif
+	    break;
+	default:
+	    if (l_type == IVL_VT_CLASS || r_type == IVL_VT_CLASS) {
+		  cerr << get_fileline() << ": error: "
+		       << "Class/null is not allowed with the '"
+		       << human_readable_op(op_) << "' operator." << endl;
+		  des->errors += 1;
+	    }
+      }
+
+
       return expr_width_;
 }
 
@@ -760,6 +790,13 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       expr_type_   = left_->expr_type();
       signed_flag_ = left_->has_sign();
 
+      if (expr_type_ == IVL_VT_CLASS || right_->expr_type() == IVL_VT_CLASS) {
+	    cerr << get_fileline() << ": error: "
+	         << "Class/null is not allowed with the '"
+	         << human_readable_op(op_) << "' operator." << endl;
+	    des->errors += 1;
+      }
+
       if (mode==SIZED)
 	    mode = l_mode;
 
@@ -780,7 +817,7 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
               // type and width of the right operand.
             long r_val = LONG_MAX;
             if (r_width < sizeof(long)*8) {
-                  r_val = (1L << r_width) - 1L;
+                  r_val = (1UL << r_width) - 1UL;
                   if ((op_ == 'p') && right_->has_sign())
                         r_val >>= 1;
             }
@@ -1168,8 +1205,8 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
             signed_flag_ = false;
 
 	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: test_width"
-		       << " of " << name << " returns test_width"
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "test_width of " << name << " returns test_width"
 		       << " of compiler integer." << endl;
 
 	    return expr_width_;
@@ -1191,8 +1228,8 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
             signed_flag_ = false;
 
 	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: test_width"
-		       << " of $is_signed returns test_width"
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "test_width of $is_signed returns test_width"
 		       << " of 1." << endl;
 
 	    return expr_width_;
@@ -1210,8 +1247,8 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
       is_overridden_ = sfunc_info->override_flag;
 
       if (debug_elaborate)
-	    cerr << get_fileline() << ": debug: test_width "
-		 << "of system function " << name
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "test_width of system function " << name
 		 << " returns wid=" << expr_width_
 		 << ", type=" << expr_type_ << "." << endl;
 
@@ -1242,16 +1279,16 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 
 	    if (test_width_method_(des, scope, mode)) {
 		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug: test_width "
-			     << "of method returns width " << expr_width_
+			cerr << get_fileline() << ": PECallFunction::" << __func__ << ": "
+			     << "test_width of method returns width " << expr_width_
 			     << ", type=" << expr_type_
 			     << "." << endl;
 		  return expr_width_;
 	    }
 
 	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: test_width "
-		       << "cannot find definition of " << path_
+		  cerr << get_fileline() << ": PECallFunction::" << __func__ << ": "
+		       << "test_width cannot find definition of " << path_
 		       << " in " << scope_path(scope) << "." << endl;
 	    return 0;
       }
@@ -1266,8 +1303,8 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
             signed_flag_ = res->get_signed();
 
 	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: test_width "
-		       << "of function returns width " << expr_width_
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "test_width of function returns width " << expr_width_
 		       << ", type=" << expr_type_
 		       << "." << endl;
 
@@ -1294,13 +1331,29 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
       perm_string method_name = peek_tail_name(use_path);
       use_path.pop_back();
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "use_path=" << use_path
+		 << ", method_name=" << method_name
+		 << endl;
+      }
+
       NetNet *net = 0;
       const NetExpr *par;
+      ivl_type_t par_type = 0;
       NetEvent *eve;
-      const NetExpr *ex1, *ex2;
 
-      symbol_search(this, des, scope, use_path,
-		    net, par, eve, ex1, ex2);
+      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
+
+      if (debug_elaborate && net!=0) {
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "net=" << net->name() << endl;
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "net->data_type()=" << net->data_type() << endl;
+	    if (net->net_type())
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "net->net_type()=" << *net->net_type() << endl;
+      }
 
       const netdarray_t*use_darray = 0;
 
@@ -1317,7 +1370,7 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 
 	    net = 0;
 	    symbol_search(this, des, scope, tmp_path,
-			  net, par, eve, ex1, ex2);
+			  net, par, eve, par_type);
 	    if (net && net->class_type()) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PECallFunction::test_width_method_: "
@@ -1383,6 +1436,33 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 	    signed_flag_= false;
 
 	    return expr_width_;
+      }
+
+      // If the net is an enumeration, and the method is one of the standard
+      // methods, then we know the size.
+      if (const netenum_t*enum_type = net->enumeration()) {
+	    if (method_name=="first" || method_name=="last"
+		|| method_name=="prev" || method_name=="next") {
+		  expr_type_  = IVL_VT_BOOL;
+		  expr_width_ = enum_type->packed_width();
+		  min_width_  = expr_width_;
+		  signed_flag_= enum_type->get_signed();
+		  return expr_width_;
+	    }
+	    if (method_name=="num") {
+		  expr_type_  = IVL_VT_BOOL;
+		  expr_width_ = 32;
+		  min_width_  = expr_width_;
+		  signed_flag_= true;
+		  return expr_width_;
+	    }
+	    if (method_name=="name") {
+		  expr_type_  = IVL_VT_STRING;
+		  expr_width_ = 1;
+		  min_width_  = 1;
+		  signed_flag_= false;
+		  return expr_width_;
+	    }
       }
 
       if (const netclass_t*class_type = net->class_type()) {
@@ -1697,8 +1777,27 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
                                        unsigned rtn_wid,
                                        PExpr*parg, unsigned args)
 {
-	// The "num()" method returns the number of elements.
+      if (debug_elaborate) {
+	    cerr << li->get_fileline() << ": " << __func__ << ": "
+		 << "Check for method " << method_name
+		 << " of enumeration at " << netenum->get_fileline()
+		 << endl;
+	    cerr << li->get_fileline() << ": " << __func__ << ": "
+		 << "use_path=" << use_path << endl;
+	    cerr << li->get_fileline() << ": " << __func__ << ": "
+		 << "rtn_wid=" << rtn_wid << endl;
+	    cerr << li->get_fileline() << ": " << __func__ << ": "
+		 << "expr=" << *expr << endl;
+      }
+
+      // First, look for some special methods that can be replace with
+      // constant literals. These get properties of the enumeration type, and
+      // so can be fully evaluated at compile time.
+
       if (method_name == "num") {
+	    // The "num()" method returns the number of elements. This is
+	    // actually a static constant, and can be replaced at compile time
+	    // with a constant value.
 	    if (args != 0) {
 		  cerr << li->get_fileline() << ": error: enumeration "
 		          "method " << use_path << ".num() does not "
@@ -1711,8 +1810,10 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    return tmp;
       }
 
-	// The "first()" method returns the first enumeration value.
       if (method_name == "first") {
+	    // The "first()" method returns the first enumeration value. This
+	    // doesn't actually care about the constant value, and instead
+	    // returns as a constant literal the first value of the enumeration.
 	    if (args != 0) {
 		  cerr << li->get_fileline() << ": error: enumeration "
 		          "method " << use_path << ".first() does not "
@@ -1727,8 +1828,10 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    return tmp;
       }
 
-	// The "last()" method returns the first enumeration value.
       if (method_name == "last") {
+	    // The "last()" method returns the first enumeration value. This
+	    // doesn't actually care about the constant value, and instead
+	    // returns as a constant literal the last value of the enumeration.
 	    if (args != 0) {
 		  cerr << li->get_fileline() << ": error: enumeration "
 		          "method " << use_path << ".last() does not "
@@ -1765,32 +1868,29 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    }
       }
 
-	// The "name()" method returns the name of the current
-	// enumeration value.
       if (method_name == "name") {
+	    // The "name()" method returns the name of the current enumeration
+	    // value. The generated system task takes the enumeration
+	    // definition and the enumeration value. The return value is the
+	    // string name of the enumeration.
 	    if (args != 0) {
 		  cerr << li->get_fileline() << ": error: enumeration "
 		          "method " << use_path << ".name() does not "
 		          "take an argument." << endl;
 		  des->errors += 1;
 	    }
-	    sys_expr = new NetESFunc("$ivl_enum_method$name", IVL_VT_STRING,
-	                             rtn_wid, 2);
-	    sys_expr->parm(0, new NetENetenum(netenum));
+
+	    // Generate the internal system function. Make sure the return
+	    // value is "string" type.
+	    sys_expr = new NetESFunc("$ivl_enum_method$name",
+				     &netstring_t::type_string, 2);
+	    NetENetenum* def = new NetENetenum(netenum);
+	    def->set_line(*li);
+	    sys_expr->parm(0, def);
 	    sys_expr->parm(1, expr);
 
-	      /* The compiler/code generators need to be fixed to support a
-	       * string return value. In some contexts we could use the
-	       * expression width, but that doesn't always work. */
-	    if (rtn_wid == 0) {
-		  cerr << li->get_fileline() << ": sorry: Enumeration method "
-		          "name() is not currently supported in this context "
-		          "(self-determined)." << endl;
-		  des->errors += 1;
-	    }
-
-	// The "next()" method returns the next enumeration value.
       } else if (method_name == "next") {
+	    // The "next()" method returns the next enumeration value.
 	    if (args > 1) {
 		  cerr << li->get_fileline() << ": error: enumeration "
 		          "method " << use_path << ".next() take at "
@@ -1799,12 +1899,14 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    }
 	    sys_expr = new NetESFunc("$ivl_enum_method$next", netenum,
 	                             2 + (args != 0));
-	    sys_expr->parm(0, new NetENetenum(netenum));
+	    NetENetenum* def = new NetENetenum(netenum);
+	    def->set_line(*li);
+	    sys_expr->parm(0, def);
 	    sys_expr->parm(1, expr);
 	    if (args != 0) sys_expr->parm(2, count);
 
-	// The "prev()" method returns the previous enumeration value.
       } else if (method_name == "prev") {
+	    // The "prev()" method returns the previous enumeration value.
 	    if (args > 1) {
 		  cerr << li->get_fileline() << ": error: enumeration "
 		          "method " << use_path << ".prev() take at "
@@ -1813,12 +1915,14 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	    }
 	    sys_expr = new NetESFunc("$ivl_enum_method$prev", netenum,
 	                             2 + (args != 0));
-	    sys_expr->parm(0, new NetENetenum(netenum));
+	    NetENetenum* def = new NetENetenum(netenum);
+	    def->set_line(*li);
+	    sys_expr->parm(0, def);
 	    sys_expr->parm(1, expr);
 	    if (args != 0) sys_expr->parm(2, count);
 
-	// This is an unknown enumeration method.
       } else {
+	    // This is an unknown enumeration method.
 	    cerr << li->get_fileline() << ": error: Unknown enumeration "
 	            "method " << use_path << "." << method_name << "()."
 	         << endl;
@@ -1829,7 +1933,7 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
       sys_expr->set_line(*li);
 
       if (debug_elaborate) {
-	    cerr << li->get_fileline() << ": debug: Generate "
+	    cerr << li->get_fileline() << ": " << __func__ << ": Generate "
 	         << sys_expr->name() << "(" << use_path << ")" << endl;
       }
 
@@ -1958,6 +2062,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
       unsigned long use_width = struct_type->packed_width();
 
       pform_name_t completed_path;
+      ivl_type_t member_type = 0;
       do {
 	    const name_component_t member_comp = member_path.front();
 	    const perm_string&member_name = member_comp.name;
@@ -1985,28 +2090,29 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		  des->errors += 1;
 		  return 0;
 	    }
+	    member_type = member->net_type;
 	    if (debug_elaborate) {
 		  cerr << li->get_fileline() << ": check_for_struct_members: "
-		       << "Member type: " << *(member->net_type)
-		       << " (" << typeid(*(member->net_type)).name() << ")"
+		       << "Member type: " << *member_type
+		       << " (" << typeid(*member_type).name() << ")"
 		       << endl;
 	    }
 
 	    off += tmp_off;
-	    ivl_assert(*li, use_width >= (unsigned long)member->net_type->packed_width());
-	    use_width = member->net_type->packed_width();
+	    ivl_assert(*li, use_width >= (unsigned long)member_type->packed_width());
+	    use_width = member_type->packed_width();
 
 	      // At this point, off and use_width are the part select
 	      // expressed by the member_comp, which is a member of the
 	      // struct. We can further refine the part select with any
 	      // indices that might be present.
 
-	    if (const netstruct_t*tmp_struct = dynamic_cast<const netstruct_t*>(member->net_type)) {
+	    if (const netstruct_t*tmp_struct = dynamic_cast<const netstruct_t*>(member_type)) {
 		    // If the member is itself a struct, then get
 		    // ready to go on to the next iteration.
 		  struct_type = tmp_struct;
 
-	    } else if (const netenum_t*tmp_enum = dynamic_cast<const netenum_t*> (member->net_type)) {
+	    } else if (const netenum_t*tmp_enum = dynamic_cast<const netenum_t*> (member_type)) {
 
 		    // If the element is an enum, then we don't have
 		    // anything special to do.
@@ -2017,7 +2123,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		  }
 		  struct_type = 0;
 
-	    } else if (const netvector_t*mem_vec = dynamic_cast<const netvector_t*>(member->net_type)) {
+	    } else if (const netvector_t*mem_vec = dynamic_cast<const netvector_t*>(member_type)) {
 
 		  if (debug_elaborate) {
 			cerr << li->get_fileline() << ": check_for_struct_members: "
@@ -2042,7 +2148,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		    // In any case, this should be the tail of the
 		    // member_path, because the array element of this
 		    // kind of array cannot be a struct.
-		  if (member_comp.index.size() > 0) {
+		  if (!member_comp.index.empty()) {
 			  // These are the dimensions defined by the type
 			const vector<netrange_t>&mem_packed_dims = mem_vec->packed_dims();
 
@@ -2104,7 +2210,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		    // there is no next struct type.
 		  struct_type = 0;
 
-	    } else if (const netparray_t*array = dynamic_cast<const netparray_t*>(member->net_type)) {
+	    } else if (const netparray_t*array = dynamic_cast<const netparray_t*>(member_type)) {
 
 		    // If the member is a parray, then the elements
 		    // are themselves packed object, including
@@ -2113,7 +2219,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		    // variable, then stepping to the element type to
 		    // possibly iterate through more of the member_path.
 		  ivl_assert(*li, array->packed());
-		  ivl_assert(*li, member_comp.index.size() > 0);
+		  ivl_assert(*li, !member_comp.index.empty());
 
 		    // These are the dimensions defined by the type
 		  const vector<netrange_t>&mem_packed_dims = array->static_dimensions();
@@ -2178,7 +2284,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	    } else {
 		    // Unknown type?
 		  cerr << li->get_fileline() << ": internal error: "
-		       << "Unexpected member type? " << *(member->net_type)
+		       << "Unexpected member type? " << *member_type
 		       << endl;
 		  des->errors += 1;
 		  struct_type = 0;
@@ -2189,7 +2295,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	    completed_path .push_back(member_comp);
 	    member_path.pop_front();
 
-      } while (member_path.size() > 0 && struct_type != 0);
+      } while (!member_path.empty() && struct_type != 0);
 
 	// The dimensions in the expression must match the packed
 	// dimensions that are declared for the variable. For example,
@@ -2224,7 +2330,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 
       NetESignal*sig = new NetESignal(net);
       NetExpr   *base = packed_base? packed_base : make_const_val(off);
-      NetESelect*sel = new NetESelect(sig, base, use_width);
+      NetESelect*sel = new NetESelect(sig, base, use_width, member_type);
 
       if (debug_elaborate) {
 	    cerr << li->get_fileline() << ": check_for_struct_member: "
@@ -2401,6 +2507,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					ivl_type_t type, unsigned flags) const
 {
+//cerr << "HERE: " << scope->basename() << ", " << *type << endl;
       const netdarray_t*darray = dynamic_cast<const netdarray_t*>(type);
       assert(darray);
       return elaborate_expr(des, scope, darray->element_type()->packed_width(), flags);
@@ -2599,7 +2706,16 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	/* Add the implicit this reference when requested. */
       if (add_this_flag) {
 	    assert(use_path.empty());
-	    use_path.push_front(name_component_t(perm_string::literal("@")));
+	    use_path.push_front(name_component_t(perm_string::literal(THIS_TOKEN)));
+      }
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "use_path: " << use_path << endl;
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "method_name: " << method_name << endl;
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "expr_wid: " << expr_wid << endl;
       }
 
 	// If there is no object to the left of the method name, then
@@ -2608,20 +2724,70 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 
       NetNet *net = 0;
       const NetExpr *par;
+      ivl_type_t par_type;
       NetEvent *eve;
-      const NetExpr *ex1, *ex2;
 
-      symbol_search(this, des, scope, use_path,
-		    net, par, eve, ex1, ex2);
+      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
 
-      if (net == 0)
-	    return 0;
+      if (debug_elaborate) {
+	    if (net) {
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "net: " << net->name() << endl;
+	    }
+	    if (par) {
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "par: " << *par << endl;
+	    }
+	    if (par_type) {
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "par_type: " << *par_type << endl;
+	    }
+      }
+
+      // If we found a net with a method...
+      if (net)
+	    return elaborate_expr_method_net_(des, scope, net, expr_wid);
+
+      // If we found a parameter with a method...
+      if (par)
+	    return elaborate_expr_method_par_(des, scope, par, par_type, expr_wid);
+
+      return 0;
+}
+
+NetExpr* PECallFunction::elaborate_expr_method_net_(Design*des, NetScope*scope,
+						    NetNet*net, unsigned expr_wid) const
+{
+      pform_name_t use_path = path_;
+      perm_string method_name = peek_tail_name(use_path);
+      use_path.pop_back();
 
       if (net->data_type() == IVL_VT_STRING) {
 
 	    if (method_name == "len") {
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$len",
 						     IVL_VT_BOOL, 32, 1);
+		  sys_expr->parm(0, new NetESignal(net));
+		  return sys_expr;
+	    }
+
+	    if (method_name == "atoi") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atoi",
+						     IVL_VT_BOOL, integer_width, 1);
+		  sys_expr->parm(0, new NetESignal(net));
+		  return sys_expr;
+	    }
+
+	    if (method_name == "atoreal") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atoreal",
+						     IVL_VT_REAL, 1, 1);
+		  sys_expr->parm(0, new NetESignal(net));
+		  return sys_expr;
+	    }
+
+	    if (method_name == "atohex") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$atohex",
+						     IVL_VT_BOOL, integer_width, 1);
 		  sys_expr->parm(0, new NetESignal(net));
 		  return sys_expr;
 	    }
@@ -2751,6 +2917,70 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    return call;
       }
 
+      return 0;
+}
+
+NetExpr* PECallFunction::elaborate_expr_method_par_(Design*, NetScope*scope,
+						    const NetExpr*par,
+						    ivl_type_t par_type,
+						    unsigned expr_wid) const
+{
+      pform_name_t use_path = path_;
+      perm_string method_name = peek_tail_name(use_path);
+      use_path.pop_back();
+
+      // If the parameter is of type string, then look for the standard string
+      // method. Return an error if not found. Since we are assured that the
+      // expression is a constant string, it should be able to calculate the
+      // result at compile time.
+      if (dynamic_cast<const netstring_t*>(par_type)) {
+
+	    const NetECString*par_string = dynamic_cast<const NetECString*>(par);
+	    ivl_assert(*par, par_string);
+	    string par_value = par_string->value().as_string();
+
+	    if (method_name == "len") {
+		  NetEConst*use_val = make_const_val(par_value.size());
+		  use_val->set_line(*this);
+		  return pad_to_width(use_val, expr_wid, *this);
+	    }
+
+	    if (method_name == "atoi") {
+		  NetEConst*use_val = make_const_val(atoi(par_value.c_str()));
+		  use_val->set_line(*this);
+		  return pad_to_width(use_val, expr_wid, true, *this);
+	    }
+
+	    if (method_name == "atoreal") {
+		  NetECReal*use_val = new NetECReal(verireal(par_value.c_str()));
+		  use_val->set_line(*this);
+		  return use_val;
+	    }
+
+	    if (method_name == "atohex") {
+		  NetEConst*use_val = make_const_val(strtoul(par_value.c_str(),0,16));
+		  use_val->set_line(*this);
+		  return pad_to_width(use_val, expr_wid, true, *this);
+	    }
+
+	    // Returning 0 here will cause the caller to print an error
+	    // message and increment the error count, so there is no need to
+	    // increment des->error_count here.
+	    cerr << get_fileline() << ": error: "
+		 << "Unknown or unsupport string method: " << method_name
+		 << endl;
+	    return 0;
+      }
+
+      // If we haven't figured out what to do with this method by now,
+      // something went wrong.
+      cerr << get_fileline() << ": sorry: Don't know how to handle methods of parameters of type:" << endl;
+      cerr << get_fileline() << ":      : " << *par_type << endl;
+      cerr << get_fileline() << ":      : in scope " << scope_path(scope) << endl;
+
+      // Returning 0 here will cause the caller to print an error message and
+      // increment the error count, so there is no need to increment
+      // des->error_count here.
       return 0;
 }
 
@@ -3132,14 +3362,14 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
       }
 
 	/* Make the empty concat expression. */
-      NetEConcat*concat = new NetEConcat(parm_cnt, repeat_count_, expr_type_);
-      concat->set_line(*this);
+      NetEConcat*cncat = new NetEConcat(parm_cnt, repeat_count_, expr_type_);
+      cncat->set_line(*this);
 
 	/* Remove any zero width constants. */
       unsigned off = 0;
       for (unsigned idx = 0 ;  idx < parm_cnt ;  idx += 1) {
 	    while (parms[off+idx] == 0) off += 1;
-	    concat->set(idx, parms[off+idx]);
+	    cncat->set(idx, parms[off+idx]);
       }
 
       if (wid_sum == 0 && expr_type_ != IVL_VT_STRING) {
@@ -3147,11 +3377,11 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 	         << "may not have zero width in this context." << endl;
 	    des->errors += 1;
 	    concat_depth -= 1;
-	    delete concat;
+	    delete cncat;
 	    return 0;
       }
 
-      NetExpr*tmp = pad_to_width(concat, expr_wid, signed_flag_, *this);
+      NetExpr*tmp = pad_to_width(cncat, expr_wid, signed_flag_, *this);
 
       concat_depth -= 1;
       return tmp;
@@ -3369,33 +3599,6 @@ NetExpr* PEIdent::calculate_up_do_base_(Design*des, NetScope*scope,
       return tmp;
 }
 
-bool PEIdent::calculate_param_range_(Design*, NetScope*,
-				     const NetExpr*par_msb, long&par_msv,
-				     const NetExpr*par_lsb, long&par_lsv,
-				     long length) const
-{
-      if (par_msb == 0) {
-	      // If the parameter doesn't have an explicit range, then
-	      // just return range values of [length-1:0].
-	    ivl_assert(*this, par_lsb == 0);
-	    par_msv = length-1;
-	    par_lsv = 0;
-	    return true;
-      }
-
-      const NetEConst*tmp = dynamic_cast<const NetEConst*> (par_msb);
-      ivl_assert(*this, tmp);
-
-      par_msv = tmp->value().as_long();
-
-      tmp = dynamic_cast<const NetEConst*> (par_lsb);
-      ivl_assert(*this, tmp);
-
-      par_lsv = tmp->value().as_long();
-
-      return true;
-}
-
 unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
 {
       if (!gn_system_verilog())
@@ -3415,9 +3618,9 @@ unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
 
       NetNet*net = 0;
       const NetExpr*par = 0;
+      ivl_type_t par_type = 0;
       NetEvent*eve = 0;
-      const NetExpr*ex1 = 0, *ex2 = 0;
-      symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
       if (net == 0) {
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": PEIdent::test_width_method_: "
@@ -3461,9 +3664,8 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
       NetNet*       net = 0;
       const NetExpr*par = 0;
+      ivl_type_t    par_type = 0;
       NetEvent*     eve = 0;
-
-      const NetExpr*ex1, *ex2;
 
       NetScope*use_scope = scope;
       if (package_) {
@@ -3476,8 +3678,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       }
 
       NetScope*found_in = symbol_search(this, des, use_scope, path_,
-					net, par, eve,
-                                        ex1, ex2);
+					net, par, eve, par_type);
 
 	// If there is a part/bit select expression, then process it
 	// here. This constrains the results no matter what kind the
@@ -3653,7 +3854,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    use_path.pop_back();
 
 	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+	    symbol_search(this, des, scope, use_path, net, par, eve, par_type);
 
 	      // Check to see if we have a net and if so is it a structure?
 	    if (net != 0) {
@@ -3715,8 +3916,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       NetNet*       net = 0;
       const NetExpr*par = 0;
+      ivl_type_t    par_type = 0;
       NetEvent*     eve = 0;
-      const NetExpr*ex1, *ex2;
 
       NetScope*use_scope = scope;
       if (package_) {
@@ -3728,9 +3929,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    return tmp;
       }
 
-      /* NetScope*found_in = */ symbol_search(this, des, use_scope, path_,
-					      net, par, eve,
-					      ex1, ex2);
+      symbol_search(this, des, use_scope, path_, net, par, eve, par_type);
 
       if (net == 0 && gn_system_verilog() && path_.size() >= 2) {
 	      // NOTE: this is assuming the member_path is only one
@@ -3742,7 +3941,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    use_path.pop_back();
 
 	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, use_scope, use_path, net, par, eve, ex1, ex2);
+	    symbol_search(this, des, use_scope, use_path, net, par, eve, par_type);
 
 	    if (net == 0) {
 		    // Nope, no struct/class with member.
@@ -3904,7 +4103,7 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
       NetScope*scope_method = find_method_containing_scope(*this, scope);
       ivl_assert(*this, scope_method);
 
-      NetNet*this_net = scope_method->find_signal(perm_string::literal("@"));
+      NetNet*this_net = scope_method->find_signal(perm_string::literal(THIS_TOKEN));
       if (this_net == 0) {
 	    cerr << get_fileline() << ": internal error: "
 		 << "Unable to find 'this' port of " << scope_path(scope_method)
@@ -3991,9 +4190,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       NetNet*       net = 0;
       const NetExpr*par = 0;
+      ivl_type_t    par_type = 0;
       NetEvent*     eve = 0;
-
-      const NetExpr*ex1, *ex2;
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PEIdent::elaborate_expr: "
@@ -4050,9 +4248,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       pform_name_t base_path = path_;
       pform_name_t member_path;
       NetScope*found_in = 0;
-      while (net==0 && par==0 && eve==0 && base_path.size()>0) {
+      while (net==0 && par==0 && eve==0 && !base_path.empty()) {
 	    found_in = symbol_search(this, des, use_scope, base_path,
-				     net, par, eve, ex1, ex2);
+				     net, par, eve, par_type);
 	    if (net) break;
 	    if (par) break;
 	    if (eve) break;
@@ -4076,7 +4274,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	// the parameter value.
       if (par != 0) {
 
-	    if (member_path.size() > 0) {
+	    if (!member_path.empty()) {
 		  cerr << get_fileline() << ": error: Paramater name " << base_path
 		       << " can't have member names (member_path=" << member_path << ")."
 		       << endl;
@@ -4084,7 +4282,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    }
 
 	    NetExpr*tmp = elaborate_expr_param_(des, scope, par, found_in,
-                                                ex1, ex2, expr_wid, flags);
+                                                par_type, expr_wid, flags);
 
             if (!tmp) return 0;
 
@@ -4115,7 +4313,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	      // If this is a struct, and there are members in the
 	      // member_path, then generate an expression that
 	      // reflects the member selection.
-	    if (net->struct_type() && member_path.size() > 0) {
+	    if (net->struct_type() && !member_path.empty()) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
 			     << "Ident " << base_path
@@ -4132,7 +4330,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	      // If this is an array object, and there are members in
 	      // the member_path, check for array properties.
-	    if (net->darray_type() && member_path.size() > 0) {
+	    if (net->darray_type() && !member_path.empty()) {
                   if (debug_elaborate) {
                         cerr << get_fileline() << ": PEIdent::elaborate_expr: "
                              << "Ident " << base_path
@@ -4151,12 +4349,104 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 			fun->parm(0, arg);
 			return fun;
+		  } else if (member_comp.name == "find") {
+			cerr << get_fileline() << ": sorry: 'find()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "find_index") {
+			cerr << get_fileline() << ": sorry: 'find_index()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "find_first") {
+			cerr << get_fileline() << ": sorry: 'find_first()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "find_first_index") {
+			cerr << get_fileline() << ": sorry: 'find_first_index()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "find_last") {
+			cerr << get_fileline() << ": sorry: 'find_last()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "find_last_index") {
+			cerr << get_fileline() << ": sorry: 'find_last_index()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "min") {
+			cerr << get_fileline() << ": sorry: 'min()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "max") {
+			cerr << get_fileline() << ": sorry: 'max()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "unique") {
+			cerr << get_fileline() << ": sorry: 'unique()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "unique_index") {
+			cerr << get_fileline() << ": sorry: 'unique_index()' "
+			        "array location method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+// FIXME: Check this is a real or integral type.
+		  } else if (member_comp.name == "sum") {
+			cerr << get_fileline() << ": sorry: 'sum()' "
+			        "array reduction method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "product") {
+			cerr << get_fileline() << ": sorry: 'product()' "
+			        "array reduction method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+// FIXME: Check this is only an integral type.
+		  } else if (member_comp.name == "and") {
+			cerr << get_fileline() << ": sorry: 'and()' "
+			        "array reduction method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "or") {
+			cerr << get_fileline() << ": sorry: 'or()' "
+			        "array reduction method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
+		  } else if (member_comp.name == "xor") {
+			cerr << get_fileline() << ": sorry: 'xor()' "
+			        "array reduction method is not currently "
+			        "implemented." << endl;
+			des->errors += 1;
+			return 0;
 		  }
 	    }
 
 	      // If this is a queue object, and there are members in
 	      // the member_path, check for array properties.
-	    if (net->queue_type() && member_path.size() > 0) {
+	    if (net->queue_type() && !member_path.empty()) {
                   if (debug_elaborate) {
                         cerr << get_fileline() << ": PEIdent::elaborate_expr: "
                              << "Ident " << base_path
@@ -4194,7 +4484,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  }
 	    }
 
-	    if (net->class_type() && member_path.size() > 0) {
+	    if (net->class_type() && !member_path.empty()) {
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
 			     << "Ident " << base_path
@@ -4208,7 +4498,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 							net, member_comp);
 	    }
 
-	    if (net->enumeration() && member_path.size() > 0) {
+	    if (net->enumeration() && !member_path.empty()) {
 		  const netenum_t*netenum = net->enumeration();
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
@@ -4227,7 +4517,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 						expr, expr_wid, NULL, 0);
 	    }
 
-	    ivl_assert(*this, member_path.size() == 0);
+	    ivl_assert(*this, member_path.empty());
 	    NetExpr*tmp = elaborate_expr_net(des, scope, net, found_in,
                                              expr_wid, flags);
 
@@ -4264,7 +4554,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
                   scope->is_const_func(false);
             }
 
-	    if (member_path.size() > 0) {
+	    if (!member_path.empty()) {
 		  cerr << get_fileline() << ": error: Event name " << base_path
 		       << " can't have member names (member_path=" << member_path << ")"
 		       << endl;
@@ -4403,17 +4693,15 @@ static verinum param_part_select_bits(const verinum&par_val, long wid,
 NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 					    const NetExpr*par,
 					    NetScope*found_in,
-					    const NetExpr*par_msb,
-					    const NetExpr*par_lsb,
+					    ivl_type_t par_type,
                                             bool need_const) const
 {
       const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
       ivl_assert(*this, par_ex);
 
       long par_msv, par_lsv;
-      if(! calculate_param_range_(des, scope, par_msb, par_msv,
-                                  par_lsb, par_lsv,
-                                  par_ex->value().len())) return 0;
+      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
+				 par_ex->value().len())) return 0;
 
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
@@ -4499,8 +4787,7 @@ NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 					     const NetExpr*par,
 					     NetScope*,
-					     const NetExpr*par_msb,
-					     const NetExpr*par_lsb,
+					     ivl_type_t par_type,
                                              unsigned expr_wid) const
 {
       long msv, lsv;
@@ -4514,9 +4801,8 @@ NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 
 
       long par_msv, par_lsv;
-      if (! calculate_param_range_(des, scope, par_msb, par_msv,
-                                   par_lsb, par_lsv,
-                                   par_ex->value().len())) return 0;
+      if (! calculate_param_range(*this, par_type, par_msv, par_lsv,
+				  par_ex->value().len())) return 0;
 
       if (! parts_defined_flag) {
 	    if (warn_ob_select) {
@@ -4625,17 +4911,15 @@ static void warn_param_ob(long par_msv, long par_lsv, bool defined,
 NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 					       const NetExpr*par,
 					       NetScope*found_in,
-					       const NetExpr*par_msb,
-					       const NetExpr*par_lsb,
+					       ivl_type_t par_type,
                                                bool need_const) const
 {
       const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
       ivl_assert(*this, par_ex);
 
       long par_msv, par_lsv;
-      if(! calculate_param_range_(des, scope, par_msb, par_msv,
-                                  par_lsb, par_lsv,
-                                  par_ex->value().len())) return 0;
+      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
+				 par_ex->value().len())) return 0;
 
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
       if (base == 0) return 0;
@@ -4677,8 +4961,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 	    if (warn_ob_select) {
                   bool defined = true;
 		    // Check to see if the parameter has a defined range.
-                  if (par_msb == 0) {
-			assert(par_lsb == 0);
+                  if (par_type == 0) {
 			defined = false;
                   }
 		    // Get the parameter values width.
@@ -4709,17 +4992,15 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 					       const NetExpr*par,
 					       NetScope*found_in,
-					       const NetExpr*par_msb,
-					       const NetExpr*par_lsb,
+					       ivl_type_t par_type,
                                                bool need_const) const
 {
       const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
       ivl_assert(*this, par_ex);
 
       long par_msv, par_lsv;
-      if(! calculate_param_range_(des, scope, par_msb, par_msv,
-                                  par_lsb, par_lsv,
-                                  par_ex->value().len())) return 0;
+      if(! calculate_param_range(*this, par_type, par_msv, par_lsv,
+				 par_ex->value().len())) return 0;
 
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
       if (base == 0) return 0;
@@ -4761,8 +5042,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 	    if (warn_ob_select) {
                   bool defined = true;
 		    // Check to see if the parameter has a defined range.
-                  if (par_msb == 0) {
-			assert(par_lsb == 0);
+                  if (par_type == 0) {
 			defined = false;
                   }
 		    // Get the parameter values width.
@@ -4800,11 +5080,21 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 					NetScope*scope,
 					const NetExpr*par,
 					NetScope*found_in,
-					const NetExpr*par_msb,
-					const NetExpr*par_lsb,
+					ivl_type_t par_type,
 					unsigned expr_wid, unsigned flags) const
 {
       bool need_const = NEED_CONST & flags;
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": " << __func__ << ": "
+		 << "Parameter: " << path_ << endl;
+	    if (par_type)
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "par_type: " << *par_type << endl;
+	    else
+		  cerr << get_fileline() << ": " << __func__ << ": "
+		       << "par_type: <nil>" << endl;
+      }
 
       if (need_const && !(ANNOTATABLE & flags)) {
             perm_string name = peek_tail_name(path_);
@@ -4834,19 +5124,19 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 
       if (use_sel == index_component_t::SEL_BIT)
 	    return elaborate_expr_param_bit_(des, scope, par, found_in,
-					     par_msb, par_lsb, need_const);
+					     par_type, need_const);
 
       if (use_sel == index_component_t::SEL_PART)
 	    return elaborate_expr_param_part_(des, scope, par, found_in,
-					      par_msb, par_lsb, expr_wid);
+					      par_type, expr_wid);
 
       if (use_sel == index_component_t::SEL_IDX_UP)
 	    return elaborate_expr_param_idx_up_(des, scope, par, found_in,
-						par_msb, par_lsb, need_const);
+						par_type, need_const);
 
       if (use_sel == index_component_t::SEL_IDX_DO)
 	    return elaborate_expr_param_idx_do_(des, scope, par, found_in,
-						par_msb, par_lsb, need_const);
+						par_type, need_const);
 
       NetExpr*tmp = 0;
 
@@ -5395,7 +5685,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": debug: "
 		       << "Bit select of a dynamic array becomes NetESelect." << endl;
 	    }
-	    NetESelect*res = new NetESelect(net, mux, darray->element_width());
+	    NetESelect*res = new NetESelect(net, mux, darray->element_width(), darray->element_type());
 	    res->set_line(*net);
 	    return res;
       }
@@ -5597,13 +5887,15 @@ NetExpr* PEIdent::elaborate_expr_net_bit_last_(Design*, NetScope*,
       }
 
       unsigned use_width = 1;
+      ivl_type_t use_type = 0;
       if (const netdarray_t*darray = net->sig()->darray_type()) {
 	    use_width = darray->element_width();
+	    use_type = darray->element_type();
       }
 
       NetELast*mux = new NetELast(net->sig());
       mux->set_line(*this);
-      NetESelect*ss = new NetESelect(net, mux, use_width);
+      NetESelect*ss = new NetESelect(net, mux, use_width, use_type);
       ss->set_line(*this);
       return ss;
 }
@@ -5762,7 +6054,7 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 
 	      // The return value of the initializer is the "this"
 	      // variable, instead of the "new&" scope name.
-	    NetNet*res1 = new1_scope->find_signal(perm_string::literal("@"));
+	    NetNet*res1 = new1_scope->find_signal(perm_string::literal(THIS_TOKEN));
 	    ivl_assert(*this, res1);
 
 	    NetESignal*eres = new NetESignal(res1);
@@ -5849,7 +6141,7 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 
 	// The return value for the constructor is actually the "this"
 	// variable, instead of the "new" scope name.
-      NetNet*res = new_scope->find_signal(perm_string::literal("@"));
+      NetNet*res = new_scope->find_signal(perm_string::literal(THIS_TOKEN));
       ivl_assert(*this, res);
 
       NetESignal*eres = new NetESignal(res);
@@ -6017,16 +6309,19 @@ unsigned PEString::test_width(Design*, NetScope*, width_mode_t&)
       return expr_width_;
 }
 
-NetEConst* PEString::elaborate_expr(Design*, NetScope*, ivl_type_t, unsigned)const
+NetEConst* PEString::elaborate_expr(Design*, NetScope*, ivl_type_t, unsigned) const
 {
-      verinum val(value());
-      NetEConst*tmp = new NetEConst(val);
+      NetECString*tmp = new NetECString(value());
       tmp->cast_signed(signed_flag_);
       tmp->set_line(*this);
 
       return tmp;
 }
 
+/*
+ * When the expression is being elaborated with a width, then we are trying to
+ * make a vector, so create a NetEConst with the basic types.
+ */
 NetEConst* PEString::elaborate_expr(Design*, NetScope*,
 				    unsigned expr_wid, unsigned) const
 {
@@ -6262,6 +6557,16 @@ NetExpr*PETypename::elaborate_expr(Design*des, NetScope*,
 
 unsigned PEUnary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
+	// Evaluate the expression width to get the correct type information
+      expr_width_  = expr_->test_width(des, scope, mode);
+
+      if (expr_->expr_type() == IVL_VT_CLASS) {
+	    cerr << get_fileline() << ": error: "
+	    << "Class/null is not allowed with the '"
+	    << human_readable_op(op_) << "' operator." << endl;
+	    des->errors += 1;
+      }
+
       switch (op_) {
 	  case '&': // Reduction AND
 	  case '|': // Reduction OR
@@ -6291,7 +6596,6 @@ unsigned PEUnary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
             return expr_width_;
       }
 
-      expr_width_  = expr_->test_width(des, scope, mode);
       expr_type_   = expr_->expr_type();
       min_width_   = expr_->min_width();
       signed_flag_ = expr_->has_sign();

@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -35,9 +35,8 @@ class PSpecPath;
 
 extern void lex_end_table();
 
-static list<pform_range_t>* param_active_range = 0;
-static bool param_active_signed = false;
-static ivl_variable_type_t param_active_type = IVL_VT_LOGIC;
+static data_type_t* param_data_type = 0;
+static list<pform_range_t>* specparam_active_range = 0;
 
 /* Port declaration lists use this structure for context. */
 static struct {
@@ -68,7 +67,7 @@ static LexicalScope::lifetime_t var_lifetime;
 
 static pform_name_t* pform_create_this(void)
 {
-      name_component_t name (perm_string::literal("@"));
+      name_component_t name (perm_string::literal(THIS_TOKEN));
       pform_name_t*res = new pform_name_t;
       res->push_back(name);
       return res;
@@ -76,7 +75,7 @@ static pform_name_t* pform_create_this(void)
 
 static pform_name_t* pform_create_super(void)
 {
-      name_component_t name (perm_string::literal("#"));
+      name_component_t name (perm_string::literal(SUPER_TOKEN));
       pform_name_t*res = new pform_name_t;
       res->push_back(name);
       return res;
@@ -649,7 +648,6 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <nettype>  net_type net_type_opt
 %type <gatetype> gatetype switchtype
 %type <porttype> port_direction port_direction_opt
-%type <vartype> bit_logic bit_logic_opt
 %type <vartype> integer_vector_type
 %type <parmvalue> parameter_value_opt
 
@@ -1238,6 +1236,15 @@ data_type /* IEEE1800-2005: A.2.2.1 */
      absent. The context may need that information to decide to resort
      to left context. */
 
+scalar_vector_opt /*IEEE1800-2005: optional support for packed array */
+  : K_vectored
+      { /* Ignore */ }
+  | K_scalared
+      { /* Ignore */ }
+  |
+      { /* Ignore */ }
+  ;
+
 data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
   : data_type
       { $$ = $1; }
@@ -1247,10 +1254,10 @@ data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | dimensions
-      { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, $1);
+  | scalar_vector_opt dimensions
+      { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, $2);
 	tmp->implicit_flag = true;
-	FILE_NAME(tmp, @1);
+	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
   |
@@ -1364,6 +1371,8 @@ description /* IEEE1800-2005: A.1.2 */
 	delete[] $3;
 	delete[] $5;
       }
+  | ';'
+      { }
   ;
 
 description_list
@@ -2321,7 +2330,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
-    tf_port_list ')' ';'
+    tf_port_list_opt ')' ';'
     block_item_decls_opt
     statement_or_null_list_opt
     K_endtask
@@ -2329,6 +2338,10 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	current_task_set_statement(@3, $10);
 	pform_set_this_class(@3, current_task);
 	pform_pop_scope();
+	if (generation_flag < GN_VER2005 && $6 == 0) {
+	      cerr << @3 << ": warning: task definition for \"" << $3
+		   << "\" has an empty port declaration list!" << endl;
+	}
 	current_task = 0;
 	if ($10) delete $10;
       }
@@ -2347,46 +2360,6 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 		                 "SystemVerilog.");
 	      }
 	      delete[]$13;
-	}
-	delete[]$3;
-      }
-
-  | K_task lifetime_opt IDENTIFIER '(' ')' ';'
-      { assert(current_task == 0);
-	current_task = pform_push_task_scope(@1, $3, $2);
-      }
-    block_item_decls_opt
-    statement_or_null_list
-    K_endtask
-      { current_task->set_ports(0);
-	current_task_set_statement(@3, $9);
-	pform_set_this_class(@3, current_task);
-	if (! current_task->method_of()) {
-	      cerr << @3 << ": warning: task definition for \"" << $3
-		   << "\" has an empty port declaration list!" << endl;
-	}
-	pform_pop_scope();
-	current_task = 0;
-	if ($9->size() > 1 && !gn_system_verilog()) {
-	      yyerror(@9, "error: Task body with multiple statements requires SystemVerilog.");
-	}
-	delete $9;
-      }
-    endlabel_opt
-      { // Last step: check any closing name. This is done late so
-	// that the parser can look ahead to detect the present
-	// endlabel_opt but still have the pform_endmodule() called
-	// early enough that the lexor can know we are outside the
-	// module.
-	if ($12) {
-	      if (strcmp($3,$12) != 0) {
-		    yyerror(@12, "error: End label doesn't match task name");
-	      }
-	      if (! gn_system_verilog()) {
-		    yyerror(@12, "error: Task end labels require "
-		                 "SystemVerilog.");
-	      }
-	      delete[]$12;
 	}
 	delete[]$3;
       }
@@ -2644,6 +2617,9 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
   | '[' ']'
       { list<pform_range_t> *tmp = new list<pform_range_t>;
 	pform_range_t index (0,0);
+	if (!gn_system_verilog()) {
+	      yyerror("error: Dynamic array declaration require SystemVerilog.");
+	}
 	tmp->push_back(index);
 	$$ = tmp;
       }
@@ -2652,7 +2628,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
 	list<pform_range_t> *tmp = new list<pform_range_t>;
 	pform_range_t index (new PENull,0);
 	if (!gn_system_verilog()) {
-	      yyerror("error: Queue declarations require SystemVerilog.");
+	      yyerror("error: Queue declaration require SystemVerilog.");
 	}
 	tmp->push_back(index);
 	$$ = tmp;
@@ -3466,6 +3442,13 @@ event_expression
 		  (*tl)[0] = tmp;
 		  $$ = tl;
 		}
+	| K_edge expression
+		{ PEEvent*tmp = new PEEvent(PEEvent::EDGE, $2);
+		  FILE_NAME(tmp, @1);
+		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
+		  (*tl)[0] = tmp;
+		  $$ = tl;
+		}
 	| expression
 		{ PEEvent*tmp = new PEEvent(PEEvent::ANYEDGE, $1);
 		  FILE_NAME(tmp, @1);
@@ -3870,6 +3853,39 @@ expr_primary
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete $1;
+      }
+  /* These are array methods that cannot be matched with the above rule */
+  | hierarchy_identifier '.' K_and
+      { pform_name_t * nm = $1;
+	nm->push_back(name_component_t(lex_strings.make("and")));
+	PEIdent*tmp = pform_new_ident(@1, *nm);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	delete nm;
+      }
+  | hierarchy_identifier '.' K_or
+      { pform_name_t * nm = $1;
+	nm->push_back(name_component_t(lex_strings.make("or")));
+	PEIdent*tmp = pform_new_ident(@1, *nm);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	delete nm;
+      }
+  | hierarchy_identifier '.' K_unique
+      { pform_name_t * nm = $1;
+	nm->push_back(name_component_t(lex_strings.make("unique")));
+	PEIdent*tmp = pform_new_ident(@1, *nm);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	delete nm;
+      }
+  | hierarchy_identifier '.' K_xor
+      { pform_name_t * nm = $1;
+	nm->push_back(name_component_t(lex_strings.make("xor")));
+	PEIdent*tmp = pform_new_ident(@1, *nm);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	delete nm;
       }
 
   | PACKAGE_IDENTIFIER K_SCOPE_RES hierarchy_identifier
@@ -4657,6 +4673,8 @@ port_declaration
 		      // here.
 	      } else if (dynamic_cast<atom2_type_t*> ($4)) {
 		    use_type = NetNet::IMPLICIT_REG;
+	      } else if (dynamic_cast<real_type_t*> ($4)) {
+		    use_type = NetNet::IMPLICIT_REG;
 	      } else if (dynamic_cast<struct_type_t*> ($4)) {
 		    use_type = NetNet::IMPLICIT_REG;
 	      } else if (dynamic_cast<enum_type_t*> ($4)) {
@@ -5315,14 +5333,14 @@ module_item
       { pform_endgenerate(false); }
 
   | generate_if
-    generate_block_opt
+    generate_block
     K_else
       { pform_start_generate_else(@1); }
     generate_block
       { pform_endgenerate(true); }
 
   | generate_if
-    generate_block_opt %prec less_than_K_else
+    generate_block %prec less_than_K_else
       { pform_endgenerate(true); }
 
   | K_case '(' expression ')'
@@ -5360,50 +5378,51 @@ module_item
      module items. These rules try to catch them at a point where a
      reasonable error message can be produced. */
 
-	| error ';'
-		{ yyerror(@2, "error: invalid module item.");
-		  yyerrok;
-		}
+  | error ';'
+      { yyerror(@2, "error: invalid module item.");
+	yyerrok;
+      }
 
-	| K_assign error '=' expression ';'
-		{ yyerror(@1, "error: syntax error in left side "
-			  "of continuous assignment.");
-		  yyerrok;
-		}
+  | K_assign error '=' expression ';'
+      { yyerror(@1, "error: syntax error in left side of "
+	            "continuous assignment.");
+	yyerrok;
+      }
 
-	| K_assign error ';'
-		{ yyerror(@1, "error: syntax error in "
-			  "continuous assignment");
-		  yyerrok;
-		}
+   | K_assign error ';'
+      { yyerror(@1, "error: syntax error in continuous assignment");
+	yyerrok;
+      }
 
-	| K_function error K_endfunction endlabel_opt
-		{ yyerror(@1, "error: I give up on this "
-			  "function definition.");
-		  if ($4) {
-			if (!gn_system_verilog()) {
-			      yyerror(@4, "error: Function end names require "
-			                  "SystemVerilog.");
-			}
-			delete[]$4;
-		  }
-		  yyerrok;
-		}
+  | K_function error K_endfunction endlabel_opt
+      { yyerror(@1, "error: I give up on this function definition.");
+	if ($4) {
+	    if (!gn_system_verilog()) {
+		  yyerror(@4, "error: Function end names require "
+		              "SystemVerilog.");
+	    }
+	    delete[]$4;
+	}
+	yyerrok;
+      }
 
   /* These rules are for the Icarus Verilog specific $attribute
      extensions. Then catch the parameters of the $attribute keyword. */
 
-	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
-		{ perm_string tmp3 = lex_strings.make($3);
-		  perm_string tmp5 = lex_strings.make($5);
-		  pform_set_attrib(tmp3, tmp5, $7);
-		  delete[] $3;
-		  delete[] $5;
-		}
-	| KK_attribute '(' error ')' ';'
-		{ yyerror(@1, "error: Malformed $attribute parameter list."); }
+  | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
+      { perm_string tmp3 = lex_strings.make($3);
+	perm_string tmp5 = lex_strings.make($5);
+	pform_set_attrib(tmp3, tmp5, $7);
+	delete[] $3;
+	delete[] $5;
+      }
+  | KK_attribute '(' error ')' ';'
+      { yyerror(@1, "error: Malformed $attribute parameter list."); }
 
-	;
+  | ';'
+      { }
+
+  ;
 
 module_item_list
   : module_item_list module_item
@@ -5423,9 +5442,9 @@ generate_case_items
   ;
 
 generate_case_item
-  : expression_list_proper ':' { pform_generate_case_item(@1, $1); } generate_block_opt
+  : expression_list_proper ':' { pform_generate_case_item(@1, $1); } generate_block
       { pform_endgenerate(false); }
-  | K_default ':' { pform_generate_case_item(@1, 0); } generate_block_opt
+  | K_default ':' { pform_generate_case_item(@1, 0); } generate_block
       { pform_endgenerate(false); }
   ;
 
@@ -5487,9 +5506,6 @@ generate_block
       }
   ;
 
-generate_block_opt : generate_block | ';' ;
-
-
   /* A net declaration assignment allows the programmer to combine the
      net declaration and the continuous assignment into a single
      statement.
@@ -5520,17 +5536,6 @@ net_decl_assigns
 		}
 	;
 
-bit_logic
-  : K_logic { $$ = IVL_VT_LOGIC; }
-  | K_bool  { $$ = IVL_VT_BOOL; /* Icarus misc */}
-  | K_bit   { $$ = IVL_VT_BOOL; /* IEEE1800 / IEEE1364-2009 */}
-  ;
-
-bit_logic_opt
-  : bit_logic
-  |         { $$ = IVL_VT_NO_TYPE; }
-  ;
-
 net_type
 	: K_wire    { $$ = NetNet::WIRE; }
 	| K_tri     { $$ = NetNet::TRI; }
@@ -5550,42 +5555,12 @@ net_type
 	| K_uwire   { $$ = NetNet::UNRESOLVED_WIRE; }
 	;
 
-param_type
-  : bit_logic_opt unsigned_signed_opt dimensions_opt
-      { param_active_range = $3;
-	param_active_signed = $2;
-	if (($1 == IVL_VT_NO_TYPE) && ($3 != 0))
-	      param_active_type = IVL_VT_LOGIC;
-	else
-	      param_active_type = $1;
-      }
-  | K_integer
-      { param_active_range = make_range_from_width(integer_width);
-	param_active_signed = true;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | K_time
-      { param_active_range = make_range_from_width(64);
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | real_or_realtime
-      { param_active_range = 0;
-	param_active_signed = true;
-	param_active_type = IVL_VT_REAL;
-      }
-  | atom2_type
-      { param_active_range = make_range_from_width($1);
-	param_active_signed = true;
-	param_active_type = IVL_VT_BOOL;
-      }
-  | TYPE_IDENTIFIER
-      { pform_set_type_referenced(@1, $1.text);
-	pform_set_param_from_type(@1, $1.type, $1.text, param_active_range,
-	                          param_active_signed, param_active_type);
-	delete[]$1.text;
-      }
-  ;
+  /* The param_type rule is just the data_type_or_implicit rule wrapped
+     with an assignment to para_data_type with the figured data type.
+     This is used by parameter_assign, which is found to the right of
+     the param_type in various rules. */
+
+param_type : data_type_or_implicit { param_data_type = $1; }
 
   /* parameter and localparam assignment lists are broken into
      separate BNF so that I can call slightly different parameter
@@ -5605,8 +5580,7 @@ localparam_assign_list
 parameter_assign
   : IDENTIFIER '=' expression parameter_value_ranges_opt
       { PExpr*tmp = $3;
-	pform_set_parameter(@1, lex_strings.make($1), param_active_type,
-			    param_active_signed, param_active_range, tmp, $4);
+	pform_set_parameter(@1, lex_strings.make($1), param_data_type, tmp, $4);
 	delete[]$1;
       }
   ;
@@ -5614,8 +5588,7 @@ parameter_assign
 localparam_assign
   : IDENTIFIER '=' expression
       { PExpr*tmp = $3;
-	pform_set_localparam(@1, lex_strings.make($1), param_active_type,
-			     param_active_signed, param_active_range, tmp);
+	pform_set_localparam(@1, lex_strings.make($1), param_data_type, tmp);
 	delete[]$1;
       }
   ;
@@ -6341,7 +6314,7 @@ specparam
 	: IDENTIFIER '=' expression
 		{ PExpr*tmp = $3;
 		  pform_set_specparam(@1, lex_strings.make($1),
-		                      param_active_range, tmp);
+		                      specparam_active_range, tmp);
 		  delete[]$1;
 		}
 	| IDENTIFIER '=' expression ':' expression ':' expression
@@ -6380,7 +6353,7 @@ specparam
 		        min_typ_max_warn -= 1;
 		  }
 		  pform_set_specparam(@1, lex_strings.make($1),
-		                      param_active_range, tmp);
+		                      specparam_active_range, tmp);
 		  delete[]$1;
 		}
 	| PATHPULSE_IDENTIFIER '=' expression
@@ -6402,9 +6375,9 @@ specparam_list
 specparam_decl
   : specparam_list
   | dimensions
-      { param_active_range = $1; }
+      { specparam_active_range = $1; }
     specparam_list
-      { param_active_range = 0; }
+      { specparam_active_range = 0; }
   ;
 
 spec_polarity
@@ -6933,6 +6906,9 @@ statement_item /* This is roughly statement_item in the LRM */
   | implicit_class_handle '.' K_new '(' expression_list_with_nuls ')' ';'
       { PChainConstructor*tmp = new PChainConstructor(*$5);
 	FILE_NAME(tmp, @3);
+	if (peek_head_name(*$1) == THIS_TOKEN) {
+	  yyerror(@1, "error: this.new is invalid syntax. Did you mean super.new?");
+	}
 	delete $1;
 	$$ = tmp;
       }

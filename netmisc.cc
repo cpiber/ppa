@@ -858,6 +858,17 @@ static NetExpr* do_elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 
       pe->test_width(des, scope, mode);
 
+	// FIXME: A class variable/array inside a class is not
+	//        reported correctly so this cannot be used.
+#if 0
+      if (pe->expr_type() == IVL_VT_CLASS) {
+	    cerr << pe->get_fileline() << ": Error: "
+	         << "Class/null r-value not allowed in this context." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+#endif
+
         // Get the final expression width. If the expression is unsized,
         // this may be different from the value returned by test_width().
       unsigned expr_width = pe->expr_width();
@@ -997,7 +1008,7 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 		       ivl_type_t lv_net_type, bool need_const)
 {
       if (debug_elaborate) {
-	    cerr << pe->get_fileline() << ": elab_and_eval: "
+	    cerr << pe->get_fileline() << ": " << __func__ << ": "
 		 << "pe=" << *pe
 		 << ", lv_net_type=" << *lv_net_type << endl;
       }
@@ -1055,8 +1066,9 @@ NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
       pe->test_width(des, scope, mode);
 
       if (debug_elaborate) {
-            cerr << pe->get_fileline() << ": debug: test_width of "
-                 << name << " argument " << (arg_idx+1) << " " << *pe << endl;
+	    cerr << pe->get_fileline() << ": " << __func__ << ": "
+		 << "test_width of " << name
+                 << " argument " << (arg_idx+1) << " " << *pe << endl;
             cerr << pe->get_fileline() << ":        "
                  << "returns type=" << pe->expr_type()
                  << ", width=" << pe->expr_width()
@@ -1801,4 +1813,53 @@ void check_for_inconsistent_delays(NetScope*scope)
 	    }
 	    display_ts_dly_warning = false;
       }
+}
+
+
+/*
+ * Calculate the bit vector range for a parameter, from the type of the
+ * parameter. This is expecting that the type is a vector type. The parameter
+ * is presumably declared something like this:
+ *
+ *    parameter [4:1] foo = <value>;
+ *
+ * In this case, the par_type is a netvector with a single dimension. The
+ * par_msv gets 4, and par_lsv get 1. The caller uses these values to
+ * interpret things like bit selects.
+ */
+bool calculate_param_range(const LineInfo&line, ivl_type_t par_type,
+			   long&par_msv, long&par_lsv, long length)
+{
+      const netvector_t*vector_type = dynamic_cast<const netvector_t*> (par_type);
+      if (vector_type == 0) {
+	    // If the parameter doesn't have an explicit range, then
+	    // just return range values of [length-1:0].
+	    par_msv = length-1;
+	    par_lsv = 0;
+	    return true;
+      }
+
+      ivl_assert(line, vector_type->packed());
+      const std::vector<netrange_t>& packed_dims = vector_type->packed_dims();
+
+      // This is a netvector_t with 0 dimensions, then the parameter was
+      // declared with a statement like this:
+      //
+      //    parameter signed foo = <value>;
+      //
+      // The netvector_t is just here to carry the signed-ness, which we don't
+      // even need here. So act like the type is defined by the r-value
+      // length.
+      if (packed_dims.size() == 0) {
+	    par_msv = length-1;
+	    par_lsv = 0;
+	    return true;
+      }
+      ivl_assert(line, packed_dims.size() == 1);
+
+      netrange_t use_range = packed_dims[0];
+      par_msv = use_range.get_msb();
+      par_lsv = use_range.get_lsb();
+
+      return true;
 }

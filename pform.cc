@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -297,7 +297,7 @@ void parm_to_defparam_list(const string&param)
 
     // Is it a decimal number?
     num = (value[0] == '-') ? value + 1 : value;
-    if (is_dec_digit_str(num)) {
+    if (num[0] != '\0' && is_dec_digit_str(num)) {
 	verinum *val = make_unsized_dec(num);
 	if (value[0] == '-') *val = -(*val);
 	PExpr* ndec = new PENumber(val);
@@ -1415,7 +1415,7 @@ void pform_endmodule(const char*name, bool inside_celldefine,
 	// bar module. Try to find the foo module in the stack, and
 	// print error messages as we go.
       if (strcmp(name, mod_name) != 0) {
-	    while (pform_cur_module.size() > 0) {
+	    while (!pform_cur_module.empty()) {
 		  Module*tmp_module = pform_cur_module.front();
 		  perm_string tmp_name = tmp_module->mod_name();
 		  pform_cur_module.pop_front();
@@ -2577,7 +2577,7 @@ void pform_module_define_port(const struct vlltype&li,
 	    signed_flag = true;
 	    prange = 0;
 
-	    if (rtype->type_code != real_type_t::REAL) {
+	    if (rtype->type_code() != real_type_t::REAL) {
 		  VLerror(li, "sorry: Only real (not shortreal) supported here (%s:%d).",
 			  __FILE__, __LINE__);
 	    }
@@ -3168,8 +3168,7 @@ LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 }
 
 void pform_set_parameter(const struct vlltype&loc,
-			 perm_string name, ivl_variable_type_t type,
-			 bool signed_flag, list<pform_range_t>*range, PExpr*expr,
+			 perm_string name, data_type_t*data_type, PExpr*expr,
 			 LexicalScope::range_t*value_range)
 {
       LexicalScope*scope = lexical_scope;
@@ -3190,20 +3189,7 @@ void pform_set_parameter(const struct vlltype&loc,
       scope->parameters[name] = parm;
 
       parm->expr = expr;
-
-      parm->type = type;
-      if (range) {
-	    assert(range->size() == 1);
-	    pform_range_t&rng = range->front();
-	    assert(rng.first);
-	    assert(rng.second);
-	    parm->msb = rng.first;
-	    parm->lsb = rng.second;
-      } else {
-	    parm->msb = 0;
-	    parm->lsb = 0;
-      }
-      parm->signed_flag = signed_flag;
+      parm->data_type = data_type;
       parm->range = value_range;
 
 	// Only a Module keeps the position of the parameter.
@@ -3212,8 +3198,7 @@ void pform_set_parameter(const struct vlltype&loc,
 }
 
 void pform_set_localparam(const struct vlltype&loc,
-			  perm_string name, ivl_variable_type_t type,
-			  bool signed_flag, list<pform_range_t>*range, PExpr*expr)
+			  perm_string name, data_type_t*data_type, PExpr*expr)
 {
       LexicalScope*scope = lexical_scope;
       if (is_compilation_unit(scope) && !gn_system_verilog()) {
@@ -3229,20 +3214,7 @@ void pform_set_localparam(const struct vlltype&loc,
       scope->localparams[name] = parm;
 
       parm->expr = expr;
-
-      parm->type = type;
-      if (range) {
-	    assert(range->size() == 1);
-	    pform_range_t&rng = range->front();
-	    assert(rng.first);
-	    assert(rng.second);
-	    parm->msb = rng.first;
-	    parm->lsb = rng.second;
-      } else {
-	    parm->msb  = 0;
-	    parm->lsb  = 0;
-      }
-      parm->signed_flag = signed_flag;
+      parm->data_type = data_type;
       parm->range = 0;
 }
 
@@ -3261,22 +3233,13 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
       pform_cur_module.front()->specparams[name] = parm;
 
       parm->expr = expr;
+      parm->range = 0;
 
       if (range) {
 	    assert(range->size() == 1);
-	    pform_range_t&rng = range->front();
-	    assert(rng.first);
-	    assert(rng.second);
-	    parm->type = IVL_VT_LOGIC;
-	    parm->msb = rng.first;
-	    parm->lsb = rng.second;
-      } else {
-	    parm->type = IVL_VT_NO_TYPE;
-	    parm->msb  = 0;
-	    parm->lsb  = 0;
+	    parm->data_type = new vector_type_t(IVL_VT_LOGIC, false, range);
+	    parm->range = 0;
       }
-      parm->signed_flag = false;
-      parm->range = 0;
 }
 
 void pform_set_defparam(const pform_name_t&name, PExpr*expr)

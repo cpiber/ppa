@@ -1,7 +1,7 @@
 #ifndef IVL_netlist_H
 #define IVL_netlist_H
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -79,6 +79,7 @@ class PExpr;
 class PFunction;
 class PPackage;
 class PTaskFunc;
+class data_type_t;
 struct enum_type_t;
 class netclass_t;
 class netdarray_t;
@@ -215,7 +216,7 @@ class NetPins : public LineInfo {
       void dump_node_pins(ostream&, unsigned, const char**pin_names =0) const;
       void set_default_dir(Link::DIR d);
 
-      bool is_linked();
+      bool is_linked() const;
       bool pins_are_virtual(void) const;
       void devirtualize_pins(void);
 
@@ -965,22 +966,17 @@ class NetScope : public Definitions, public Attrib {
 
       struct range_t;
       void set_parameter(perm_string name, bool is_annotatable,
-			 PExpr*val, ivl_variable_type_t type,
-			 PExpr*msb, PExpr*lsb, bool signed_flag,
+			 PExpr*val, data_type_t*data_type,
 			 bool local_flag,
 			 NetScope::range_t*range_list,
 			 const LineInfo&file_line);
       void set_parameter(perm_string name, NetExpr*val,
 			 const LineInfo&file_line);
 
-      const NetExpr*get_parameter(Design*des,
-				  const char* name,
-				  const NetExpr*&msb,
-				  const NetExpr*&lsb);
-      const NetExpr*get_parameter(Design*des,
-				  perm_string name,
-				  const NetExpr*&msb,
-				  const NetExpr*&lsb);
+      const NetExpr*get_parameter(Design*des, const char* name,
+				  ivl_type_t&ivl_type);
+      const NetExpr*get_parameter(Design*des, perm_string name,
+				  ivl_type_t&ivl_type);
 
 	/* These are used by defparam elaboration to replace the
 	   expression with a new expression, without affecting the
@@ -1015,7 +1011,7 @@ class NetScope : public Definitions, public Attrib {
       void rem_signal(NetNet*);
       NetNet* find_signal(perm_string name);
 
-      netclass_t* find_class(perm_string name);
+      netclass_t* find_class(const Design*des, perm_string name);
 
 	/* The unit(), parent(), and child() methods allow users of
 	   NetScope objects to locate nearby scopes. */
@@ -1072,6 +1068,9 @@ class NetScope : public Definitions, public Attrib {
       perm_string get_def_file() const { return def_file_; };
       unsigned get_lineno() const { return lineno_; };
       unsigned get_def_lineno() const { return def_lineno_; };
+
+      std::string get_fileline() const;
+      std::string get_def_fileline() const;
 
       bool in_func() const;
 
@@ -1210,31 +1209,26 @@ class NetScope : public Definitions, public Attrib {
 	/* After everything is all set up, the code generators like
 	   access to these things to make up the parameter lists. */
       struct param_expr_t : public LineInfo {
-	    param_expr_t() : msb_expr(0), lsb_expr(0), val_expr(0), val_scope(0),
-                             solving(false), is_annotatable(false),
-                             type(IVL_VT_NO_TYPE), signed_flag(false),
-                             local_flag(false),
-                             msb(0), lsb(0), range(0), val(0) { }
-              // Source expressions
-	    PExpr*msb_expr;
-	    PExpr*lsb_expr;
+	    param_expr_t() : val_expr(0), val_type(0), val_scope(0),
+		             solving(false), is_annotatable(false),
+		             local_flag(false),
+		             range(0), val(0), ivl_type(0) { }
+	    // Source expression and data type (before elaboration)
 	    PExpr*val_expr;
-              // Scope information
+	    data_type_t*val_type;
+	    // Scope information
             NetScope*val_scope;
-	      // Evaluation status
+	    // Evaluation status
 	    bool solving;
-	      // specparam status
+	    // specparam status
 	    bool is_annotatable;
-	      // Type information
-	    ivl_variable_type_t type;
-	    bool signed_flag;
-            bool  local_flag;
-	    NetExpr*msb;
-	    NetExpr*lsb;
-	      // range constraints
+	    // Is this a localparam?
+	    bool local_flag;
+	    // range constraints
 	    struct range_t*range;
-	      // Expression value
+	    // Expression value and type (elaborated versoins of val_expr/val_type)
 	    NetExpr*val;
+	    ivl_type_t ivl_type;
       };
       map<perm_string,param_expr_t>parameters;
 
@@ -1258,6 +1252,7 @@ class NetScope : public Definitions, public Attrib {
     private:
       void evaluate_parameter_logic_(Design*des, param_ref_t cur);
       void evaluate_parameter_real_(Design*des, param_ref_t cur);
+      void evaluate_parameter_string_(Design*des, param_ref_t cur);
       void evaluate_parameter_(Design*des, param_ref_t cur);
 
     private:
@@ -2225,6 +2220,15 @@ class NetECReal  : public NetExpr {
       verireal value_;
 };
 
+class NetECString  : public NetEConst {
+    public:
+      explicit NetECString(const std::string& val);
+      ~NetECString();
+
+      // The type of a string is IVL_VT_STRING
+      ivl_variable_type_t expr_type() const;
+};
+
 class NetECRealParam  : public NetECReal {
 
     public:
@@ -2971,7 +2975,7 @@ class NetAssign : public NetAssignBase {
 				     map<perm_string,LocalVar>&ctx) const;
 
     private:
-      void eval_func_lval_op_real_(const LineInfo&loc, verireal&lv, verireal&rv) const;
+      void eval_func_lval_op_real_(const LineInfo&loc, verireal&lv, const verireal&rv) const;
       void eval_func_lval_op_(const LineInfo&loc, verinum&lv, verinum&rv) const;
       bool eval_func_lval_(const LineInfo&loc, map<perm_string,LocalVar>&ctx,
 			   const NetAssign_*lval, NetExpr*rval_result) const;
@@ -3518,7 +3522,7 @@ class NetEvProbe  : public NetNode {
       friend class NetEvent;
 
     public:
-      enum edge_t { ANYEDGE, POSEDGE, NEGEDGE };
+      enum edge_t { ANYEDGE, POSEDGE, NEGEDGE, EDGE };
 
       explicit NetEvProbe(NetScope*s, perm_string n,
 			  NetEvent*tgt, edge_t t, unsigned p);
@@ -4401,21 +4405,29 @@ class NetEConcat  : public NetExpr {
  * If the base expression is null, then this expression node can be
  * used to express width expansion, signed or unsigned depending on
  * the has_sign() flag.
+ *
+ * An alternative form of this expression node is used for dynamic
+ * array word selects and for packed struct member selects. In this
+ * case use_type indicates the type of the selected element/member.
  */
 class NetESelect  : public NetExpr {
 
     public:
       NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
                  ivl_select_type_t sel_type = IVL_SEL_OTHER);
+      NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
+                 ivl_type_t use_type);
       ~NetESelect();
 
       const NetExpr*sub_expr() const;
       const NetExpr*select() const;
       ivl_select_type_t select_type() const;
 
-	// The type of a NetESelect is the base type of the
-	// sub-expression.
+	// The type of a bit/part select is the base type of the
+	// sub-expression. The type of an array/member select is
+	// the base type of the element/member.
       virtual ivl_variable_type_t expr_type() const;
+      virtual const netenum_t* enumeration() const;
 
       virtual NexusSet* nex_input(bool rem_out = true, bool always_sens = false,
                                   bool nested_func = false) const;
@@ -4431,6 +4443,7 @@ class NetESelect  : public NetExpr {
     private:
       NetExpr*expr_;
       NetExpr*base_;
+      ivl_type_t use_type_;
       ivl_select_type_t sel_type_;
 };
 

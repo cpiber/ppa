@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  * Copyright CERN 2015
  * @author Maciej Suminski (maciej.suminski@cern.ch)
@@ -296,8 +296,8 @@ int CaseSeqStmt::CaseStmtAlternative::emit(ostream&out, Entity*ent, ScopeBase*sc
 {
       int errors = 0;
 
-      bool first = true;
       if (exp_) {
+	    bool first = true;
             for (list<Expression*>::iterator it = exp_->begin(); it != exp_->end(); ++it) {
 		  if(first)
 		    first = false;
@@ -556,7 +556,7 @@ int ReportStmt::emit(ostream&out, Entity*ent, ScopeBase*scope)
     out << "\" (" << get_fileline() << ")\");";
 
     if(severity_ == FAILURE)
-        out << "$finish();";
+        out << "$finish(0);";
 
     out << std::endl;
 

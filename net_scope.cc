@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2019 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2016 CERN Michele Castellana (michele.castellana@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -198,6 +198,22 @@ void NetScope::set_line(perm_string file, unsigned lineno)
       def_lineno_ = lineno;
 }
 
+string NetScope::get_fileline() const
+{
+      ostringstream buf;
+      buf << (file_? file_ : "") << ":" << lineno_;
+      string res = buf.str();
+      return res;
+}
+
+string NetScope::get_def_fileline() const
+{
+      ostringstream buf;
+      buf << (def_file_? def_file_ : "") << ":" << def_lineno_;
+      string res = buf.str();
+      return res;
+}
+
 void NetScope::set_line(perm_string file, perm_string def_file,
                         unsigned lineno, unsigned def_lineno)
 {
@@ -279,27 +295,28 @@ const netenum_t*NetScope::find_enumeration_for_name(const Design*des, perm_strin
       return cur_scope->enum_names_[name]->enumeration();
 }
 
+/*
+ * Attach to the a parameter name in the scope a value and a type. The value
+ * (val_expr) is the PExpr form that is not yet elaborated. Later, when
+ * elaboration happens, the val_expr is elaborated and written to the val
+ * member.
+ */
 void NetScope::set_parameter(perm_string key, bool is_annotatable,
-			     PExpr*val, ivl_variable_type_t type__,
-			     PExpr*msb, PExpr*lsb, bool signed_flag,
+			     PExpr*val, data_type_t*val_type,
 			     bool local_flag,
 			     NetScope::range_t*range_list,
 			     const LineInfo&file_line)
 {
       param_expr_t&ref = parameters[key];
       ref.is_annotatable = is_annotatable;
-      ref.msb_expr = msb;
-      ref.lsb_expr = lsb;
       ref.val_expr = val;
+      ref.val_type = val_type;
       ref.val_scope = this;
-      ref.type = type__;
-      ref.msb = 0;
-      ref.lsb = 0;
-      ref.signed_flag = signed_flag;
       ref.local_flag = local_flag;
       ivl_assert(file_line, ref.range == 0);
       ref.range = range_list;
       ref.val = 0;
+      ref.ivl_type = 0;
       ref.set_line(file_line);
 }
 
@@ -313,14 +330,11 @@ void NetScope::set_parameter(perm_string key, NetExpr*val,
 {
       param_expr_t&ref = parameters[key];
       ref.is_annotatable = false;
-      ref.msb_expr = 0;
-      ref.lsb_expr = 0;
       ref.val_expr = 0;
+      ref.val_type = 0;
       ref.val_scope = this;
-      ref.type = IVL_VT_BOOL;
-      ref.msb = 0;
-      ref.lsb = 0;
-      ref.signed_flag = false;
+      ref.ivl_type = netvector_t::integer_type();
+      ivl_assert(file_line, ref.ivl_type);
       ref.val = val;
       ref.set_line(file_line);
 }
@@ -399,18 +413,14 @@ bool NetScope::make_parameter_unannotatable(perm_string key)
  * perm_string::literal method to fake the compiler into doing the
  * compare without actually creating a perm_string.
  */
-const NetExpr* NetScope::get_parameter(Design*des,
-				       const char* key,
-				       const NetExpr*&msb,
-				       const NetExpr*&lsb)
+const NetExpr* NetScope::get_parameter(Design*des, const char* key,
+				       ivl_type_t&ivl_type)
 {
-      return get_parameter(des, perm_string::literal(key), msb, lsb);
+      return get_parameter(des, perm_string::literal(key), ivl_type);
 }
 
-const NetExpr* NetScope::get_parameter(Design*des,
-				       perm_string key,
-				       const NetExpr*&msb,
-				       const NetExpr*&lsb)
+const NetExpr* NetScope::get_parameter(Design*des, perm_string key,
+				       ivl_type_t&ivl_type)
 {
       map<perm_string,param_expr_t>::iterator idx;
 
@@ -419,13 +429,11 @@ const NetExpr* NetScope::get_parameter(Design*des,
             if (idx->second.val_expr)
                   evaluate_parameter_(des, idx);
 
-	    msb = idx->second.msb;
-	    lsb = idx->second.lsb;
+	    ivl_type = idx->second.ivl_type;
 	    return idx->second.val;
       }
 
-      msb = 0;
-      lsb = 0;
+      ivl_type = 0;
       const NetExpr*tmp = enumeration_expr(key);
       return tmp;
 }
@@ -702,7 +710,7 @@ NetNet* NetScope::find_signal(perm_string key)
 	    return 0;
 }
 
-netclass_t*NetScope::find_class(perm_string name)
+netclass_t*NetScope::find_class(const Design*des, perm_string name)
 {
 	// Special case: The scope itself is the class that we are
 	// looking for. This may happen for example when elaborating
@@ -715,20 +723,25 @@ netclass_t*NetScope::find_class(perm_string name)
       if (cur != classes_.end())
 	    return cur->second;
 
+        // Try the imports.
+      NetScope*import_scope = find_import(des, name);
+      if (import_scope)
+            return import_scope->find_class(des, name);
+
       if (up_==0 && type_==CLASS) {
 	    assert(class_def_);
 
 	    NetScope*def_parent = class_def_->definition_scope();
-	    return def_parent->find_class(name);
+	    return def_parent->find_class(des, name);
       }
 
 	// Try looking up for the class.
       if (up_!=0 && type_!=MODULE)
-	    return up_->find_class(name);
+	    return up_->find_class(des, name);
 
 	// Try the compilation unit.
-      if (unit_ != 0)
-	    return unit_->find_class(name);
+      if (unit_ != 0 && this != unit_)
+	    return unit_->find_class(des, name);
 
 	// Nowhere left to try...
       return 0;

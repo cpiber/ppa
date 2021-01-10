@@ -67,11 +67,6 @@ void vvp_darray::get_word(unsigned, vvp_object_t&)
       cerr << "XXXX get_word(vvp_object_t) not implemented for " << typeid(*this).name() << endl;
 }
 
-void vvp_darray::shallow_copy(const vvp_object*)
-{
-      cerr << "XXXX shallow_copy(vvp_object_t) not implemented for " << typeid(*this).name() << endl;
-}
-
 vvp_vector4_t vvp_darray::get_bitstream(bool)
 {
       cerr << "XXXX get_bitstream() not implemented for " << typeid(*this).name() << endl;
@@ -120,6 +115,15 @@ template <class TYPE> void vvp_darray_atom<TYPE>::shallow_copy(const vvp_object*
       unsigned num_items = min(array_.size(), that->array_.size());
       for (unsigned idx = 0 ; idx < num_items ; idx += 1)
 	    array_[idx] = that->array_[idx];
+}
+
+template <class TYPE> vvp_object* vvp_darray_atom<TYPE>::duplicate(void) const
+{
+      vvp_darray_atom<TYPE>*that = new vvp_darray_atom<TYPE>(array_.size());
+      for (size_t idx = 0 ; idx < array_.size() ; idx += 1)
+	    that->array_[idx] = array_[idx];
+
+      return that;
 }
 
 template <class TYPE> vvp_vector4_t vvp_darray_atom<TYPE>::get_bitstream(bool)
@@ -190,6 +194,16 @@ void vvp_darray_vec4::shallow_copy(const vvp_object*obj)
       unsigned num_items = min(array_.size(), that->array_.size());
       for (unsigned idx = 0 ; idx < num_items ; idx += 1)
 	    array_[idx] = that->array_[idx];
+}
+
+vvp_object* vvp_darray_vec4::duplicate(void) const
+{
+      vvp_darray_vec4*that = new vvp_darray_vec4(array_.size(), word_wid_);
+
+      for (size_t idx = 0 ; idx < array_.size() ; idx += 1)
+	    that->array_[idx] = array_[idx];
+
+      return that;
 }
 
 vvp_vector4_t vvp_darray_vec4::get_bitstream(bool as_vec4)
@@ -344,6 +358,16 @@ void vvp_darray_real::shallow_copy(const vvp_object*obj)
 	    array_[idx] = that->array_[idx];
 }
 
+vvp_object* vvp_darray_real::duplicate(void) const
+{
+      vvp_darray_real*that = new vvp_darray_real(array_.size());
+
+      for (size_t idx = 0 ; idx < array_.size() ; idx += 1)
+	    that->array_[idx] = array_[idx];
+
+      return that;
+}
+
 vvp_vector4_t vvp_darray_real::get_bitstream(bool)
 {
       const unsigned word_wid = sizeof(double) * 8;
@@ -404,6 +428,16 @@ void vvp_darray_string::shallow_copy(const vvp_object*obj)
       unsigned num_items = min(array_.size(), that->array_.size());
       for (unsigned idx = 0 ; idx < num_items ; idx += 1)
 	    array_[idx] = that->array_[idx];
+}
+
+vvp_object* vvp_darray_string::duplicate(void) const
+{
+      vvp_darray_string*that = new vvp_darray_string(array_.size());
+
+      for (size_t idx = 0 ; idx < array_.size() ; idx += 1)
+	    that->array_[idx] = array_[idx];
+
+      return that;
 }
 
 vvp_queue::~vvp_queue()
@@ -482,7 +516,7 @@ vvp_queue_real::~vvp_queue_real()
 /*
  * Helper functions used while copying multiple elements into a queue.
  */
-static void print_copy_is_too_big(size_t src_size, unsigned max_size, string qtype)
+static void print_copy_is_too_big(size_t src_size, unsigned max_size, const string&qtype)
 {
       cerr << get_fileline()
            << "Warning: queue<" << qtype << "> is bounded to have at most "
@@ -591,22 +625,7 @@ void vvp_queue_real::insert(unsigned idx, double value, unsigned max_size)
 		       << max_size << "]." << endl;
 		  queue.pop_back();
 	    }
-	      // Inserting at the beginning
-	    if (idx == 0)
-		  queue.push_front(value);
-	      // Inserting in the middle
-	    else {
-		  std::deque<double>::iterator pos;
-		  unsigned middle = queue.size()/2;
-		  if (idx < middle) {
-			pos = queue.begin();
-			for (unsigned count = 0; count < idx; ++count) ++pos;
-		  } else {
-			pos = queue.end();
-			for (unsigned count = queue.size(); count > idx; --count) --pos;
-		  }
-		  queue.insert(pos, value);
-	    }
+	    queue.insert(queue.begin()+idx, value);
       }
 }
 
@@ -635,17 +654,8 @@ void vvp_queue_real::push_front(double value, unsigned max_size)
 
 void vvp_queue_real::erase(unsigned idx)
 {
-      std::deque<double>::iterator pos;
-      unsigned middle = queue.size()/2;
-      if (idx < middle) {
-	    pos = queue.begin();
-	    for (unsigned count = 0; count < idx; ++count) ++pos;
-      } else {
-	    pos = queue.end();
-	    for (unsigned count = queue.size(); count > idx; --count) --pos;
-      }
-
-      queue.erase(pos);
+      assert(queue.size() > idx);
+      queue.erase(queue.begin()+idx);
 }
 
 void vvp_queue_real::erase_tail(unsigned idx)
@@ -727,22 +737,7 @@ void vvp_queue_string::insert(unsigned idx, const string&value, unsigned max_siz
 		       << max_size << "]." << endl;
 		  queue.pop_back();
 	    }
-	      // Inserting at the beginning
-	    if (idx == 0)
-		  queue.push_front(value);
-	      // Inserting in the middle
-	    else {
-		  std::deque<string>::iterator pos;
-		  unsigned middle = queue.size()/2;
-		  if (idx < middle) {
-			pos = queue.begin();
-			for (unsigned count = 0; count < idx; ++count) ++pos;
-		  } else {
-			pos = queue.end();
-			for (unsigned count = queue.size(); count > idx; --count) --pos;
-		  }
-		  queue.insert(pos, value);
-	    }
+	    queue.insert(queue.begin()+idx, value);
       }
 }
 
@@ -771,17 +766,8 @@ void vvp_queue_string::push_front(const string&value, unsigned max_size)
 
 void vvp_queue_string::erase(unsigned idx)
 {
-      std::deque<std::string>::iterator pos;
-      unsigned middle = queue.size()/2;
-      if (idx < middle) {
-	    pos = queue.begin();
-	    for (unsigned count = 0; count < idx; ++count) ++pos;
-      } else {
-	    pos = queue.end();
-	    for (unsigned count = queue.size(); count > idx; --count) --pos;
-      }
-
-      queue.erase(pos);
+      assert(queue.size() > idx);
+      queue.erase(queue.begin()+idx);
 }
 
 void vvp_queue_string::erase_tail(unsigned idx)
@@ -863,22 +849,7 @@ void vvp_queue_vec4::insert(unsigned idx, const vvp_vector4_t&value, unsigned ma
 		       << value.size() << "]> [" << max_size << "]." << endl;
 		  queue.pop_back();
 	    }
-	      // Inserting at the beginning
-	    if (idx == 0)
-		  queue.push_front(value);
-	      // Inserting in the middle
-	    else {
-		  std::deque<vvp_vector4_t>::iterator pos;
-		  unsigned middle = queue.size()/2;
-		  if (idx < middle) {
-			pos = queue.begin();
-			for (unsigned count = 0; count < idx; ++count) ++pos;
-		  } else {
-			pos = queue.end();
-			for (unsigned count = queue.size(); count > idx; --count) --pos;
-		  }
-		  queue.insert(pos, value);
-	    }
+	    queue.insert(queue.begin()+idx, value);
       }
 }
 
@@ -907,17 +878,8 @@ void vvp_queue_vec4::push_front(const vvp_vector4_t&value, unsigned max_size)
 
 void vvp_queue_vec4::erase(unsigned idx)
 {
-      std::deque<vvp_vector4_t>::iterator pos;
-      unsigned middle = queue.size()/2;
-      if (idx < middle) {
-	    pos = queue.begin();
-	    for (unsigned count = 0; count < idx; ++count) ++pos;
-      } else {
-	    pos = queue.end();
-	    for (unsigned count = queue.size(); count > idx; --count) --pos;
-      }
-
-      queue.erase(pos);
+      assert(queue.size() > idx);
+      queue.erase(queue.begin()+idx);
 }
 
 void vvp_queue_vec4::erase_tail(unsigned idx)
