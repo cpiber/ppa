@@ -1,0 +1,37 @@
+Source: rofi
+Section: x11
+Priority: optional
+Maintainer: Constantin Piber <cp.piber@gmail.com>
+Build-Depends: debhelper-compat (= 11), dh-autoreconf, bison, flex, libpango1.0-dev, libstartup-notification0-dev, libxkbcommon-dev (>= 0.5.0), libxkbcommon-x11-dev (>= 0.5.0), libxcb1-dev, libxcb-xkb-dev, libxcb-xinerama0-dev, libxcb-ewmh-dev, libxcb-icccm4-dev, libxcb-randr0-dev, libxcb-util0-dev, librsvg2-dev, libxcb-xrm-dev
+Standards-Version: 4.4.1
+Homepage: <insert the upstream URL, if relevant>
+Vcs-Browser: https://github.com/davatorium/rofi
+Vcs-Git: https://github.com/davatorium/rofi.git
+
+Package: rofi
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libc6 (>= 2.27), libcairo2 (>= 1.6.4-5~), libglib2.0-0 (>= 2.35.9), libpango-1.0-0 (>= 1.22.0), libpangocairo-1.0-0 (>= 1.22.0), librsvg2-2 (>= 2.14.4), libstartup-notification0 (>= 0.11), libxcb-ewmh2 (>= 0.4.1), libxcb-icccm4 (>= 0.4.1), libxcb-randr0 (>= 1.12), libxcb-util1 (>= 0.4.0), libxcb-xinerama0, libxcb-xkb1, libxcb-xrm0 (>= 0.0.0), libxcb1, libxkbcommon-x11-0 (>= 0.5.0), libxkbcommon0 (>= 0.7.0)
+Description: window switcher, run dialog and dmenu replacement
+ rofi can act as an application launcher, window switcher, ssh launcher and
+ dmenu replacement.
+ .
+ Included features:
+  * Full (configurable) keyboard navigation
+  * Type to filter
+    + Tokenized: Type any word in any order to filter
+    + Case insensitive
+  * UTF-8 enabled
+    + UTF-8 aware string collating
+    + intl. keyboard support (`e -> è)
+  * Pango font rendering
+  * RTL language support
+  * Window Switcher
+    + I3 support (requires i3-wm to be installed)
+    + EWMH compatible WM
+  * Run dialog
+  * Desktop File Run dialog
+  * SSH launcher
+  * History based ordering based on use. (optional)
+  * Levenshtein distance ordering of matches. (optional)
+  * Drop in dmenu replacement (with many added improvements).
+  * Can be easily extended using scripts.
