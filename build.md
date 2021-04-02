@@ -12,7 +12,7 @@
 
 `pdebuild -- --basetgz ../<series>.tgz` (Might need to `cp` orig)
 
-deb will be in `/var/cache/pbuilder/result`
+deb will be in `/var/cache/pbuilder/result`, all other files will have a copy in parent directory
 
 
 # Uploading to launchpad
@@ -20,4 +20,5 @@ deb will be in `/var/cache/pbuilder/result`
 ## sign and upload
 
 `debsign <changesfile>`
+
 `dput ppa:<user>/<ppa> <changesfile>` ([Uploading](https://help.launchpad.net/Packaging/PPA/Uploading))
