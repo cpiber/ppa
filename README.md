@@ -15,4 +15,5 @@ Below you can find all upstreams in alphabetical order.
 ```
 git remote add cgdb https://github.com/cgdb/cgdb.git
 git remote add iverilog https://github.com/steveicarus/iverilog.git
+git remote add rofi https://github.com/davatorium/rofi.git
 ```
