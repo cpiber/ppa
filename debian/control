@@ -2,7 +2,7 @@ Source: cgdb
 Section: devel
 Priority: optional
 Maintainer: Constantin Piber <cp.piber@gmail.com>
-Build-Depends: debhelper-compat (= 12), flex (>= 2.6.4), bison (>= 2:3.0.4), gcc (>= 4.9), libtool, libncurses-dev (>= 6), autotools-dev, texinfo, libreadline-dev (>= 7.0)
+Build-Depends: debhelper-compat (= 11), flex (>= 2.6.4), bison (>= 2:3.0.4), gcc (>= 4.9), libtool, libncurses-dev (>= 6) | libncurses5-dev (>= 6), autotools-dev, texinfo, libreadline-dev (>= 7.0)
 Standards-Version: 4.4.1
 Homepage: https://cgdb.github.io/
 Vcs-Browser: https://github.com/cgdb/cgdb
@@ -10,7 +10,7 @@ Vcs-Git: https://github.com/cgdb/cgdb.git
 
 Package: cgdb
 Architecture: any
-Depends: libc6 (>= 2.15), libncurses6 (>= 6), libreadline8 (>= 6.0), libtinfo6 (>= 6), gdb, dpkg (>= 1.15.4) | install-info, ${shlibs:Depends}, ${misc:Depends}
+Depends: libc6 (>= 2.15), libncurses6 (>= 6) | libncurses5 (>= 6), libreadline8 (>= 6.0), libtinfo6 (>= 6), gdb, dpkg (>= 1.15.4) | install-info, ${shlibs:Depends}, ${misc:Depends}
 Description: curses-based interface to the GNU Debugger (GDB)
  CGDB is a curses  frontend to the GNU Debugger (GDB). The goal of CGDB is
  to be lightweight and responsive; not encumbered with unnecessary features.
