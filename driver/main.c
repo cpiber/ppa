@@ -1,6 +1,6 @@
+const char COPYRIGHT[] =
+  "Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)";
 /*
- * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
- *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
  *    General Public License as published by the Free Software
@@ -355,15 +355,15 @@ static int t_version_only(void)
 
 static void build_preprocess_command(int e_flag)
 {
-      snprintf(tmp, sizeof tmp, "%s%civlpp %s%s%s -F\"%s\" -f\"%s\" -p\"%s\"%s",
+      snprintf(tmp, sizeof tmp, "%s%civlpp%s%s%s -F\"%s\" -f\"%s\" -p\"%s\"%s",
 	       ivlpp_dir, sep,
                verbose_flag ? " -v" : "",
 	       e_flag ? "" : " -L",
-               strchr(warning_flags, 'r') ? " -Wredef-all " :
-               strchr(warning_flags, 'R') ? " -Wredef-chg " : "",
+               strchr(warning_flags, 'r') ? " -Wredef-all" :
+               strchr(warning_flags, 'R') ? " -Wredef-chg" : "",
                defines_path, source_path,
 	       compiled_defines_path,
-	       e_flag ? "" : " | ");
+	       e_flag ? "" : " |");
 }
 
 static int t_preprocess_only(void)
@@ -1059,7 +1059,11 @@ static void find_ivl_root(void)
 	    find_ivl_root_failed("command path exceeds size of string buffer.");
       }
       if (len <= 0) {
-	    find_ivl_root_failed("couldn't get command path from OS.");
+	      // We've failed, but we may yet find a -B option on the command line.
+	      // Use the built-in path so the user sees a sensible error message.
+	    assert(strlen(IVL_ROOT) < sizeof ivl_root);
+	    strcpy(ivl_root, IVL_ROOT);
+	    return;
       }
       s = strrchr(ivl_root, sep);
       if (s == 0) {
@@ -1114,8 +1118,6 @@ int main(int argc, char **argv)
       }
 
       fprintf(defines_file, "D:__ICARUS__=1\n");
-      if (strcmp(gen_verilog_ams,"verilog-ams") == 0)
-	    fprintf(defines_file, "D:__VAMS_ENABLE__=1\n");
 
 	/* Create another temporary file for passing configuration
 	   information to ivl. */
@@ -1299,6 +1301,11 @@ int main(int argc, char **argv)
 	    }
       }
 
+      if (strcmp(gen_verilog_ams,"verilog-ams") == 0)
+	    fprintf(defines_file, "D:__VAMS_ENABLE__=1\n");
+      if (synth_flag)
+	    fprintf(defines_file, "D:__ICARUS_SYNTH__=1\n");
+
       if (vpi_dir == 0)
 	    vpi_dir = base;
       if (ivlpp_dir == 0)
@@ -1308,7 +1315,7 @@ int main(int argc, char **argv)
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
-	    printf("Copyright 1998-2020 Stephen Williams\n\n");
+	    printf("%s\n\n", COPYRIGHT);
 	    puts(NOTICE);
       }
 

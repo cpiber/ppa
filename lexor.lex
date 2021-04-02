@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -167,6 +167,7 @@ TU [munpf]
      that flag to attach implicit attributes to "initial" and
      "always" statements. */
 
+"// Icarus preprocessor had ("[0-9]+") errors."\n { pre_process_failed(yytext); }
 "//"{W}*"synthesis"{W}+"translate_on"{W}*\n { pform_mc_translate_on(true); }
 "//"{W}*"synthesis"{W}+"translate_off"{W}*\n { pform_mc_translate_on(false); }
 "//" { comment_enter = YY_START; BEGIN(LCOMMENT); }
@@ -178,6 +179,8 @@ TU [munpf]
 
 "/*" { comment_enter = YY_START; BEGIN(CCOMMENT); }
 <CCOMMENT>.    { ; }
+  /* Check for a possible nested comment. */
+<CCOMMENT>"/*" { VLerror(yylloc, "error: Possible nested comment."); }
 <CCOMMENT>\n   { yylloc.first_line += 1; }
 <CCOMMENT>"*/" { BEGIN(comment_enter); }
 
@@ -223,6 +226,7 @@ TU [munpf]
 "^~" { return K_NXOR; }
 "~&" { return K_NAND; }
 "->" { return K_TRIGGER; }
+"->>" { return K_NB_TRIGGER; }
 "+:" { return K_PO_POS; }
 "-:" { return K_PO_NEG; }
 "<+" { return K_CONTRIBUTE; }
@@ -258,7 +262,7 @@ TU [munpf]
 		yylloc.first_line += 1; }
 <CSTRING>\n   { BEGIN(0);
 		yylval.text = yytext_string_filter(yytext, yyleng);
-		VLerror(yylloc, "Missing closing quote for string.");
+		VLerror(yylloc, "error: Missing closing quote for string.");
 		yylloc.first_line += 1;
 		return STRING; }
 <CSTRING>\"   { BEGIN(0);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2021 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -720,8 +720,19 @@ void PTaskFunc::elaborate_sig_ports_(Design*des, NetScope*scope,
 	      // that expression here.
 	    if (ports_->at(idx).defe != 0) {
 		  if (tmp->port_type() == NetNet::PINPUT) {
-			tmp_def = elab_and_eval(des, scope, ports_->at(idx).defe,
-						-1, scope->need_const_func());
+			  // Elaborate a class port default in the context of
+			  // the class type.
+			if (tmp->data_type() == IVL_VT_CLASS) {
+			      tmp_def = elab_and_eval(des, scope,
+			                              ports_->at(idx).defe,
+			                              tmp->net_type(),
+			                              scope->need_const_func());
+			} else {
+			      tmp_def = elab_and_eval(des, scope,
+			                              ports_->at(idx).defe,
+			                              -1,
+			                              scope->need_const_func());
+			}
 			if (tmp_def == 0) {
 			      cerr << get_fileline()
 				   << ": error: Unable to evaluate "
@@ -913,6 +924,7 @@ bool test_ranges_eeq(const vector<netrange_t>&lef, const vector<netrange_t>&rig)
       return true;
 }
 
+
 /*
  * Elaborate a source wire. The "wire" is the declaration of wires,
  * registers, ports and memories. The parser has already merged the
@@ -950,6 +962,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		 << ", wtype=" << wtype
 		 << ", data_type_=" << data_type_
 		 << ", is_implicit_scalar=" << (is_implicit_scalar?"true":"false")
+		 << ", unpacked_.size()=" << unpacked_.size()
 		 << endl;
       }
 
@@ -1086,8 +1099,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // dimensions, then turn this into a dynamic array and
 	      // put all the packed dimensions there.
 	    if (use_lidx==0 && use_ridx==0) {
-		  netvector_t*vec = new netvector_t(packed_dimensions, data_type_);
-		  vec->set_signed(get_signed());
+		  ivl_type_t vec = make_ivl_type(data_type_, packed_dimensions,
+						 get_signed());
 		  packed_dimensions.clear();
 		  ivl_assert(*this, netdarray==0);
 		  netdarray = new netdarray_t(vec);
@@ -1097,8 +1110,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // Special case: Detect the mark for a QUEUE
 	      // declaration, which is the dimensions [null:max_idx].
 	    if (dynamic_cast<PENull*>(use_lidx)) {
-		  netvector_t*vec = new netvector_t(packed_dimensions, data_type_);
-		  vec->set_signed(get_signed());
+		  ivl_type_t vec = make_ivl_type(data_type_, packed_dimensions,
+						 get_signed());
 		  packed_dimensions.clear();
 		  ivl_assert(*this, netdarray==0);
 		  long max_idx;
@@ -1232,7 +1245,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    const netenum_t*use_enum = base_type_scope->find_enumeration_for_name(des, sample_name->name);
 
 	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": " << __func__ << ": "
+		  cerr << get_fileline() << ": PWire::elaborate_sig: "
 		       << "Create signal " << wtype
 		       << " enumeration "
 		       << name_ << " in scope " << scope_path(scope)
@@ -1247,9 +1260,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       } else if (netdarray) {
 
 	    if (debug_elaborate) {
-	          cerr << get_fileline() << ": " << __func__ << ": "
-		       << "Create signal " << wtype
-		       << " dynamic array " << name_
+	          cerr << get_fileline() << ": PWire::elaborate_sig: "
+		       << "Create signal wtype=" << wtype
+		       << " name=" << name_
+		       << " netdarray=" << *netdarray
 		       << " in scope " << scope_path(scope) << endl;
 	    }
 
@@ -1265,6 +1279,21 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		       << "Create signal " << wtype
 		       << " string "
 		       << name_ << " in scope " << scope_path(scope)
+		       << endl;
+	    }
+
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions,
+			     &netstring_t::type_string);
+
+      } else if (set_data_type_==0 && data_type_==IVL_VT_STRING) {
+
+	    // Signal declared as: string foo;
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PWire::elaborate_sig: "
+		       << "Create signal " << wtype
+		       << " string "
+		       << name_ << " in scope " << scope_path(scope)
+		       << " without set_data_type_"
 		       << endl;
 	    }
 
@@ -1295,8 +1324,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       } else {
 	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": " << __func__ << ": "
-		       << "Create signal " << wtype
+		  cerr << get_fileline() << ": PWire::elaborate_sig: "
+		       << "Create vector signal " << wtype
 		       << " data_type=" << data_type_;
 		  if (!get_scalar()) {
 			cerr << " " << packed_dimensions;
@@ -1309,7 +1338,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    if (use_data_type == IVL_VT_NO_TYPE) {
 		  use_data_type = IVL_VT_LOGIC;
 		  if (debug_elaborate) {
-			cerr << get_fileline() << ": " << __func__ << ": "
+			cerr << get_fileline() << ": PWire::elaborate_sig: "
 			     << "Signal " << name_
 			     << " in scope " << scope_path(scope)
 			     << " defaults to data type " << use_data_type << endl;

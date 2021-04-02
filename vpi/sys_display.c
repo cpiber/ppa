@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -312,8 +312,12 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
   size = strlen(result) + 1; /* fallback value if errors */
   switch (fmt) {
 
-    case '%':
     case '\0':
+      vpi_printf("WARNING: %s:%d: a single %% at the end of format string "
+                 "%s%s will be displayed as '%%'.\n",
+                 info->filename, info->lineno, info->name, fmtb);
+      // fallthrough
+    case '%':
       if (ljust != 0  || plus != 0 || ld_zero != 0 || width != -1 ||
           prec != -1) {
         vpi_printf("WARNING: %s:%d: invalid format %s%s.\n",
@@ -1203,12 +1207,13 @@ static int sys_check_args(vpiHandle callh, vpiHandle argv, const PLI_BYTE8*name,
 			                 "      to %s.\n", name);
 			      br916_hint_issued = 1;
 			}
-	                ret = 1;
+	                ret = 2;
 		      default:
 			break;
 		    }
 		  }
 #endif
+	      case vpiClassVar:
 	      case vpiSysFuncCall:
 		  break;
 
@@ -1241,6 +1246,7 @@ static PLI_INT32 sys_common_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name, int no_au
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s requires at least a file descriptor/MCD.\n",
 		             name);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 		  return 0;
 	    }
@@ -1250,11 +1256,14 @@ static PLI_INT32 sys_common_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name, int no_au
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s's file descriptor/MCD must be numeric.\n",
 		             name);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
       }
 
-      if (sys_check_args(callh, argv, name, no_auto, is_monitor)) {
+      int rtn = sys_check_args(callh, argv, name, no_auto, is_monitor);
+      if (rtn) {
+	    if (rtn==1) vpip_set_return_value(1);
 	    vpi_control(vpiFinish, 1);
       }
       return 0;
@@ -1488,7 +1497,11 @@ static PLI_INT32 sys_monitor_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
 
-      if (sys_check_args(callh, argv, name, 1, 1)) vpi_control(vpiFinish, 1);
+      int rtn = sys_check_args(callh, argv, name, 1, 1);
+      if (rtn) {
+	    if (rtn == 1) vpip_set_return_value(1);
+	    vpi_control(vpiFinish, 1);
+      }
       return 0;
 }
 
@@ -1605,6 +1618,7 @@ static PLI_INT32 sys_swrite_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
     vpi_printf("ERROR:%s:%d: ", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
     vpi_printf("%s requires at least one argument.\n", name);
+    vpip_set_return_value(1);
     vpi_control(vpiFinish, 1);
     return 0;
   }
@@ -1620,7 +1634,11 @@ static PLI_INT32 sys_swrite_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
     return 0;
   }
 
-  if (sys_check_args(callh, argv, name, 0, 0)) vpi_control(vpiFinish, 1);
+  int rtn = sys_check_args(callh, argv, name, 0, 0);
+  if (rtn) {
+    if (rtn == 1) vpip_set_return_value(1);
+    vpi_control(vpiFinish, 1);
+  }
   return 0;
 }
 
@@ -1674,6 +1692,7 @@ static PLI_INT32 sys_sformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
     vpi_printf("ERROR:%s:%d: ", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
     vpi_printf("%s requires at least two arguments.\n", name);
+    vpip_set_return_value(1);
     vpi_control(vpiFinish, 1);
     return 0;
   }
@@ -1685,6 +1704,7 @@ static PLI_INT32 sys_sformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
     vpi_printf("ERROR:%s:%d: ", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
     vpi_printf("%s's first argument must be a register or SV string.\n", name);
+    vpip_set_return_value(1);
     vpi_control(vpiFinish, 1);
     return 0;
   }
@@ -1695,6 +1715,7 @@ static PLI_INT32 sys_sformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
     vpi_printf("ERROR:%s:%d: ", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
     vpi_printf("%s requires at least two arguments.\n", name);
+    vpip_set_return_value(1);
     vpi_control(vpiFinish, 1);
     return 0;
   }
@@ -1705,11 +1726,16 @@ static PLI_INT32 sys_sformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
     vpi_printf("ERROR:%s:%d: ", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
     vpi_printf("%s's second argument must be a string or a register.\n", name);
+    vpip_set_return_value(1);
     vpi_control(vpiFinish, 1);
     return 0;
   }
 
-  if (sys_check_args(callh, argv, name, 0, 0)) vpi_control(vpiFinish, 1);
+  int rtn = sys_check_args(callh, argv, name, 0, 0);
+  if (rtn) {
+    if (rtn == 1) vpip_set_return_value(1);
+    vpi_control(vpiFinish, 1);
+  }
   return 0;
 }
 
@@ -1774,6 +1800,7 @@ static PLI_INT32 sys_sformatf_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
     vpi_printf("ERROR:%s:%d: ", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
     vpi_printf("%s requires at least one argument.\n", name);
+    vpip_set_return_value(1);
     vpi_control(vpiFinish, 1);
     return 0;
   }
@@ -1784,6 +1811,7 @@ static PLI_INT32 sys_sformatf_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
     vpi_printf("ERROR:%s:%d: ", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
     vpi_printf("%s requires at least one argument.\n", name);
+    vpip_set_return_value(1);
     vpi_control(vpiFinish, 1);
     return 0;
   }
@@ -1794,11 +1822,16 @@ static PLI_INT32 sys_sformatf_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
     vpi_printf("ERROR:%s:%d: ", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
     vpi_printf("%s's first argument must be a string or a register.\n", name);
+    vpip_set_return_value(1);
     vpi_control(vpiFinish, 1);
     return 0;
   }
 
-  if (sys_check_args(callh, argv, name, 0, 0)) vpi_control(vpiFinish, 1);
+  int rtn = sys_check_args(callh, argv, name, 0, 0);
+  if (rtn) {
+    if (rtn == 1) vpip_set_return_value(1);
+    vpi_control(vpiFinish, 1);
+  }
   return 0;
 }
 
@@ -1828,6 +1861,7 @@ static PLI_INT32 sys_timeformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s's units argument must be numeric.\n", name);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
 
@@ -1837,6 +1871,7 @@ static PLI_INT32 sys_timeformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s requires zero or four arguments.\n", name);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 		  return 0;
 	    }
@@ -1846,6 +1881,7 @@ static PLI_INT32 sys_timeformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s's precision argument must be numeric.\n",
 		             name);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
 
@@ -1855,6 +1891,7 @@ static PLI_INT32 sys_timeformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s requires zero or four arguments.\n", name);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 		  return 0;
 	    }
@@ -1863,6 +1900,7 @@ static PLI_INT32 sys_timeformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s's suffix argument must be a string.\n", name);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
 
@@ -1872,6 +1910,7 @@ static PLI_INT32 sys_timeformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s requires zero or four arguments.\n", name);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 		  return 0;
 	    }
@@ -1881,6 +1920,7 @@ static PLI_INT32 sys_timeformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s's minimum width argument must be numeric.\n",
 		             name);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
 
@@ -1997,6 +2037,7 @@ static PLI_INT32 sys_printtimescale_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("%s's argument must have a module, given a %s.\n",
 		             name, vpi_get_str(vpiType, arg));
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
 
@@ -2043,10 +2084,13 @@ static PLI_INT32 sys_fatal_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
                   vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
                              (int)vpi_get(vpiLineNo, callh));
                   vpi_printf("%s's finish number must be numeric.\n", name);
+		  vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
             }
 
-	    if (sys_check_args(callh, argv, name, 0, 0)) {
+	    int rtn = sys_check_args(callh, argv, name, 0, 0);
+	    if (rtn) {
+		  if (rtn == 1) vpip_set_return_value(1);
 		  vpi_control(vpiFinish, 1);
 	    }
       }
@@ -2115,7 +2159,7 @@ static PLI_INT32 sys_severity_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpi_get_time(0, &now);
       now64 = timerec_to_time64(&now);
 
-      vpi_printf("\n%*s  Time: %" PLI_UINT64_FMT " Scope: %s\n",
+      vpi_printf("\n%*s  Time: %" PLI_UINT64_FMT "  Scope: %s\n",
                  (int)strlen(sstr), " ", now64,
                  vpi_get_str(vpiFullName, scope));
 

@@ -752,6 +752,24 @@ PTrigger* pform_new_trigger(const struct vlltype&loc, PPackage*pkg,
       return tmp;
 }
 
+PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
+			         const list<PExpr*>*dly,
+			         const pform_name_t&name)
+{
+      if (gn_system_verilog())
+	    check_potential_imports(loc, name.front().name, false);
+
+      PExpr*tmp_dly = 0;
+      if (dly) {
+	    assert(dly->size() == 1);
+	    tmp_dly = dly->front();
+      }
+
+      PNBTrigger*tmp = new PNBTrigger(name, tmp_dly);
+      FILE_NAME(tmp, loc);
+      return tmp;
+}
+
 PGenerate* pform_parent_generate(void)
 {
       return pform_cur_generate;
@@ -1213,6 +1231,13 @@ int pform_get_timeunit()
       return scopex->time_unit;
 }
 
+int pform_get_timeprec()
+{
+      PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
+      assert(scopex);
+      return scopex->time_precision;
+}
+
 void pform_set_timeprec(const char*txt, bool initial_decl)
 {
       int val;
@@ -1369,6 +1394,7 @@ Module::port_t* pform_module_port_reference(perm_string name,
       FILE_NAME(tmp, file, lineno);
       ptmp->name = name;
       ptmp->expr.push_back(tmp);
+      ptmp->default_value = 0;
 
       return ptmp;
 }
@@ -1692,6 +1718,16 @@ void pform_endgenerate(bool end_conditional)
 	    pform_cur_module.front()->generate_schemes.push_back(pform_cur_generate);
       }
       pform_cur_generate = parent_generate;
+}
+
+void pform_make_elab_task(const struct vlltype&li,
+                          perm_string name,
+                          const list<PExpr*>&params)
+{
+      PCallTask*elab_task = new PCallTask(name, params);
+      FILE_NAME(elab_task, li);
+
+      lexical_scope->elab_tasks.push_back(elab_task);
 }
 
 MIN_TYP_MAX min_typ_max_flag = TYP;
@@ -3273,6 +3309,46 @@ void pform_set_param_from_type(const struct vlltype&loc,
            << data_type->get_fileline() <<  "." << endl;
       error_count += 1;
 }
+
+void pform_make_let(const struct vlltype&loc,
+                    perm_string name,
+                    list<PLet::let_port*>*ports,
+                    PExpr*expr)
+{
+      LexicalScope*scope =  pform_peek_scope();
+
+      cerr << loc.get_fileline() << ": sorry: let declarations ("
+           << name << ") are not currently supported." << endl;
+      error_count += 1;
+
+      PLet*res = new PLet(name, scope, ports, expr);
+      FILE_NAME(res, loc);
+
+/*
+      cerr << "Found: ";
+      res->dump(cerr, 0);
+*/
+
+      delete res;
+      delete ports;
+      delete expr;
+}
+
+PLet::let_port_t* pform_make_let_port(data_type_t*data_type,
+                                      perm_string name,
+                                      list<pform_range_t>*range,
+                                      PExpr*def)
+{
+      PLet::let_port_t*res = new PLet::let_port_t;
+
+      res->type_ = data_type;
+      res->name_ = name;
+      res->range_ = range;
+      res->def_ = def;
+
+      return res;
+}
+
 /*
  * Specify paths.
  */

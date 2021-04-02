@@ -1,7 +1,7 @@
 #ifndef IVL_Statement_H
 #define IVL_Statement_H
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -224,6 +224,8 @@ class PCallTask  : public Statement {
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+
+      bool elaborate_elab(Design*des, NetScope*scope) const;
 
     private:
       NetProc* elaborate_sys(Design*des, NetScope*scope) const;
@@ -586,6 +588,19 @@ class PTrigger  : public Statement {
     private:
       PPackage*package_;
       pform_name_t event_;
+};
+
+class PNBTrigger  : public Statement {
+    public:
+      explicit PNBTrigger(const pform_name_t&ev, PExpr*dly);
+      ~PNBTrigger();
+
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      pform_name_t event_;
+      PExpr*dly_;
 };
 
 class PWhile  : public Statement {

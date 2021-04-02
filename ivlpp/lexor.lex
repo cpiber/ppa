@@ -1,7 +1,7 @@
 %option prefix="yy"
 %{
 /*
- * Copyright (c) 1999-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,6 +33,8 @@
 static void output_init(void);
 #define YY_USER_INIT output_init()
 
+static void  handle_line_directive(void);
+
 static void  def_start(void);
 static void  def_add_arg(void);
 static void  def_finish(void);
@@ -50,7 +52,7 @@ static void  do_expand(int use_args);
 static const char* do_magic(const char*name);
 static const char* macro_name(void);
 
-static void include_filename(void);
+static void include_filename(int macro_str);
 static void do_include(void);
 
 static int load_next_input(void);
@@ -201,12 +203,13 @@ static int ma_parenthesis_level = 0;
 
 %x IFDEF_NAME
 %x IFNDEF_NAME
+%s IFDEF_TRUE
+%x IFDEF_FALSE
+%x IFDEF_SUPR
 %x ELSIF_NAME
 %x ELSIF_SUPR
-
-%x IFDEF_FALSE
-%s IFDEF_TRUE
-%x IFDEF_SUPR
+%s ELSE_TRUE
+%x ELSE_SUPR
 
 W        [ \t\b\f]+
 
@@ -214,10 +217,17 @@ W        [ \t\b\f]+
  * older versions of flex (at least 2.5.31); they are supposed to
  * be implied, according to the flex manual.
  */
-keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
+keywords (line|include|define|undef|ifdef|ifndef|else|elsif|endif)
 
 %%
 
+ /* Recognize and handle the `line directive. Also pass it through to
+  * the output so the main compiler is aware of the change.
+  */
+^[ \t]?"`line"[ \t]+.+ { handle_line_directive(); ECHO; }
+
+ /* Detect single line comments, passing them directly to the output.
+  */
 "//"[^\r\n]* { ECHO; }
 
  /* detect multiline, c-style comments, passing them directly to the
@@ -249,9 +259,9 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <PCOMENT>`{keywords} {
     emit_pathline(istack);
+    fprintf(stderr, "error: macro expansion cannot be directive keywords "
+                    "('%s').\n", yytext);
     error_count += 1;
-    fprintf(stderr, "error: macro names cannot be directive keywords "
-            "('%s'); replaced with nothing.\n", yytext);
 }
 
 <PCOMENT>`[a-zA-Z][a-zA-Z0-9_$]* {
@@ -279,16 +289,18 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <PPINCLUDE>`{keywords} {
     emit_pathline(istack);
+    fprintf(stderr, "error: macro expansion cannot be directive keywords "
+                    "('%s').\n", yytext);
     error_count += 1;
-    fprintf(stderr, "error: macro names cannot be directive keywords "
-            "('%s'); replaced with nothing.\n", yytext);
+    BEGIN(ERROR_LINE);
 }
 
 <PPINCLUDE>`[a-zA-Z][a-zA-Z0-9_]* {
     if (macro_needs_args(yytext+1)) yy_push_state(MA_START); else do_expand(0);
 }
 
-<PPINCLUDE>\"[^\"]*\" { include_filename(); }
+<PPINCLUDE>\"[^\"]*\"   { include_filename(0); }  /* A normal (") string */
+<PPINCLUDE>`\"[^\"]*`\" { include_filename(1); }  /* A macro (`") string */
 
 <PPINCLUDE>[ \t\b\f] { ; }
 
@@ -331,10 +343,10 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <DEF_NAME>{keywords}{W}? {
     emit_pathline(istack);
+    fprintf(stderr, "error: malformed `define directive: macro names "
+                    "cannot be directive keywords ('%s')\n", yytext);
     error_count += 1;
     BEGIN(ERROR_LINE);
-    fprintf(stderr, "error: malformed `define directive: macro names "
-            "cannot be directive keywords\n");
 }
 
 <DEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]*"("{W}? { BEGIN(DEF_ARG); def_start(); }
@@ -361,7 +373,7 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <DEF_NAME,DEF_ESC,DEF_ARG,DEF_SEP>. {
     emit_pathline(istack);
-    fprintf(stderr, "error: malformed `define directive.\n");
+    fprintf(stderr, "error: malformed `define directive ('%s').\n", yytext);
     error_count += 1;
     BEGIN(ERROR_LINE);
 }
@@ -416,16 +428,16 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
     yy_push_state(IFNDEF_NAME);
 }
 
-<IFDEF_FALSE,IFDEF_SUPR>`ifdef{W}  |
-<IFDEF_FALSE,IFDEF_SUPR>`ifndef{W} { ifdef_enter(); yy_push_state(IFDEF_SUPR); }
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>`ifdef{W}  |
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>`ifndef{W} { ifdef_enter(); yy_push_state(IFDEF_SUPR); }
 
-<IFDEF_TRUE>`elsif{W}  { prev_state = YYSTATE; BEGIN(ELSIF_SUPR); }
-<IFDEF_FALSE>`elsif{W} { prev_state = YYSTATE; BEGIN(ELSIF_NAME); }
+<IFDEF_TRUE>`elsif{W}  |
 <IFDEF_SUPR>`elsif{W}  { prev_state = YYSTATE; BEGIN(ELSIF_SUPR); }
+<IFDEF_FALSE>`elsif{W} { prev_state = YYSTATE; BEGIN(ELSIF_NAME); }
 
-<IFDEF_TRUE>`else  { BEGIN(IFDEF_SUPR); }
-<IFDEF_FALSE>`else { BEGIN(IFDEF_TRUE); }
-<IFDEF_SUPR>`else  {}
+<IFDEF_TRUE>`else  |
+<IFDEF_SUPR>`else  { BEGIN(ELSE_SUPR); }
+<IFDEF_FALSE>`else { BEGIN(ELSE_TRUE); }
 
 <IFDEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]* {
     if (is_defined(yytext))
@@ -452,9 +464,9 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
     BEGIN(IFDEF_SUPR);
 }
 
-<IFDEF_FALSE,IFDEF_SUPR>"//"[^\r\n]* {}
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>"//"[^\r\n]* {}
 
-<IFDEF_FALSE,IFDEF_SUPR>"/*" { comment_enter = YY_START; BEGIN(IFCCOMMENT); }
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>"/*" { comment_enter = YY_START; BEGIN(IFCCOMMENT); }
 
 <IFCCOMMENT>[^\r\n] {}
 <IFCCOMMENT>\n\r    |
@@ -463,20 +475,20 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <IFCCOMMENT>\r      { istack->lineno += 1; fputc('\n', yyout); }
 <IFCCOMMENT>"*/"    { BEGIN(comment_enter); }
 
-<IFDEF_FALSE,IFDEF_SUPR>[^\r\n] {  }
-<IFDEF_FALSE,IFDEF_SUPR>\n\r    |
-<IFDEF_FALSE,IFDEF_SUPR>\r\n    |
-<IFDEF_FALSE,IFDEF_SUPR>\n      |
-<IFDEF_FALSE,IFDEF_SUPR>\r      { istack->lineno += 1; fputc('\n', yyout); }
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>[^\r\n] {  }
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>\n\r    |
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>\r\n    |
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>\n      |
+<IFDEF_FALSE,IFDEF_SUPR,ELSE_SUPR>\r      { istack->lineno += 1; fputc('\n', yyout); }
 
-<IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR>`endif { ifdef_leave(); yy_pop_state(); }
+<IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR,ELSE_TRUE,ELSE_SUPR>`endif { ifdef_leave(); yy_pop_state(); }
 
 <IFDEF_NAME>(\n|\r) |
 <IFDEF_NAME>. |
 `ifdef {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `ifdef without a macro name.\n");
     error_count += 1;
-    fprintf(stderr, "%s:%u: `ifdef without a macro name - ignored.\n",
-            istack->path, istack->lineno+1);
     if (YY_START == IFDEF_NAME) {
         ifdef_leave();
         yy_pop_state();
@@ -487,9 +499,9 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <IFNDEF_NAME>(\n|\r) |
 <IFNDEF_NAME>. |
 `ifndef {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `ifndef without a macro name.\n");
     error_count += 1;
-    fprintf(stderr, "%s:%u: `ifndef without a macro name - ignored.\n",
-            istack->path, istack->lineno+1);
     if (YY_START == IFNDEF_NAME) {
         ifdef_leave();
         yy_pop_state();
@@ -500,38 +512,52 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <ELSIF_NAME,ELSIF_SUPR>(\n|\r) |
 <ELSIF_NAME,ELSIF_SUPR>. |
 `elsif {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `elsif without a macro name.\n");
     error_count += 1;
-    fprintf(stderr, "%s:%u: `elsif without a macro name - ignored.\n",
-            istack->path, istack->lineno+1);
     if (YY_START != INITIAL) {
         BEGIN(prev_state);
         unput(yytext[0]);
     }
 }
 
-<INITIAL>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
+<ELSE_TRUE,ELSE_SUPR>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `elsif after a matching `else.\n");
     error_count += 1;
-    fprintf(stderr, "%s:%u: `elsif without a matching `ifdef - ignored.\n",
-            istack->path, istack->lineno+1);
+    BEGIN(ELSE_SUPR);
+}
+
+<ELSE_TRUE,ELSE_SUPR>`else {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `else after a matching `else.\n");
+    error_count += 1;
+    BEGIN(ELSE_SUPR);
+}
+
+<INITIAL>`elsif{W}[a-zA-Z_][a-zA-Z0-9_$]* {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `elsif without a matching `ifdef.\n");
+    error_count += 1;
 }
 
 `else {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `else without a matching `ifdef.\n");
     error_count += 1;
-    fprintf(stderr, "%s:%u: `else without a matching `ifdef - ignored.\n",
-            istack->path, istack->lineno+1);
 }
 
 `endif {
+    emit_pathline(istack);
+    fprintf(stderr, "error: `endif without a matching `ifdef.\n");
     error_count += 1;
-    fprintf(stderr, "%s:%u: `endif without a matching `ifdef - ignored.\n",
-            istack->path, istack->lineno+1);
 }
 
 `{keywords} {
     emit_pathline(istack);
+    fprintf(stderr, "error: macro expansion cannot be directive keywords "
+                    "('%s').\n", yytext);
     error_count += 1;
-    fprintf(stderr, "error: macro names cannot be directive keywords "
-            "('%s'); replaced with nothing.\n", yytext);
 }
 
  /* This pattern notices macros and arranges for them to be replaced. */
@@ -601,7 +627,6 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 
 <MA_START>. {
     emit_pathline(istack);
-
     fprintf(stderr, "error: missing argument list for `%s.\n", macro_name());
     error_count += 1;
 
@@ -677,6 +702,87 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <<EOF>> { if (!load_next_input()) yyterminate(); }
 
 %%
+/*
+ * Parse a `line directive and set the current file name and line
+ * number accordingly. This ensures we restore the correct name
+ * and line number when returning from an include file or macro
+ * expansion. Ignore an invalid directive - the main compiler
+ * will report the error.
+ */
+static void handle_line_directive(void)
+{
+    char *cp;
+    char *cpr;
+    unsigned long lineno;
+    char*fn_start;
+    char*fn_end;
+
+      /* Skip any leading space. */
+    cp = strchr(yytext, '`');
+      /* Skip the `line directive. */
+    assert(strncmp(cp, "`line", 5) == 0);
+    cp += 5;
+
+      /* strtoul skips leading space. */
+    lineno = strtoul(cp, &cpr, 10);
+    if (cp == cpr || lineno == 0) {
+        return;
+    }
+    cp = cpr;
+
+      /* Skip the space between the line number and the file name. */
+    cpr += strspn(cp, " \t");
+    if (cp == cpr) {
+        return;
+    }
+    cp = cpr;
+
+      /* Find the starting " and skip it. */
+    fn_start = strchr(cp, '"');
+    if (cp != fn_start) {
+        return;
+    }
+    fn_start += 1;
+
+      /* Find the last ". */
+    fn_end = strrchr(fn_start, '"');
+    if (!fn_end) {
+        return;
+    }
+
+      /* Skip the space after the file name. */
+    cp = fn_end + 1;
+    cpr = cp;
+    cpr += strspn(cp, " \t");
+    if (cp == cpr) {
+        return;
+    }
+    cp = cpr;
+
+      /* Check that the level is correct, we do not need the level. */
+    if (strspn(cp, "012") != 1) {
+        return;
+    }
+    cp += 1;
+
+      /* Verify that only space is left. */
+    cp += strspn(cp, " \t");
+    if ((size_t)(cp-yytext) != strlen(yytext)) {
+        return;
+    }
+
+      /* Update the current file name and line number. Subtract 1 from
+         the line number because `line sets the number for the next
+         line, and 1 because our line numbers are zero-based. This
+         will underflow on line 1, but that's OK because we are using
+         unsigned arithmetic. */
+    assert(istack);
+    istack->path = realloc(istack->path, fn_end-fn_start+1);
+    strncpy(istack->path, fn_start, fn_end-fn_start);
+    istack->path[fn_end-fn_start] = '\0';
+    istack->lineno = lineno - 2;
+}
+
  /* Defined macros are kept in this table for convenient lookup. As
   * `define directives are matched (and the do_define() function
   * called) the tree is built up to match names with values. If a
@@ -817,6 +923,7 @@ static void check_for_max_args(void)
     if (def_argc == MAX_DEF_ARG) {
         emit_pathline(istack);
         fprintf(stderr, "error: too many macro arguments - aborting\n");
+        error_count += 1;
         exit(1);
     }
 }
@@ -1156,11 +1263,12 @@ static void do_define(void)
      */
     if ((def_argc > 1) && strchr(head, ARG_MARK)) {
         emit_pathline(istack);
-        error_count += 1;
         def_argc = 0;
 
         fprintf(stderr, "error: implementation restriction - "
-	        "macro text may not contain a %s character\n", _STR2(ARG_MARK));
+                        "macro text may not contain a %s character\n",
+                        _STR2(ARG_MARK));
+        error_count += 1;
     }
 
     /* Look for formal argument names in the definition, and replace
@@ -1459,6 +1567,7 @@ static void expand_using_args(void)
     if (def_argc > cur_macro->argc) {
         emit_pathline(istack);
         fprintf(stderr, "error: too many arguments for `%s\n", cur_macro->name);
+        error_count += 1;
         return;
     }
     while (def_argc < cur_macro->argc) {
@@ -1469,6 +1578,7 @@ static void expand_using_args(void)
 	}
         emit_pathline(istack);
         fprintf(stderr, "error: too few arguments for `%s\n", cur_macro->name);
+        error_count += 1;
         return;
     }
     assert(def_argc == cur_macro->argc);
@@ -1687,18 +1797,19 @@ static void output_init(void)
     }
 }
 
-static void include_filename(void)
+static void include_filename(int macro_str)
 {
     if(standby) {
         emit_pathline(istack);
         fprintf(stderr,
                 "error: malformed `include directive. Extra junk on line?\n");
+        error_count += 1;
         exit(1);
     }
 
     standby = malloc(sizeof(struct include_stack_t));
-    standby->path = strdup(yytext+1);
-    standby->path[strlen(standby->path)-1] = 0;
+    standby->path = strdup(yytext+1+macro_str);
+    standby->path[strlen(standby->path)-1-macro_str] = 0;
     standby->lineno = 0;
     standby->comment = NULL;
 }
@@ -1831,11 +1942,11 @@ static void lexor_done(void)
         ifdef_stack = cur->next;
 
         fprintf(stderr, "%s:%u: error: This `ifdef lacks an `endif.\n",
-                cur->path, cur->lineno+1);
+                        cur->path, cur->lineno+1);
+        error_count += 1;
 
         free(cur->path);
         free(cur);
-        error_count += 1;
     }
 }
 

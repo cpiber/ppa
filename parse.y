@@ -394,6 +394,9 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       LexicalScope::range_t* value_range;
       vector<Module::port_t*>*mports;
 
+      list<PLet::let_port_t*>*let_port_lst;
+      PLet::let_port_t*let_port_itm;
+
       named_number_t* named_number;
       list<named_number_t>* named_numbers;
 
@@ -475,7 +478,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %token K_CONTRIBUTE
 %token K_PO_POS K_PO_NEG K_POW
 %token K_PSTAR K_STARP K_DOTSTAR
-%token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER K_LEQUIV
+%token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER K_NB_TRIGGER K_LEQUIV
 %token K_SCOPE_RES
 %token K_edge_descriptor
 
@@ -613,11 +616,13 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
 %type <gate>  gate_instance
 %type <gates> gate_instance_list
+%type <let_port_lst> let_port_list_opt let_port_list
+%type <let_port_itm> let_port_item
 
 %type <pform_name> hierarchy_identifier implicit_class_handle
 %type <expr>  assignment_pattern expression expr_mintypmax
 %type <expr>  expr_primary_or_typename expr_primary
-%type <expr>  class_new dynamic_array_new
+%type <expr>  class_new dynamic_array_new let_default_opt
 %type <expr>  inc_or_dec_expression inside_expression lpvalue
 %type <expr>  branch_probe_expression streaming_concatenation
 %type <expr>  delay_value delay_value_simple
@@ -629,7 +634,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <decl_assignments> list_of_variable_decl_assignments
 
 %type <data_type>  data_type data_type_or_implicit data_type_or_implicit_or_void
-%type <data_type>  simple_type_or_string
+%type <data_type>  simple_type_or_string let_formal_type
 %type <class_type> class_identifier
 %type <struct_member>  struct_union_member
 %type <struct_members> struct_union_member_list
@@ -687,7 +692,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
 %token K_TAND
 %nonassoc K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
-%nonassoc K_XOR_EQ K_LS_EQ K_RS_EQ K_RSS_EQ
+%nonassoc K_XOR_EQ K_LS_EQ K_RS_EQ K_RSS_EQ K_NB_TRIGGER
 %right K_TRIGGER K_LEQUIV
 %right '?' ':' K_inside
 %left K_LOR
@@ -3190,7 +3195,7 @@ delay_value_simple
 	: DEC_NUMBER
 		{ verinum*tmp = $1;
 		  if (tmp == 0) {
-			yyerror(@1, "internal error: delay.");
+			yyerror(@1, "internal error: decimal delay.");
 			$$ = 0;
 		  } else {
 			$$ = new PENumber(tmp);
@@ -3201,7 +3206,7 @@ delay_value_simple
 	| REALTIME
 		{ verireal*tmp = $1;
 		  if (tmp == 0) {
-			yyerror(@1, "internal error: delay.");
+			yyerror(@1, "internal error: real time delay.");
 			$$ = 0;
 		  } else {
 			$$ = new PEFNumber(tmp);
@@ -3220,7 +3225,7 @@ delay_value_simple
 		  based_size = 0;
 		  $$         = 0;
 		  if ($1 == 0 || !get_time_unit($1, unit))
-			yyerror(@1, "internal error: delay.");
+			yyerror(@1, "internal error: time literal delay.");
 		  else {
 			double p = pow(10.0,
 			               (double)(unit - pform_get_timeunit()));
@@ -3827,10 +3832,18 @@ expr_primary
           based_size = 0;
           $$         = 0;
           if ($1 == 0 || !get_time_unit($1, unit))
-              yyerror(@1, "internal error: delay.");
+              yyerror(@1, "internal error: time literal.");
           else {
               double p = pow(10.0, (double)(unit - pform_get_timeunit()));
               double time = atof($1) * p;
+              // The time value needs to be rounded at the correct digit
+              // since this is a normal real value and not a delay that
+              // will be rounded later. This style of rounding is not safe
+              // for all real values!
+              int rdigit = pform_get_timeunit() - pform_get_timeprec();
+              assert(rdigit >= 0);
+              double scale = pow(10.0, (double)rdigit);
+              time = round(time*scale)/scale;
 
               verireal *v = new verireal(time);
               $$ = new PEFNumber(v);
@@ -4621,6 +4634,22 @@ port_declaration
 	delete[]$4;
 	$$ = ptmp;
       }
+  | attribute_list_opt K_input net_type_opt data_type_or_implicit IDENTIFIER '=' expression
+      { if (!gn_system_verilog()) {
+	      yyerror("error: Default port values require SystemVerilog.");
+	}
+	Module::port_t*ptmp;
+	perm_string name = lex_strings.make($5);
+	data_type_t*use_type = $4;
+	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	ptmp->default_value = $7;
+	pform_module_define_port(@2, name, NetNet::PINPUT, $3, use_type, $1);
+	port_declaration_context.port_type = NetNet::PINPUT;
+	port_declaration_context.port_net_type = $3;
+	port_declaration_context.data_type = $4;
+	delete[]$5;
+	$$ = ptmp;
+      }
   | attribute_list_opt K_inout net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
@@ -5169,6 +5198,11 @@ module_item
 	yyerrok;
       }
 
+  | K_let IDENTIFIER let_port_list_opt '=' expression ';'
+      { perm_string tmp2 = lex_strings.make($2);
+        pform_make_let(@1, tmp2, $3, $5);
+      }
+
   /* Maybe this is a discipline declaration? If so, then the lexor
      will see the discipline name as an identifier. We match it to the
      discipline or type name semantically. */
@@ -5349,6 +5383,18 @@ module_item
     K_endcase
       { pform_endgenerate(true); }
 
+  /* Elaboration system tasks. */
+  | SYSTEM_IDENTIFIER '(' expression_list_with_nuls ')' ';'
+      { pform_make_elab_task(@1, lex_strings.make($1), *$3);
+	delete[]$1;
+	delete $3;
+      }
+  | SYSTEM_IDENTIFIER ';'
+      { list<PExpr*>pt;
+	pform_make_elab_task(@1, lex_strings.make($1), pt);
+	delete[]$1;
+      }
+
   | modport_declaration
 
   /* 1364-2001 and later allow specparam declarations outside specify blocks. */
@@ -5422,6 +5468,50 @@ module_item
   | ';'
       { }
 
+  ;
+
+let_port_list_opt
+  : '(' let_port_list ')'
+      { $$ = $2; }
+  | '(' ')'
+      { $$ = 0; }
+  |
+      { $$ = 0; }
+  ;
+
+let_port_list
+  : let_port_item
+      { list<PLet::let_port_t*>*tmp = new list<PLet::let_port_t*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  | let_port_list ',' let_port_item
+      { list<PLet::let_port_t*>*tmp = $1;
+        tmp->push_back($3);
+        $$ = tmp;
+      }
+  ;
+
+  // FIXME: What about the attributes?
+let_port_item
+  : attribute_list_opt let_formal_type IDENTIFIER dimensions_opt let_default_opt
+      { perm_string tmp3 = lex_strings.make($3);
+        $$ = pform_make_let_port($2, tmp3, $4, $5);
+      }
+  ;
+
+let_default_opt
+  : '=' expression
+      { $$ = $2; }
+  |
+      { $$ = 0; }
+  ;
+
+let_formal_type
+  : data_type_or_implicit
+      { $$ = $1; }
+  | K_untyped
+      { $$ = 0; }
   ;
 
 module_item_list
@@ -5898,6 +5988,7 @@ port_reference
 	  Module::port_t*ptmp = new Module::port_t;
 	  ptmp->name = perm_string();
 	  ptmp->expr.push_back(wtmp);
+	  ptmp->default_value = 0;
 
 	  delete[]$1;
 	  $$ = ptmp;
@@ -5921,6 +6012,7 @@ port_reference
 	  Module::port_t*ptmp = new Module::port_t;
 	  ptmp->name = perm_string();
 	  ptmp->expr.push_back(tmp);
+	  ptmp->default_value = 0;
 	  delete[]$1;
 	  $$ = ptmp;
 	}
@@ -5932,6 +6024,7 @@ port_reference
 	  FILE_NAME(wtmp, @1);
 	  ptmp->name = lex_strings.make($1);
 	  ptmp->expr.push_back(wtmp);
+	  ptmp->default_value = 0;
 	  delete[]$1;
 	  $$ = ptmp;
 	}
@@ -6642,15 +6735,36 @@ statement_item /* This is roughly statement_item in the LRM */
 		}
   | K_TRIGGER hierarchy_identifier ';'
       { PTrigger*tmp = pform_new_trigger(@2, 0, *$2);
-	FILE_NAME(tmp, @1);
 	delete $2;
 	$$ = tmp;
       }
   | K_TRIGGER PACKAGE_IDENTIFIER K_SCOPE_RES hierarchy_identifier
       { PTrigger*tmp = pform_new_trigger(@4, $2, *$4);
-	FILE_NAME(tmp, @1);
 	delete $4;
 	$$ = tmp;
+      }
+    /* FIXME: Does this need support for package resolution like above? */
+  | K_NB_TRIGGER hierarchy_identifier ';'
+      { PNBTrigger*tmp = pform_new_nb_trigger(@2, 0, *$2);
+	delete $2;
+	$$ = tmp;
+      }
+  | K_NB_TRIGGER delay1 hierarchy_identifier ';'
+      { PNBTrigger*tmp = pform_new_nb_trigger(@3, $2, *$3);
+	delete $3;
+	$$ = tmp;
+      }
+  | K_NB_TRIGGER event_control hierarchy_identifier ';'
+      { PNBTrigger*tmp = pform_new_nb_trigger(@3, 0, *$3);
+	delete $3;
+	$$ = tmp;
+        yywarn(@1, "Sorry: ->> with event control is not currently supported.");
+      }
+  | K_NB_TRIGGER K_repeat '(' expression ')' event_control hierarchy_identifier ';'
+      { PNBTrigger*tmp = pform_new_nb_trigger(@7, 0, *$7);
+	delete $7;
+	$$ = tmp;
+        yywarn(@1, "Sorry: ->> with repeat event control is not currently supported.");
       }
 
   | procedural_assertion_statement { $$ = $1; }

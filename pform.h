@@ -1,7 +1,7 @@
 #ifndef IVL_pform_H
 #define IVL_pform_H
 /*
- * Copyright (c) 1998-2020 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2021 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -250,6 +250,9 @@ extern PEIdent* pform_new_ident(const struct vlltype&loc, const pform_name_t&nam
 
 extern PTrigger* pform_new_trigger(const struct vlltype&loc, PPackage*pkg,
 				   const pform_name_t&name);
+extern PNBTrigger* pform_new_nb_trigger(const struct vlltype&loc,
+				        const list<PExpr*>*dly,
+				        const pform_name_t&name);
 
 /*
  * Enter/exit name scopes. The push_scope function pushes the scope
@@ -312,6 +315,10 @@ extern void pform_endgenerate(bool end_conditional);
  * generate scheme.
  */
 extern PGenerate* pform_parent_generate(void);
+
+extern void pform_make_elab_task(const struct vlltype&li,
+                                 perm_string name,
+                                 const std::list<PExpr*>&params);
 
 extern void pform_set_typedef(perm_string name, data_type_t*data_type,
 			      std::list<pform_range_t>*unp_ranges);
@@ -436,6 +443,16 @@ extern void pform_set_param_from_type(const struct vlltype&loc,
                                       list<pform_range_t> *&param_range,
                                       bool &param_signed,
                                       ivl_variable_type_t &param_type);
+
+extern void pform_make_let(const struct vlltype&loc,
+                           perm_string name,
+                           list<PLet::let_port_t*>*ports,
+                           PExpr*expr);
+
+extern PLet::let_port_t* pform_make_let_port(data_type_t*data_type,
+                                             perm_string name,
+                                             list<pform_range_t>*range,
+                                             PExpr*def);
 
 /*
  * Functions related to specify blocks.
@@ -580,6 +597,7 @@ extern void parm_to_defparam_list(const string&param);
  */
 extern bool get_time_unit(const char*cp, int &unit);
 extern int  pform_get_timeunit();
+extern int  pform_get_timeprec();
 extern void pform_set_timeunit(const char*txt, bool initial_decl);
 extern void pform_set_timeprec(const char*txt, bool initial_decl);
 /*

@@ -29,6 +29,7 @@
 
 # include  <typeinfo>
 # include  <cstdlib>
+# include  <cstring>
 # include  <iostream>
 # include  <sstream>
 # include  <list>
@@ -1319,12 +1320,24 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
       for (unsigned idx = 0 ;  idx < pins.size() ;  idx += 1) {
 	    bool unconnected_port = false;
+	    bool using_default = false;
 
 	    perm_string port_name = rmod->get_port_name(idx);
 
-	      // Skip unconnected module ports. This happens when a
-	      // null parameter is passed in.
+	      // If the port is unconnected, substitute the default
+	      // value. The parser ensures that a default value only
+	      // exists for input ports.
+	    if (pins[idx] == 0) {
+		  PExpr*default_value = rmod->get_port_default_value(idx);
+		  if (default_value) {
+			pins[idx] = default_value;
+			using_default = true;
+		  }
+	    }
 
+	      // Skip unconnected module ports. This happens when a
+	      // null parameter is passed in and there is no default 
+	      // value.
 	    if (pins[idx] == 0) {
 
 		  if (pins_fromwc[idx]) {
@@ -1504,10 +1517,11 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		       port is actually empty on the inside. We assume
 		       in that case that the port is input. */
 
-		  NetExpr*tmp_expr = elab_and_eval(des, scope, pins[idx], -1);
+		  NetExpr*tmp_expr = elab_and_eval(des, scope, pins[idx], -1, using_default);
 		  if (tmp_expr == 0) {
 			cerr << pins[idx]->get_fileline()
-			     << ": error: Failed to elaborate port expression."
+			     << ": error: Failed to elaborate port "
+			     << (using_default ? "default value." : "expression.")
 			     << endl;
 			des->errors += 1;
 			continue;
@@ -2561,18 +2575,16 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
 }
 
 /*
- * Assignments within program blocks can only write to certain types
- * of variables. We can only write to:
- *    - variables in a program block
- *    - static properties of a class
+ * Assignments within program blocks are supposed to be run
+ * in the Reactive region, but that is currently not supported
+ * so find out if we are assigning to something outside a
+ * program block and print a warning for that.
  */
 static bool lval_not_program_variable(const NetAssign_*lv)
 {
       while (lv) {
 	    NetScope*sig_scope = lv->scope();
-	    if (! sig_scope->program_block() && sig_scope->type()!=NetScope::CLASS)
-		  return true;
-
+	    if (! sig_scope->program_block()) return true;
 	    lv = lv->more;
       }
       return false;
@@ -2593,9 +2605,10 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
       if (lv == 0) return 0;
 
       if (scope->program_block() && lval_not_program_variable(lv)) {
-	    cerr << get_fileline() << ": error: Blocking assignments to "
-		 << "non-program variables are not allowed." << endl;
-	    des->errors += 1;
+	    cerr << get_fileline() << ": warning: Program blocking "
+	            "assignments are not currently scheduled in the "
+	            "Reactive region."
+	         << endl;
       }
 
 	/* If there is an internal delay expression, elaborate it. */
@@ -2797,22 +2810,6 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 }
 
 /*
- * Return true if any lvalue parts are in a program block scope.
- */
-static bool lval_is_program_variable(const NetAssign_*lv)
-{
-      while (lv) {
-	    NetScope*sig_scope = lv->sig()->scope();
-	    if (sig_scope->program_block())
-		  return true;
-
-	    lv = lv->more;
-      }
-
-      return false;
-}
-
-/*
  * Elaborate non-blocking assignments. The statement is of the general
  * form:
  *
@@ -2848,12 +2845,11 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
 
-      if (scope->program_block() && lval_is_program_variable(lv)) {
-	    cerr << get_fileline() << ": error: Non-blocking assignments to "
-		 << "program variables are not allowed." << endl;
-	    des->errors += 1;
-	      // This is an error, but we can let elaboration continue
-	      // because it would necessarily trigger other errors.
+      if (scope->program_block() && lval_not_program_variable(lv)) {
+	    cerr << get_fileline() << ": warning: Program non-blocking "
+	            "assignments are not currently scheduled in the "
+	            "Reactive-NBA region."
+	         << endl;
       }
 
       NetExpr*rv = elaborate_rval_(des, scope, 0, lv->expr_type(), count_lval_width(lv));
@@ -3371,7 +3367,8 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
       assert(scope);
 
       if (debug_elaborate)
-	    cerr << get_fileline() << ": debug: Elaborate condition statement"
+	    cerr << get_fileline() << ":  PCondit::elaborate: "
+		 << "Elaborate condition statement"
 		 << " with conditional: " << *expr_ << endl;
 
 	// Elaborate and try to evaluate the conditional expression.
@@ -3786,6 +3783,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
       use_path.pop_back();
 
       NetNet *net;
+      ivl_type_t cls_val = 0;
       const NetExpr *par;
       ivl_type_t par_type = 0;
       NetEvent *eve;
@@ -3803,7 +3801,7 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope,
 	// resolve to a class object. Note that the "this" symbol
 	// (internally represented as "@") is handled by there being a
 	// "this" object in the instance scope.
-      symbol_search(this, des, scope, use_path, net, par, eve, par_type);
+      symbol_search(this, des, scope, use_path, net, par, eve, par_type, cls_val);
 
       if (net == 0)
 	    return 0;
@@ -4193,6 +4191,107 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
       }
 
       return block;
+}
+
+static bool check_parm_is_const(NetExpr*param)
+{
+// FIXME: Are these actually needed and are others needed?
+//      if (dynamic_cast<NetEConstEnum*>(param)) { cerr << "Enum" << endl; return; }
+//      if (dynamic_cast<NetECString*>(param)) { cerr << "String" << endl; return; }
+      if (dynamic_cast<NetEConstParam*>(param)) return true;
+      if (dynamic_cast<NetECReal*>(param)) return true;
+      if (dynamic_cast<NetECRealParam*>(param)) return true;
+      if (dynamic_cast<NetEConst*>(param)) return true;
+
+      return false;
+}
+
+/* Elaborate an elaboration task. */
+bool PCallTask::elaborate_elab(Design*des, NetScope*scope) const
+{
+      assert(scope);
+      assert(path_.size() == 1);
+
+      unsigned parm_count = parms_.size();
+
+        /* Catch the special case that the elaboration task has no
+           parameters. The "()" string will be parsed as a single
+           empty parameter, when we really mean no parameters at all. */
+      if ((parm_count== 1) && (parms_[0] == 0))
+            parm_count = 0;
+
+      perm_string name = peek_tail_name(path_);
+
+      if (!gn_system_verilog()) {
+	    cerr << get_fileline() << ": error: Elaboration task '"
+	         << name << "' requires SystemVerilog." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      if (name != "$fatal" &&
+          name != "$error" &&
+          name != "$warning" &&
+          name != "$info") {
+	    cerr << get_fileline() << ": error: '" << name
+	         << "' is not a valid elaboration task." << endl;
+	    des->errors += 1;
+	    return true;
+      }
+
+      vector<NetExpr*>eparms (parm_count);
+
+      bool const_parms = true;
+      for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
+            PExpr*ex = parms_[idx];
+            if (ex != 0) {
+                  eparms[idx] = elab_sys_task_arg(des, scope, name, idx, ex);
+		  if (!check_parm_is_const(eparms[idx])) {
+			cerr << get_fileline() << ": error: Elaboration task "
+			     << name << " parameter [" << idx+1 << "] '"
+			     << *eparms[idx] << "' is not constant." << endl;
+			des->errors += 1;
+			const_parms = false;
+		  }
+            } else {
+                  eparms[idx] = 0;
+            }
+      }
+      if (!const_parms) return true;
+
+	/* Drop the $ and convert to upper case for the severity string */
+      string sstr = name.str()+1;
+      transform(sstr.begin(), sstr.end(), sstr.begin(), ::toupper);
+
+      cerr << sstr << ": " << get_fileline() << ":";
+      if (parm_count != 0) {
+	    cerr << " ";
+/*
+	    cerr << *eparms[0];
+	    for (unsigned idx = 1; idx < parm_count; idx += 1) {
+	    cerr << ", " << *eparms[idx];
+	    }
+*/
+// FIXME: Need to actually handle this.
+	    cerr << "sorry: Elaboration tasks with arguments "
+	            "are not currently supported.";
+	    des->errors += 1;
+      }
+      cerr << endl;
+
+      cerr << string(sstr.size(), ' ') << "  During elaboration  Scope: "
+           << scope->fullname() << endl;
+
+	// For a fatal mark as an error and fail elaboration.
+      if (name == "$fatal") {
+	    des->errors += 1;
+	    return false;
+      }
+
+	// For an error just set it as an error.
+      if (name == "$error") des->errors += 1;
+
+      return true;
 }
 
 /*
@@ -5694,6 +5793,38 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
       return trig;
 }
 
+NetProc* PNBTrigger::elaborate(Design*des, NetScope*scope) const
+{
+      assert(scope);
+
+      NetNet*       sig = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+
+      NetScope*found_in = symbol_search(this, des, scope, event_,
+					sig, par, eve);
+
+      if (found_in == 0) {
+	    cerr << get_fileline() << ": error: event <" << event_ << ">"
+		 << " not found." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (eve == 0) {
+	    cerr << get_fileline() << ": error:  <" << event_ << ">"
+		 << " is not a named event." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetExpr*dly = 0;
+      if (dly_) dly = elab_and_eval(des, scope, dly_, -1);
+      NetEvNBTrig*trig = new NetEvNBTrig(eve, dly);
+      trig->set_line(*this);
+      return trig;
+}
+
 /*
  * The while loop is fairly directly represented in the netlist.
  */
@@ -6127,6 +6258,12 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 		 ; sp != specify_paths.end() ; ++ sp ) {
 
 	    (*sp)->elaborate(des, scope);
+      }
+
+	// Elaborate the elaboration tasks.
+      for (list<PCallTask*>::const_iterator et = elab_tasks.begin()
+		 ; et != elab_tasks.end() ; ++ et ) {
+	    result_flag &= (*et)->elaborate_elab(des, scope);
       }
 
       return result_flag;
@@ -6702,7 +6839,7 @@ static void check_event_probe_width(const LineInfo *info, const NetEvProbe *prb)
       assert(prb->pin(0).is_linked());
       if (prb->edge() == NetEvProbe::ANYEDGE) return;
       if (prb->pin(0).nexus()->vector_width() > 1) {
-	    cerr << info->get_fileline() << " Warning: Synthesis wants "
+	    cerr << info->get_fileline() << " warning: Synthesis wants "
                     "the sensitivity list expressions for '";
 	    switch (prb->edge()) {
 	      case NetEvProbe::POSEDGE:
@@ -6732,7 +6869,7 @@ static void check_ff_sensitivity(const NetProc* statement)
 		  const NetEvProbe *prb = evt->probe(cprb);
 		  check_event_probe_width(evwt, prb);
 		  if (prb->edge() == NetEvProbe::ANYEDGE) {
-			cerr << evwt->get_fileline() << " Warning: Synthesis "
+			cerr << evwt->get_fileline() << " warning: Synthesis "
 			        "requires the sensitivity list of an "
 			        "always_ff process to only be edge "
 			        "sensitive. ";
