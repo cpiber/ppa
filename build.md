@@ -8,7 +8,7 @@
 
 Be sure to do this every once in a while. If you need new sources (in `/etc/apt/sources.list`), be sure to specify them here with `--othermirror` (see `man pbuilder`)
 
-`sudo pbuilder update --basetgz ../<series>.tgz`
+`sudo pbuilder update --basetgz ../<series>.tgz --override-config`
 
 Launchpad.net adds your own ppa, the main ppa of the series, security and updates.
 
