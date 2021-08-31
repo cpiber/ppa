@@ -1,0 +1,36 @@
+#!/usr/bin/make -f
+# See debhelper(7) (uncomment to enable)
+# output every command that modifies files on the build system.
+#export DH_VERBOSE = 1
+
+# https://salsa.debian.org/mpd-team/mpd/-/blob/master/debian/rules
+
+# no smbclient on hurd-i386 (#815441)
+ENABLE_SMBCLIENT=-Dsmbclient=enabled
+ifeq ($(DEB_HOST_ARCH), hurd-i386)
+    ENABLE_SMBCLIENT=-Dsmbclient=disabled
+endif
+
+export PATH := $(CURDIR)/bin:$(PATH)
+
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	tar -xzf debian/python/meson-0.59.1.tar.gz
+	mkdir $(CURDIR)/bin
+	ln -s $(CURDIR)/meson-0.59.1/meson.py $(CURDIR)/bin/meson
+	meson --version
+	CC=gcc-8 CXX=g++-8 dh_auto_configure -- $(ENABLE_SMBCLIENT)
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf output meson-0.59.1 bin
+
+
+# dh_make generated override targets
+# This is example for Cmake (See https://bugs.debian.org/641051 )
+#override_dh_auto_configure:
+#	dh_auto_configure -- #	-DCMAKE_LIBRARY_PATH=$(DEB_HOST_MULTIARCH)
+

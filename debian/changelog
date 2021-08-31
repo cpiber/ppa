@@ -1,0 +1,5 @@
+mpd (0.22.11-1~no-libmpdclient) bionic; urgency=medium
+
+  * Initial release
+
+ -- Constantin Piber <cp.piber@gmail.com>  Tue, 31 Aug 2021 00:08:03 +0200
