@@ -1,3 +1,9 @@
+mpd (0.22.11-2~-ppa1) bionic; urgency=medium
+
+  * Add libmpdclient, can cause dependency problems
+
+ -- Constantin Piber <cp.piber@gmail.com>  Tue, 31 Aug 2021 00:08:03 +0200
+
 mpd (0.22.11-1~no-libmpdclient) bionic; urgency=medium
 
   * Initial release

@@ -1,0 +1,4 @@
+mpd for Debian
+-------------
+
+Needs the bionic-security channel for building (gcc-8)
