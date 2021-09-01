@@ -1,0 +1,25 @@
+Source: ncmpcpp
+Section: sound
+Priority: optional
+Maintainer: Constantin Piber <cp.piber@gmail.com>
+Build-Depends: debhelper (>= 10), libmpdclient-dev, libboost-all-dev, libncursesw5-dev, libreadline-dev, libcurl4-openssl-dev, libfftw3-dev, libtag1-dev
+Standards-Version: 4.1.2
+Homepage: http://rybczak.net/ncmpcpp/
+Vcs-Git: https://github.com/ncmpcpp/ncmpcpp.git
+Vcs-Browser: https://github.com/ncmpcpp/ncmpcpp.git
+
+Package: ncmpcpp
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: mpd
+Description: featureful ncurses based MPD client inspired by ncmpc
+  Main features:
+  tag editor
+  playlist editor
+  easy to use search engine
+  media library
+  music visualizer
+  ability to fetch artist info from last.fm
+  new display mode
+  alternative user interface
+  ability to browse and add files from outside of MPD music directory …and a lot more minor functions.
