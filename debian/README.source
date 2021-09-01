@@ -1,10 +1,18 @@
 ncmpcpp for Debian
 -----------------
 
-<this file describes information about the source package, see Debian policy
-manual section 4.14. You WILL either need to modify or delete this file>
+featureful ncurses based MPD client inspired by ncmpc
 
+Main features:
+- tag editor
+- playlist editor
+- easy to use search engine
+- media library
+- music visualizer
+- ability to fetch artist info from last.fm
+- new display mode
+- alternative user interface
+- ability to browse and add files from outside of MPD music directory …and a lot more minor functions.
 
-
- -- Const <const@unknown>  Wed, 01 Sep 2021 15:46:59 +0200
+See `man ncmpcpp`.
 
