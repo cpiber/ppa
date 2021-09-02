@@ -1,3 +1,9 @@
+ncmpcpp (0.9.2-2) bionic; urgency=medium
+
+  * Debian files fixes
+
+ -- Constantin Piber <cp.piber@gmail.com>  Wed, 01 Sep 2021 15:46:59 +0200
+
 ncmpcpp (0.9.2-1) bionic; urgency=medium
 
   * Initial release 0.9.2
