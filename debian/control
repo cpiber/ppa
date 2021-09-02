@@ -1,0 +1,17 @@
+Source: vimpc
+Section: sound
+Priority: optional
+Maintainer: Constantin Piber <cp.piber@gmail.com>
+Build-Depends: debhelper (>= 10), pkgconf, libmpdclient-dev, libpcre3-dev, libcurl4-openssl-dev, libncursesw5-dev, libncurses5-dev, libtagc0-dev
+Standards-Version: 4.1.2
+Homepage: https://github.com/boysetsfrog/vimpc
+Vcs-Git: https://github.com/boysetsfrog/vimpc.git
+Vcs-Browser: https://github.com/boysetsfrog/vimpc.git
+
+Package: vimpc
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Suggests: mpd
+Description: Client for mpd with vi-like key bindings
+  vimpc provides an alternative to other mpd clients (such as ncmpc and ncmpcpp)
+  that tries to provide an interface similar to that of the vim text editor.
