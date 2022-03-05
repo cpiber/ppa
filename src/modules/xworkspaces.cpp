@@ -7,10 +7,10 @@
 #include "drawtypes/iconset.hpp"
 #include "drawtypes/label.hpp"
 #include "modules/meta/base.inl"
-#include "utils/factory.hpp"
 #include "utils/math.hpp"
 #include "x11/atoms.hpp"
 #include "x11/connection.hpp"
+#include "x11/icccm.hpp"
 
 POLYBAR_NS
 
@@ -35,24 +35,19 @@ namespace modules {
    */
   xworkspaces_module::xworkspaces_module(const bar_settings& bar, string name_)
       : static_module<xworkspaces_module>(bar, move(name_)), m_connection(connection::make()) {
+    m_router->register_action_with_data(EVENT_FOCUS, [this](const std::string& data) { action_focus(data); });
+    m_router->register_action(EVENT_NEXT, [this]() { action_next(); });
+    m_router->register_action(EVENT_PREV, [this]() { action_prev(); });
+
     // Load config values
     m_pinworkspaces = m_conf.get(name(), "pin-workspaces", m_pinworkspaces);
     m_click = m_conf.get(name(), "enable-click", m_click);
     m_scroll = m_conf.get(name(), "enable-scroll", m_scroll);
+    m_revscroll = m_conf.get(name(), "reverse-scroll", m_revscroll);
 
     // Initialize ewmh atoms
     if ((m_ewmh = ewmh_util::initialize()) == nullptr) {
       throw module_error("Failed to initialize ewmh atoms");
-    }
-
-    // Check if the WM supports _NET_CURRENT_DESKTOP
-    if (!ewmh_util::supports(m_ewmh->_NET_CURRENT_DESKTOP)) {
-      throw module_error("The WM does not support _NET_CURRENT_DESKTOP, aborting...");
-    }
-
-    // Check if the WM supports _NET_DESKTOP_VIEWPORT
-    if (!(m_monitorsupport = ewmh_util::supports(m_ewmh->_NET_DESKTOP_VIEWPORT)) && m_pinworkspaces) {
-      throw module_error("The WM does not support _NET_DESKTOP_VIEWPORT (required when `pin-workspaces = true`)");
     }
 
     // Add formats and elements
@@ -75,14 +70,19 @@ namespace modules {
       // clang-format on
     }
 
-    m_icons = factory_util::shared<iconset>();
-    m_icons->add(DEFAULT_ICON, factory_util::shared<label>(m_conf.get(name(), DEFAULT_ICON, ""s)));
+    m_icons = std::make_shared<iconset>();
+    m_icons->add(DEFAULT_ICON, std::make_shared<label>(m_conf.get(name(), DEFAULT_ICON, ""s)));
 
+    int i = 0;
     for (const auto& workspace : m_conf.get_list<string>(name(), "icon", {})) {
       auto vec = string_util::tokenize(workspace, ';');
       if (vec.size() == 2) {
-        m_icons->add(vec[0], factory_util::shared<label>(vec[1]));
+        m_icons->add(vec[0], std::make_shared<label>(vec[1]));
+      } else {
+        m_log.err("%s: Ignoring icon-%d because it has %s semicolons", name(), i, vec.size() > 2? "too many" : "too few");
       }
+
+      i++;
     }
 
     // Get list of monitors
@@ -90,8 +90,7 @@ namespace modules {
 
     // Get desktop details
     m_desktop_names = get_desktop_names();
-    m_current_desktop = ewmh_util::get_current_desktop();
-    m_current_desktop_name = m_desktop_names[m_current_desktop];
+    update_current_desktop();
 
     rebuild_desktops();
 
@@ -100,12 +99,14 @@ namespace modules {
     rebuild_desktop_states();
   }
 
+  void xworkspaces_module::update_current_desktop() {
+    m_current_desktop = ewmh_util::get_current_desktop();
+  }
+
   /**
    * Handler for XCB_PROPERTY_NOTIFY events
    */
   void xworkspaces_module::handle(const evt::property_notify& evt) {
-    std::lock_guard<std::mutex> lock(m_workspace_mutex);
-
     if (evt->atom == m_ewmh->_NET_CLIENT_LIST || evt->atom == m_ewmh->_NET_WM_DESKTOP) {
       rebuild_clientlist();
       rebuild_desktop_states();
@@ -115,13 +116,11 @@ namespace modules {
       rebuild_clientlist();
       rebuild_desktop_states();
     } else if (evt->atom == m_ewmh->_NET_CURRENT_DESKTOP) {
-      m_current_desktop = ewmh_util::get_current_desktop();
-      m_current_desktop_name = m_desktop_names[m_current_desktop];
+      update_current_desktop();
       rebuild_desktop_states();
     } else if (evt->atom == WM_HINTS) {
-      if (icccm_util::get_wm_urgency(m_connection, evt->window)) {
-        set_desktop_urgent(evt->window);
-      }
+      rebuild_urgent_hints();
+      rebuild_desktop_states();
     } else {
       return;
     }
@@ -145,8 +144,33 @@ namespace modules {
 
     // rebuild entire mapping of clients to desktops
     m_clients.clear();
+    m_windows.clear();
     for (auto&& client : newclients) {
-      m_clients[client] = ewmh_util::get_desktop_from_window(client);
+      auto desk = ewmh_util::get_desktop_from_window(client);
+      m_clients[client] = desk;
+      m_windows[desk]++;
+    }
+
+    rebuild_urgent_hints();
+  }
+
+  /**
+   * Goes through all clients and updates the urgent hints on the desktop they are on.
+   */
+  void xworkspaces_module::rebuild_urgent_hints() {
+    m_urgent_desktops.assign(m_desktop_names.size(), false);
+    for (auto&& client : ewmh_util::get_client_list()) {
+      auto desk = ewmh_util::get_desktop_from_window(client);
+      /*
+       * EWMH allows for 0xFFFFFFFF to be returned here, which means the window
+       * should appear on all desktops.
+       *
+       * We don't take those windows into account for the urgency hint because
+       * it would mark all workspaces as urgent.
+       */
+      if (desk < m_urgent_desktops.size()) {
+        m_urgent_desktops[desk] = m_urgent_desktops[desk] || icccm_util::get_wm_urgency(m_connection, client);
+      }
     }
   }
 
@@ -170,10 +194,7 @@ namespace modules {
      * We use this to map workspaces to viewports, desktop i is at position
      * ws_positions[i].
      */
-    vector<position> ws_positions;
-    if (m_monitorsupport) {
-      ws_positions = ewmh_util::get_desktop_viewports();
-    }
+    vector<position> ws_positions = ewmh_util::get_desktop_viewports();
 
     /*
      * Not all desktops were assigned a viewport, add (0, 0) for all missing
@@ -243,7 +264,9 @@ namespace modules {
 
     for (auto&& v : m_viewports) {
       for (auto&& d : v->desktops) {
-        if (d->index == m_current_desktop) {
+        if (m_urgent_desktops[d->index]) {
+          d->state = desktop_state::URGENT;
+        } else if (d->index == m_current_desktop) {
           d->state = desktop_state::ACTIVE;
         } else if (occupied_desks.count(d->index) > 0) {
           d->state = desktop_state::OCCUPIED;
@@ -255,6 +278,7 @@ namespace modules {
         d->label->reset_tokens();
         d->label->replace_token("%index%", to_string(d->index + 1));
         d->label->replace_token("%name%", m_desktop_names[d->index]);
+        d->label->replace_token("%nwin%", to_string(m_windows[d->index]));
         d->label->replace_token("%icon%", m_icons->get(m_desktop_names[d->index], DEFAULT_ICON)->get());
       }
     }
@@ -276,30 +300,6 @@ namespace modules {
   }
 
   /**
-   * Find window and set corresponding desktop to urgent
-   */
-  void xworkspaces_module::set_desktop_urgent(xcb_window_t window) {
-    auto desk = ewmh_util::get_desktop_from_window(window);
-    if (desk == m_current_desktop)
-      // ignore if current desktop is urgent
-      return;
-    for (auto&& v : m_viewports) {
-      for (auto&& d : v->desktops) {
-        if (d->index == desk && d->state != desktop_state::URGENT) {
-          d->state = desktop_state::URGENT;
-
-          d->label = m_labels.at(d->state)->clone();
-          d->label->reset_tokens();
-          d->label->replace_token("%index%", to_string(d->index + 1));
-          d->label->replace_token("%name%", m_desktop_names[d->index]);
-          d->label->replace_token("%icon%", m_icons->get(m_desktop_names[d->index], DEFAULT_ICON)->get());
-          return;
-        }
-      }
-    }
-  }
-
-  /**
    * Fetch and parse data
    */
   void xworkspaces_module::update() {}
@@ -308,22 +308,20 @@ namespace modules {
    * Generate module output
    */
   string xworkspaces_module::get_output() {
-    std::unique_lock<std::mutex> lock(m_workspace_mutex);
-
     // Get the module output early so that
     // the format prefix/suffix also gets wrapped
     // with the cmd handlers
     string output;
     for (m_index = 0; m_index < m_viewports.size(); m_index++) {
       if (m_index > 0) {
-        m_builder->space(m_formatter->get(DEFAULT_FORMAT)->spacing);
+        m_builder->spacing(m_formatter->get(DEFAULT_FORMAT)->spacing);
       }
       output += module::get_output();
     }
 
     if (m_scroll) {
-      m_builder->action(mousebtn::SCROLL_DOWN, *this, EVENT_PREV, "");
-      m_builder->action(mousebtn::SCROLL_UP, *this, EVENT_NEXT, "");
+      m_builder->action(mousebtn::SCROLL_DOWN, *this, m_revscroll ? EVENT_NEXT : EVENT_PREV, "");
+      m_builder->action(mousebtn::SCROLL_UP, *this, m_revscroll ? EVENT_PREV : EVENT_NEXT, "");
     }
 
     m_builder->append(output);
@@ -363,42 +361,61 @@ namespace modules {
     }
   }
 
-  /**
-   * Handle user input event
-   */
-  bool xworkspaces_module::input(const string& action, const string& data) {
-    std::lock_guard<std::mutex> lock(m_workspace_mutex);
+  void xworkspaces_module::action_focus(const string& data) {
+    focus_desktop(std::strtoul(data.c_str(), nullptr, 10));
+  }
 
-    vector<unsigned int> indexes;
+  void xworkspaces_module::action_next() {
+    focus_direction(true);
+  }
+
+  void xworkspaces_module::action_prev() {
+    focus_direction(false);
+  }
+
+  /**
+   * Focuses either the next or previous desktop.
+   *
+   * Will wrap around at the ends and go in the order the desktops are displayed.
+   */
+  void xworkspaces_module::focus_direction(bool next) {
+    unsigned int current_desktop{ewmh_util::get_current_desktop()};
+    int current_index = -1;
+
+    /*
+     * Desktop indices in the order they are displayed.
+     */
+    vector<unsigned int> indices;
+
     for (auto&& viewport : m_viewports) {
       for (auto&& desktop : viewport->desktops) {
-        indexes.emplace_back(desktop->index);
+        if (current_desktop == desktop->index) {
+          current_index = indices.size();
+        }
+
+        indices.emplace_back(desktop->index);
       }
     }
 
-    std::sort(indexes.begin(), indexes.end());
-
-    unsigned int new_desktop{0};
-    unsigned int current_desktop{ewmh_util::get_current_desktop()};
-
-    if (action == EVENT_FOCUS) {
-      new_desktop = std::strtoul(data.c_str(), nullptr, 10);
-    } else if (action == EVENT_NEXT) {
-      new_desktop = math_util::min<unsigned int>(indexes.back(), current_desktop + 1);
-      new_desktop = new_desktop == current_desktop ? indexes.front() : new_desktop;
-    } else if (action == EVENT_PREV) {
-      new_desktop = math_util::max<unsigned int>(indexes.front(), current_desktop - 1);
-      new_desktop = new_desktop == current_desktop ? indexes.back() : new_desktop;
+    if (current_index == -1) {
+      m_log.err("%s: Current desktop (%u) not found in list of desktops", name(), current_desktop);
+      return;
     }
 
+    int offset = next ? 1 : -1;
+
+    int new_index = (current_index + offset + indices.size()) % indices.size();
+    focus_desktop(indices.at(new_index));
+  }
+
+  void xworkspaces_module::focus_desktop(unsigned new_desktop) {
+    unsigned int current_desktop{ewmh_util::get_current_desktop()};
     if (new_desktop != current_desktop) {
       m_log.info("%s: Requesting change to desktop #%u", name(), new_desktop);
       ewmh_util::change_current_desktop(new_desktop);
     } else {
       m_log.info("%s: Ignoring change to current desktop", name());
     }
-
-    return true;
   }
 }  // namespace modules
 

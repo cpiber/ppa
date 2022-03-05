@@ -15,6 +15,12 @@ namespace modules {
 
   pulseaudio_module::pulseaudio_module(const bar_settings& bar, string name_)
       : event_module<pulseaudio_module>(bar, move(name_)) {
+    if (m_handle_events) {
+      m_router->register_action(EVENT_DEC, [this]() { action_dec(); });
+      m_router->register_action(EVENT_INC, [this]() { action_inc(); });
+      m_router->register_action(EVENT_TOGGLE, [this]() { action_toggle(); });
+    }
+
     // Load configuration values
     m_interval = m_conf.get(name(), "interval", m_interval);
 
@@ -22,7 +28,7 @@ namespace modules {
     bool m_max_volume = m_conf.get(name(), "use-ui-max", true);
 
     try {
-      m_pulseaudio = factory_util::unique<pulseaudio>(m_log, move(sink_name), m_max_volume);
+      m_pulseaudio = std::make_unique<pulseaudio>(m_log, move(sink_name), m_max_volume);
     } catch (const pulseaudio_error& err) {
       throw module_error(err.what());
     }
@@ -142,29 +148,16 @@ namespace modules {
     return true;
   }
 
-  bool pulseaudio_module::input(const string& action, const string&) {
-    if (!m_handle_events) {
-      return false;
-    }
+  void pulseaudio_module::action_inc() {
+    m_pulseaudio->inc_volume(m_interval);
+  }
 
-    try {
-      if (m_pulseaudio && !m_pulseaudio->get_name().empty()) {
-        if (action == EVENT_TOGGLE) {
-          m_pulseaudio->toggle_mute();
-        } else if (action == EVENT_INC) {
-          // cap above 100 (~150)?
-          m_pulseaudio->inc_volume(m_interval);
-        } else if (action == EVENT_DEC) {
-          m_pulseaudio->inc_volume(-m_interval);
-        } else {
-          return false;
-        }
-      }
-    } catch (const exception& err) {
-      m_log.err("%s: Failed to handle command (%s)", name(), err.what());
-    }
+  void pulseaudio_module::action_dec() {
+    m_pulseaudio->inc_volume(-m_interval);
+  }
 
-    return true;
+  void pulseaudio_module::action_toggle() {
+    m_pulseaudio->toggle_mute();
   }
 }  // namespace modules
 

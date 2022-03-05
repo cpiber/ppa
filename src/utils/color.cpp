@@ -1,5 +1,7 @@
 #include "utils/color.hpp"
 
+#include <algorithm>
+
 POLYBAR_NS
 
 /**
@@ -11,7 +13,7 @@ POLYBAR_NS
  * Colors without alpha channel will get an alpha channel of FF
  * The input does not have to start with '#'
  *
- * \returns Empty string for malformed input, either AA for the alpha only
+ * @returns Empty string for malformed input, either AA for the alpha only
  * input or an 8 character string of the expanded form AARRGGBB
  */
 static string normalize_hex(string hex) {
@@ -22,6 +24,11 @@ static string normalize_hex(string hex) {
   // We remove the hash because it makes processing easier
   if (hex[0] == '#') {
     hex.erase(0, 1);
+  }
+
+  // Check that only valid characters are used
+  if (!std::all_of(hex.cbegin(), hex.cend(), isxdigit)) {
+    return "";
   }
 
   if (hex.length() == 2) {
@@ -51,20 +58,20 @@ static string normalize_hex(string hex) {
   return hex;
 }
 
-rgba::rgba() : m_value(0), m_type(NONE) {}
-rgba::rgba(uint32_t value, color_type type) : m_value(value), m_type(type) {}
+rgba::rgba() : m_value(0), m_type(type::NONE) {}
+rgba::rgba(uint32_t value, enum type type) : m_value(value), m_type(type) {}
 rgba::rgba(string hex) {
   hex = normalize_hex(hex);
 
   if (hex.length() == 0) {
     m_value = 0;
-    m_type = NONE;
+    m_type = type::NONE;
   } else if (hex.length() == 2) {
     m_value = std::strtoul(hex.c_str(), nullptr, 16) << 24;
-    m_type = ALPHA_ONLY;
+    m_type = type::ALPHA_ONLY;
   } else {
     m_value = std::strtoul(hex.c_str(), nullptr, 16);
-    m_type = ARGB;
+    m_type = type::ARGB;
   }
 }
 
@@ -80,26 +87,34 @@ bool rgba::operator==(const rgba& other) const {
   }
 
   switch (m_type) {
-    case NONE:
+    case type::NONE:
       return true;
-    case ARGB:
+    case type::ARGB:
       return m_value == other.m_value;
-    case ALPHA_ONLY:
+    case type::ALPHA_ONLY:
       return alpha_i() == other.alpha_i();
     default:
       return false;
   }
 }
 
+bool rgba::operator!=(const rgba& other) const {
+  return !(*this == other);
+}
+
 rgba::operator uint32_t() const {
   return m_value;
+}
+
+rgba::operator bool() const {
+  return has_color();
 }
 
 uint32_t rgba::value() const {
   return this->m_value;
 }
 
-rgba::color_type rgba::type() const {
+enum rgba::type rgba::get_type() const {
   return m_type;
 }
 
@@ -136,7 +151,7 @@ uint8_t rgba::blue_i() const {
 }
 
 bool rgba::has_color() const {
-  return m_type != NONE;
+  return m_type != type::NONE;
 }
 
 /**
@@ -151,10 +166,10 @@ rgba rgba::apply_alpha_to(rgba other) const {
  * If this is an ALPHA_ONLY color, applies this alpha channel to the other
  * color, otherwise just returns this.
  *
- * \returns the new color if this is ALPHA_ONLY or a copy of this otherwise.
+ * @returns the new color if this is ALPHA_ONLY or a copy of this otherwise.
  */
 rgba rgba::try_apply_alpha_to(rgba other) const {
-  if (m_type == ALPHA_ONLY) {
+  if (m_type == type::ALPHA_ONLY) {
     return apply_alpha_to(other);
   }
 

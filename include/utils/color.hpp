@@ -11,18 +11,20 @@ POLYBAR_NS
  */
 class rgba {
  public:
-  enum color_type { NONE, ARGB, ALPHA_ONLY };
+  enum class type { NONE = 0, ARGB, ALPHA_ONLY };
 
   explicit rgba();
-  explicit rgba(uint32_t value, color_type type = ARGB);
+  explicit rgba(uint32_t value, type type = type::ARGB);
   explicit rgba(string hex);
 
   operator string() const;
   operator uint32_t() const;
+  operator bool() const;
   bool operator==(const rgba& other) const;
+  bool operator!=(const rgba& other) const;
 
   uint32_t value() const;
-  color_type type() const;
+  type get_type() const;
 
   double alpha_d() const;
   double red_d() const;
@@ -56,7 +58,7 @@ class rgba {
    *
    * Cannot be const because we have to assign to it in the constructor and initializer lists are not possible.
    */
-  color_type m_type{NONE};
+  enum type m_type { type::NONE };
 };
 
 namespace color_util {

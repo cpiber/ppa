@@ -114,6 +114,7 @@ as follows:
 * A draft PR is opened for the release branch. This PR MUST NOT be merged in
   GitHub's interface, it is only here for review, merging happens at the
   commandline.
+* A `draft release`_ is created in GitHub's release publishing tools
 * After approval, the GitHub release publishing tool is used to publish the
   release and tag the tip of the release branch (the release commit).
 * After the tag is created, the release branch is manually merged into
@@ -144,22 +145,62 @@ The release commit needs to update the version number in:
 
 * ``version.txt``
 
-The commit message contains the `Changelog`_ for this release.
+The release commit must also finalize the `Changelog`_ for this release.
 
 Changelog
 ~~~~~~~~~
 
-Each release should come with a changelog briefly explaining what has changed
-for the user. It should generally be separated into 'Deprecations', 'Features',
-and 'Fixes', with 'Breaking Changes' listed separately at the top.
+The ``CHANGELOG.md`` file at the root of the repo should already contain all the
+changes for the upcoming release in a format based on
+`keep a changelog <https://keepachangelog.com/en/1.0.0/>`_.
+For each release those changes should be checked to make sure we did not miss
+anything.
 
-See `old releases <https://github.com/polybar/polybar/releases>`_ for how to
-format the changelog.
+For all releases, a new section of the following form should be created below
+the ``Unreleased`` section:
+
+.. code-block:: md
+
+  ## [X.Y.Z] - YYYY-MM-DD
+
+In addition, the reference link for the release should be added and the
+reference link for the unreleased section should be updated at the bottom of the
+document:
+
+.. code-block:: md
+
+  [Unreleased]: https://github.com/polybar/polybar/compare/X.Y.Z...HEAD
+  [X.Y.Z]: https://github.com/polybar/polybar/releases/tag/X.Y.Z
+
+Since the release tag doesn't exist yet, both of these links will be invalid
+until the release is published.
+
+All changes from the ``Unreleased`` section that apply to this release should be
+moved into the new release section.
+For regular releases this is generally the entire ``Unreleased`` section, while
+for patch releases it will only be a few entries.
+
+The contents of the release section can be copied into the draft release in
+GitHub's release tool with a heading named ``## Changelog``.
 
 Since major releases generally break backwards compatibility in some way, their
 changelog should also prominently feature precisely what breaking changes were
 introduced. If suitable, maybe even separate documentation dedicated to the
 migration should be written.
+
+Draft Release
+~~~~~~~~~~~~~
+
+On `GitHub <https://github.com/polybar/polybar/releases/new>`_ a new release
+should be drafted.
+The release targets the tip of the release branch (the release commit), the
+name of the release and the tag is simply the release number.
+
+The content of the release message should contain the changelog copied from
+``CHANGELOG.md`` under the heading ``## Changelog``.
+In addition using GitHub's "Auto-generate release notes" feature, the list of
+new contributors should be generated and put at the end of the release notes.
+The generated list of PRs can be removed.
 
 After-Release Checklist
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -171,18 +212,19 @@ After-Release Checklist
   <https://github.com/polybar/polybar/issues/1971>`_. Mention any dependency
   changes and any changes to the build workflow. Also mention any new files are
   created by the installation.
-* Create a source archive named ``polybar-<version>.tar``.
-  The repository contains a script that automates this:
-
-.. code-block:: shell
-
-  ./common/release-archive.sh <version>
-
-* Update the github release with a download section that contains a link to
-  ``polybar-<version>.tar`` and its sha256.
+* Confirm that the release archive was added to the release.
+  We have a GitHub action workflow called 'Release Workflow' that on every
+  release automatically creates a release archive, uploads it to the release,
+  and adds a 'Download' section to the release body.
+  If this fails for some reason, it should be triggered manually.
 * Create a PR that updates the AUR ``PKGBUILD`` files for the ``polybar`` and
-  ``polybar-git`` packages (push after the ``.tar`` file was created).
-
+  ``polybar-git`` packages (push after the release archive is uploaded).
+* Close the `GitHub Milestone <https://github.com/polybar/polybar/milestones>`_
+  for the new release and move open issues (if any) to a later release.
+* Activate the version on `Read the Docs
+  <https://readthedocs.org/projects/polybar/versions/>`_ and deactivate all
+  previous versions for the same minor release (e.g. for 3.5.4, deactivate all
+  other 3.5.X versions).
 
 Deprecations
 ~~~~~~~~~~~~

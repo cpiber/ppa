@@ -8,24 +8,23 @@ A fast and easy-to-use tool for creating status bars.
 
 <p align="center">
 <a href="https://github.com/polybar/polybar/releases"><img src="https://img.shields.io/github/release/polybar/polybar.svg"></a>
+<a href="https://github.com/polybar/polybar/releases"><img alt="GitHub All Releases" src="https://img.shields.io/github/downloads/polybar/polybar/total" /></a>
 <a href="https://github.com/polybar/polybar/actions?query=workflow%3ACI"><img src="https://github.com/polybar/polybar/workflows/CI/badge.svg"></a>
+<a href="https://github.com/polybar/polybar/actions?query=workflow%3A%22Release+Workflow%22"><img src="https://github.com/polybar/polybar/workflows/Release%20Workflow/badge.svg?branch=master"></a>
 <a href="https://polybar.readthedocs.io"><img src="https://readthedocs.org/projects/polybar/badge/?version=latest"></a>
 <a href="https://gitter.im/polybar/polybar"><img src="https://badges.gitter.im/polybar/polybar.svg"></a>
 <a href="https://codecov.io/gh/polybar/polybar/branch/master"><img src="https://codecov.io/gh/polybar/polybar/branch/master/graph/badge.svg"></a>
 <a href="https://github.com/polybar/polybar/blob/master/LICENSE"><img src="https://img.shields.io/github/license/polybar/polybar.svg"></a>
 <a href="https://www.codetriage.com/polybar/polybar"><img src="https://www.codetriage.com/polybar/polybar/badges/users.svg"></a>
+<a href="https://opencollective.com/polybar"><img src="https://opencollective.com/polybar/tiers/badge.svg"></a>
 </p>
+
+**[Documentation](https://github.com/polybar/polybar/wiki/) | [Installation](#installation) | [Support](SUPPORT.md) | [Donate](#donations)**
 
 **Polybar** aims to help users build beautiful and highly customizable status bars
 for their desktop environment, without the need of having a black belt in shell scripting.
-Here are a few screenshots showing you what it can look like:
 
-[![sample screenshot](https://i.imgur.com/xvlw9iHt.png)](https://i.imgur.com/xvlw9iH.png)
-[![sample screenshot](https://i.imgur.com/cYQOuRrt.png)](https://i.imgur.com/cYQOuRr.png)
-[![sample screenshot](https://i.imgur.com/A6spiZZt.png)](https://i.imgur.com/A6spiZZ.png)
-[![sample screenshot](https://i.imgur.com/TY5a5r9t.png)](https://i.imgur.com/TY5a5r9.png)
-
-You can find polybar configs for these example images (and other configs) [here](https://github.com/jaagr/dots/tree/master/.local/etc/themer/themes).
+![default configuration screenshot](doc/_static/default.png)
 
 ## Table of Contents
 
@@ -34,12 +33,13 @@ You can find polybar configs for these example images (and other configs) [here]
 * [Contributing](#contributing)
 * [Getting started](#getting-started)
   * [Installation](#installation)
-  * [Configuration](#configuration)
-  * [Running](#running)
+  * [First Steps](#first-steps)
 * [Community](#community)
 * [Contributors](#contributors)
+* [Donations](#donations)
+  * [Sponsors](#sponsors)
+  * [Backers](#backers)
 * [License](#license)
-
 
 ## Introduction
 
@@ -77,18 +77,30 @@ Read our [contributing guidelines](CONTRIBUTING.md) for how to get started with 
 
 ## Getting started
 
+### Installation
+
 <a href="https://repology.org/metapackage/polybar">
     <img src="https://repology.org/badge/vertical-allrepos/polybar.svg" alt="Packaging status" align="right">
 </a>
 
-Polybar was already packaged for the distros listed below.
-If you can't find your distro here, you will have to [build from source](https://github.com/polybar/polybar/wiki/Compiling).
+Polybar is already available in the package manager for many repositories.
+We list some of the more prominent ones here.
+Also click the [image on the
+right](https://repology.org/project/polybar/versions) to see a more complete
+list of available polybar packages.
 
-If you are using **Debian** (unstable or testing), you can install [polybar](https://tracker.debian.org/pkg/polybar) using `sudo apt install polybar`.
-If you are using **Debian** (buster/stable), you need to enable [backports](https://wiki.debian.org/Backports) and then install using `sudo apt -t buster-backports install polybar`.
+If you are using **Debian** (bullseye/11/stable) or later, you can install [polybar](https://tracker.debian.org/pkg/polybar)
+using `sudo apt install polybar`. Newer releases of polybar are sometimes provided in the [backports](https://wiki.debian.org/Backports)
+repository for stable users, you need to enable [backports](https://wiki.debian.org/Backports) and then install using
+`sudo apt -t buster-backports install polybar`.
 
-If you are using **Arch Linux**, you can install the AUR package [polybar-git](https://aur.archlinux.org/packages/polybar-git/) to get the latest version, or
-[polybar](https://aur.archlinux.org/packages/polybar/) for the latest stable release.
+If you are using **Ubuntu** 20.10 (Groovy Gorilla) or later, you can install polybar
+using `sudo apt install polybar`.
+
+If you are using **Arch Linux**, you can install the AUR package
+[polybar](https://aur.archlinux.org/packages/polybar/) to get the latest
+version, or [polybar-git](https://aur.archlinux.org/packages/polybar-git/) for
+the most up-to-date (unstable) changes.
 
 If you are using **Void Linux**, you can install [polybar](https://github.com/void-linux/void-packages/blob/master/srcpkgs/polybar/template) using `xbps-install -S polybar`.
 
@@ -98,7 +110,14 @@ If you are using **Slackware**, polybar is available from the [SlackBuilds](http
 
 If you are using **Source Mage GNU/Linux**, polybar spell is available in test grimoire and can be installed via `cast polybar`.
 
-If you are using **openSUSE**, polybar is available from [OBS](https://build.opensuse.org/package/show/X11:Utilities/polybar/) repository. Package is available for openSUSE Leap 15.1, openSUSE Leap 15.2 and Tumbleweed.
+If you are using **openSUSE Tumbleweed**, polybar is available from the
+[official
+repositories](https://build.opensuse.org/package/show/openSUSE%3AFactory/polybar)
+and can be installed via `zypper install polybar`.
+
+If you are using **openSUSE Leap**, polybar is available from
+[OBS](https://build.opensuse.org/package/show/X11:Utilities/polybar/).
+The package is available for openSUSE Leap 15.1 and above.
 
 If you are using **FreeBSD**, [polybar](https://svnweb.freebsd.org/ports/head/x11/polybar/) can be installed using `pkg install polybar`. Make sure you are using the `latest` package branch.
 
@@ -106,37 +125,17 @@ If you are using **Gentoo**, both release and git-master versions are available 
 
 If you are using **Fedora**, you can install [polybar](https://src.fedoraproject.org/rpms/polybar) using `sudo dnf install polybar`.
 
-### Installation
+If you can't find your distro here, you will have to [build from source](https://github.com/polybar/polybar/wiki/Compiling).
 
-The [compiling page](https://github.com/polybar/polybar/wiki/Compiling) on the
-wiki describes all steps necessary to build and install polybar.
-
-### Configuration
-
-Details on how to setup and configure the bar and each module have been moved to [the wiki](https://github.com/polybar/polybar/wiki/Configuration).
-
-#### Install the example configuration
-Run the following inside the build directory:
-~~~ sh
-$ make userconfig
-~~~
-Or you can copy the example config from `/usr/share/doc/polybar/config` or ` /usr/local/share/doc/polybar/config` (depending on your install parameters)
-
-#### Launch the example bar
-  ~~~ sh
-  $ polybar example
-  ~~~
-
-### Running
-
-[See the wiki for details on how to run polybar](https://github.com/polybar/polybar/wiki).
+### First Steps
+[See the wiki for details on how to run and configure polybar](https://github.com/polybar/polybar/wiki).
 
 ## Community
 Want to get in touch?
 
 * Join our Gitter room at [gitter.im/polybar/polybar](https://gitter.im/polybar/polybar)
 * We have our own subreddit at [r/polybar](https://www.reddit.com/r/polybar).
-* Chat with us in the `#polybar` IRC channel on the `chat.freenode.net` server.
+* Chat with us in the `#polybar` IRC channel on the [`irc.libera.chat:6697`](https://libera.chat/) server.
 
 ## Contributors
 
@@ -153,6 +152,77 @@ Want to get in touch?
 
 
 ### [All Contributors](https://github.com/polybar/polybar/graphs/contributors)
+
+## Donations
+
+Polybar accepts donations through [open collective](https://opencollective.com/polybar).
+
+[Become a backer](https://opencollective.com/polybar) and support polybar!
+### Sponsors
+
+<a href="https://opencollective.com/polybar/sponsor/0/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/0/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/1/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/1/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/2/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/2/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/3/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/3/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/4/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/4/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/5/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/5/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/6/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/6/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/7/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/7/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/8/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/8/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/9/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/9/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/10/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/10/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/11/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/11/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/12/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/12/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/13/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/13/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/14/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/14/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/15/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/15/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/16/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/16/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/17/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/17/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/18/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/18/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/19/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/19/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/20/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/20/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/21/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/21/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/22/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/22/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/23/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/23/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/24/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/24/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/25/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/25/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/26/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/26/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/27/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/27/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/28/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/28/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/sponsor/29/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/sponsor/29/avatar.svg?requireActive=false"></a>
+
+### Backers
+
+<a href="https://opencollective.com/polybar/backer/0/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/0/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/1/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/1/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/2/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/2/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/3/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/3/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/4/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/4/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/5/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/5/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/6/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/6/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/7/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/7/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/8/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/8/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/9/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/9/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/10/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/10/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/11/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/11/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/12/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/12/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/13/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/13/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/14/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/14/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/15/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/15/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/16/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/16/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/17/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/17/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/18/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/18/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/19/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/19/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/20/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/20/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/21/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/21/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/22/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/22/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/23/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/23/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/24/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/24/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/25/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/25/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/26/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/26/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/27/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/27/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/28/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/28/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/polybar/backer/29/website?requireActive=false" target="_blank"><img src="https://opencollective.com/polybar/backer/29/avatar.svg?requireActive=false"></a>
 
 ## License
 

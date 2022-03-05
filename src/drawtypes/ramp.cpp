@@ -1,4 +1,5 @@
 #include "drawtypes/ramp.hpp"
+
 #include "utils/factory.hpp"
 #include "utils/math.hpp"
 
@@ -7,6 +8,12 @@ POLYBAR_NS
 namespace drawtypes {
   void ramp::add(label_t&& icon) {
     m_icons.emplace_back(forward<decltype(icon)>(icon));
+  }
+
+  void ramp::add(label_t&& icon, unsigned weight) {
+    while (weight--) {
+      m_icons.emplace_back(icon);
+    }
   }
 
   label_t ramp::get(size_t index) {
@@ -18,13 +25,18 @@ namespace drawtypes {
     return m_icons[math_util::cap<size_t>(index, 0, m_icons.size() - 1)];
   }
 
-  label_t ramp::get_by_percentage_with_borders(float percentage) {
+  label_t ramp::get_by_percentage_with_borders(int value, int min, int max) {
+    return get_by_percentage_with_borders(static_cast<float>(value), static_cast<float>(min), static_cast<float>(max));
+  }
+
+  label_t ramp::get_by_percentage_with_borders(float value, float min, float max) {
     size_t index;
-    if (percentage <= 0.0f) {
+    if (value <= min) {
       index = 0;
-    } else if (percentage >= 100.0f) {
+    } else if (value >= max) {
       index = m_icons.size() - 1;
     } else {
+      float percentage = math_util::percentage(value, min, max);
       index = percentage * (m_icons.size() - 2) / 100.0f + 1;
       index = math_util::cap<size_t>(index, 0, m_icons.size() - 1);
     }
@@ -54,13 +66,18 @@ namespace drawtypes {
     }
 
     for (size_t i = 0; i < icons.size(); i++) {
-      auto icon = load_optional_label(conf, section, name + "-" + to_string(i), icons[i]);
+      auto ramp_name = name + "-" + to_string(i);
+      auto icon = load_optional_label(conf, section, ramp_name, icons[i]);
       icon->copy_undefined(ramp_defaults);
-      vec.emplace_back(move(icon));
+
+      auto weight = conf.get(section, ramp_name + "-weight", 1U);
+      while (weight--) {
+        vec.emplace_back(icon);
+      }
     }
 
-    return factory_util::shared<drawtypes::ramp>(move(vec));
+    return std::make_shared<drawtypes::ramp>(move(vec));
   }
-}
+}  // namespace drawtypes
 
 POLYBAR_NS_END

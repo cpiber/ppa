@@ -32,33 +32,32 @@ enum class edge { NONE = 0, TOP, BOTTOM, LEFT, RIGHT, ALL };
 
 enum class alignment { NONE = 0, LEFT, CENTER, RIGHT };
 
-enum class attribute { NONE = 0, UNDERLINE, OVERLINE };
-
-enum class syntaxtag {
+enum class mousebtn {
   NONE = 0,
-  A,  // mouse action
-  B,  // background color
-  F,  // foreground color
-  T,  // font index
-  O,  // pixel offset
-  R,  // flip colors
-  o,  // overline color
-  u,  // underline color
-  P,  // Polybar control tag
+  LEFT,
+  MIDDLE,
+  RIGHT,
+  SCROLL_UP,
+  SCROLL_DOWN,
+  DOUBLE_LEFT,
+  DOUBLE_MIDDLE,
+  DOUBLE_RIGHT,
+  // Terminator value, do not use
+  BTN_COUNT,
 };
 
-/**
- * Values for polybar control tags
- *
- * %{P...} tags are tags for internal polybar control commands, they are not
- * part of the public interface
- */
-enum class controltag {
-  NONE = 0,
-  R,  // Reset all open tags (B, F, T, o, u). Used at module edges
-};
-
-enum class mousebtn { NONE = 0, LEFT, MIDDLE, RIGHT, SCROLL_UP, SCROLL_DOWN, DOUBLE_LEFT, DOUBLE_MIDDLE, DOUBLE_RIGHT };
+static inline mousebtn mousebtn_get_double(mousebtn btn) {
+  switch (btn) {
+    case mousebtn::LEFT:
+      return mousebtn::DOUBLE_LEFT;
+    case mousebtn::MIDDLE:
+      return mousebtn::DOUBLE_MIDDLE;
+    case mousebtn::RIGHT:
+      return mousebtn::DOUBLE_RIGHT;
+    default:
+      return mousebtn::NONE;
+  }
+}
 
 enum class strut {
   LEFT = 0,
@@ -85,9 +84,52 @@ struct size {
   unsigned int h{1U};
 };
 
+enum class spacing_type { SPACE, POINT, PIXEL };
+
+enum class extent_type { POINT, PIXEL };
+
+struct spacing_val {
+  spacing_type type{spacing_type::SPACE};
+  /**
+   * Numerical spacing value. Is truncated to an integer for pixels and spaces.
+   * Must be non-negative.
+   */
+  float value{0};
+
+  /**
+   * Any non-positive number is interpreted as no spacing.
+   */
+  operator bool() const {
+    return value > 0;
+  }
+};
+
+static constexpr spacing_val ZERO_SPACE = {spacing_type::SPACE, 0};
+
+/*
+ * Defines the signed length of something as either a number of pixels or points.
+ *
+ * Used for widths, heights, and offsets
+ */
+struct extent_val {
+  extent_type type{extent_type::PIXEL};
+  float value{0};
+
+  operator bool() const {
+    return value != 0;
+  }
+};
+
+static constexpr extent_val ZERO_PX_EXTENT = {extent_type::PIXEL, 0};
+
 struct side_values {
-  unsigned int left{0U};
-  unsigned int right{0U};
+  spacing_val left{ZERO_SPACE};
+  spacing_val right{ZERO_SPACE};
+};
+
+struct percentage_with_offset {
+  double percentage{0};
+  extent_val offset{ZERO_PX_EXTENT};
 };
 
 struct edge_values {
@@ -98,11 +140,13 @@ struct edge_values {
 };
 
 struct radius {
-  double top{0.0};
-  double bottom{0.0};
+  double top_left{0.0};
+  double top_right{0.0};
+  double bottom_left{0.0};
+  double bottom_right{0.0};
 
   operator bool() const {
-    return top != 0.0 || bottom != 0.0;
+    return top_left != 0.0 || top_right != 0.0 || bottom_left != 0.0 || bottom_right != 0.0;
   }
 };
 
@@ -121,21 +165,6 @@ struct action {
   string command{};
 };
 
-struct action_block : public action {
-  alignment align{alignment::NONE};
-  double start_x{0.0};
-  double end_x{0.0};
-  bool active{true};
-
-  unsigned int width() const {
-    return static_cast<unsigned int>(end_x - start_x + 0.5);
-  }
-
-  bool test(int point) const {
-    return static_cast<int>(start_x) <= point && static_cast<int>(end_x) > point;
-  }
-};
-
 struct bar_settings {
   explicit bar_settings() = default;
   bar_settings(const bar_settings& other) = default;
@@ -148,11 +177,14 @@ struct bar_settings {
   struct size size {
     1U, 1U
   };
+
+  double dpi_x{0.};
+  double dpi_y{0.};
+
   position pos{0, 0};
   position offset{0, 0};
-  side_values padding{0U, 0U};
-  side_values margin{0U, 0U};
-  side_values module_margin{0U, 0U};
+  side_values padding{ZERO_SPACE, ZERO_SPACE};
+  side_values module_margin{ZERO_SPACE, ZERO_SPACE};
   edge_values strut{0U, 0U, 0U, 0U};
 
   rgba background{0xFF000000};
@@ -165,13 +197,18 @@ struct bar_settings {
   std::unordered_map<edge, border_settings, enum_hash> borders{};
 
   struct radius radius {};
-  int spacing{0};
+  /**
+   * TODO deprecated
+   */
+  spacing_val spacing{ZERO_SPACE};
   label_t separator{};
 
   string wmname{};
   string locale{};
 
   bool override_redirect{false};
+
+  int double_click_interval{400};
 
   string cursor{};
   string cursor_click{};
@@ -181,12 +218,6 @@ struct bar_settings {
 
   bool dimmed{false};
   double dimvalue{1.0};
-
-  bool shaded{false};
-  struct size shade_size {
-    1U, 1U
-  };
-  position shade_pos{1U, 1U};
 
   const xcb_rectangle_t inner_area(bool abspos = false) const {
     xcb_rectangle_t rect = this->outer_area(abspos);

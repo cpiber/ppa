@@ -26,19 +26,20 @@ namespace modules {
   battery_module::battery_module(const bar_settings& bar, string name_)
       : inotify_module<battery_module>(bar, move(name_)) {
     // Load configuration values
-    m_fullat = math_util::min(m_conf.get(name(), "full-at", m_fullat), 100);
+    m_fullat = std::min(m_conf.get(name(), "full-at", m_fullat), 100);
+    m_lowat = std::max(m_conf.get(name(), "low-at", m_lowat), 0);
     m_interval = m_conf.get<decltype(m_interval)>(name(), "poll-interval", 5s);
-    m_lastpoll = chrono::system_clock::now();
+    m_lastpoll = chrono::steady_clock::now();
 
     auto path_adapter = string_util::replace(PATH_ADAPTER, "%adapter%", m_conf.get(name(), "adapter", "ADP1"s)) + "/";
     auto path_battery = string_util::replace(PATH_BATTERY, "%battery%", m_conf.get(name(), "battery", "BAT0"s)) + "/";
 
     // Make state reader
-    if (file_util::exists((m_fstate = path_adapter + "online"))) {
+    if (file_util::exists((m_fstate = path_battery + "status"))) {
+          m_state_reader =
+              make_unique<state_reader>([=] { return file_util::contents(m_fstate).compare(0, 8, "Charging") == 0; });
+    } else if (file_util::exists((m_fstate = path_adapter + "online"))) {
       m_state_reader = make_unique<state_reader>([=] { return file_util::contents(m_fstate).compare(0, 1, "1") == 0; });
-    } else if (file_util::exists((m_fstate = path_battery + "status"))) {
-      m_state_reader =
-          make_unique<state_reader>([=] { return file_util::contents(m_fstate).compare(0, 8, "Charging") == 0; });
     } else {
       throw module_error("No suitable way to get current charge state");
     }
@@ -116,6 +117,7 @@ namespace modules {
         {TAG_BAR_CAPACITY, TAG_RAMP_CAPACITY, TAG_ANIMATION_CHARGING, TAG_LABEL_CHARGING});
     m_formatter->add(FORMAT_DISCHARGING, TAG_LABEL_DISCHARGING,
         {TAG_BAR_CAPACITY, TAG_RAMP_CAPACITY, TAG_ANIMATION_DISCHARGING, TAG_LABEL_DISCHARGING});
+    m_formatter->add_optional(FORMAT_LOW, {TAG_BAR_CAPACITY, TAG_RAMP_CAPACITY, TAG_ANIMATION_LOW, TAG_LABEL_LOW});
     m_formatter->add(FORMAT_FULL, TAG_LABEL_FULL, {TAG_BAR_CAPACITY, TAG_RAMP_CAPACITY, TAG_LABEL_FULL});
 
     if (m_formatter->has(TAG_ANIMATION_CHARGING, FORMAT_CHARGING)) {
@@ -123,6 +125,9 @@ namespace modules {
     }
     if (m_formatter->has(TAG_ANIMATION_DISCHARGING, FORMAT_DISCHARGING)) {
       m_animation_discharging = load_animation(m_conf, name(), TAG_ANIMATION_DISCHARGING);
+    }
+    if (m_formatter->has(TAG_ANIMATION_LOW, FORMAT_LOW)) {
+      m_animation_low = load_animation(m_conf, name(), TAG_ANIMATION_LOW);
     }
     if (m_formatter->has(TAG_BAR_CAPACITY)) {
       m_bar_capacity = load_progressbar(m_bar, m_conf, name(), TAG_BAR_CAPACITY);
@@ -136,6 +141,9 @@ namespace modules {
     if (m_formatter->has(TAG_LABEL_DISCHARGING, FORMAT_DISCHARGING)) {
       m_label_discharging = load_optional_label(m_conf, name(), TAG_LABEL_DISCHARGING, "%percentage%%");
     }
+    if (m_formatter->has(TAG_LABEL_LOW, FORMAT_LOW)) {
+      m_label_low = load_optional_label(m_conf, name(), TAG_LABEL_LOW, "%percentage%%");
+    }
     if (m_formatter->has(TAG_LABEL_FULL, FORMAT_FULL)) {
       m_label_full = load_optional_label(m_conf, name(), TAG_LABEL_FULL, "%percentage%%");
     }
@@ -146,7 +154,8 @@ namespace modules {
 
     // Setup time if token is used
     if ((m_label_charging && m_label_charging->has_token("%time%")) ||
-        (m_label_discharging && m_label_discharging->has_token("%time%"))) {
+        (m_label_discharging && m_label_discharging->has_token("%time%")) ||
+        (m_label_low && m_label_low->has_token("%time%"))) {
       if (!m_bar.locale.empty()) {
         setlocale(LC_TIME, m_bar.locale.c_str());
       }
@@ -161,7 +170,7 @@ namespace modules {
   void battery_module::start() {
     this->inotify_module::start();
     // We only start animation thread if there is at least one animation.
-    if (m_animation_charging || m_animation_discharging) {
+    if (m_animation_charging || m_animation_discharging || m_animation_low) {
       m_subthread = thread(&battery_module::subthread, this);
     }
   }
@@ -186,7 +195,7 @@ namespace modules {
    */
   void battery_module::idle() {
     if (m_interval.count() > 0) {
-      auto now = chrono::system_clock::now();
+      auto now = chrono::steady_clock::now();
       if (chrono::duration_cast<decltype(m_interval)>(now - m_lastpoll) > m_interval) {
         m_lastpoll = now;
         m_log.info("%s: Polling values (inotify fallback)", name());
@@ -205,7 +214,7 @@ namespace modules {
     auto percentage = current_percentage();
 
     // Reset timer to avoid unnecessary polling
-    m_lastpoll = chrono::system_clock::now();
+    m_lastpoll = chrono::steady_clock::now();
 
     if (event != nullptr) {
       m_log.trace("%s: Inotify event reported for %s", name(), event->filename);
@@ -220,17 +229,11 @@ namespace modules {
     m_state = state;
     m_percentage = percentage;
 
-    const auto label = [this] {
-      if (m_state == battery_module::state::FULL) {
-        return m_label_full;
-      } else if (m_state == battery_module::state::DISCHARGING) {
-        return m_label_discharging;
-      } else {
-        return m_label_charging;
+    const auto replace_tokens = [&](label_t& label) {
+      if (!label) {
+        return;
       }
-    }();
 
-    if (label) {
       label->reset_tokens();
       label->replace_token("%percentage%", to_string(clamp_percentage(m_percentage, m_state)));
       label->replace_token("%percentage_raw%", to_string(m_percentage));
@@ -239,7 +242,12 @@ namespace modules {
       if (m_state != battery_module::state::FULL && !m_timeformat.empty()) {
         label->replace_token("%time%", current_time());
       }
-    }
+    };
+
+    replace_tokens(m_label_full);
+    replace_tokens(m_label_discharging);
+    replace_tokens(m_label_low);
+    replace_tokens(m_label_charging);
 
     return true;
   }
@@ -248,12 +256,15 @@ namespace modules {
    * Get the output format based on state
    */
   string battery_module::get_format() const {
-    if (m_state == battery_module::state::CHARGING) {
-      return FORMAT_CHARGING;
-    } else if (m_state == battery_module::state::DISCHARGING) {
-      return FORMAT_DISCHARGING;
-    } else {
-      return FORMAT_FULL;
+    switch (m_state) {
+      case battery_module::state::FULL: return FORMAT_FULL;
+      case battery_module::state::LOW:
+        if (m_formatter->has_format(FORMAT_LOW)) {
+          return FORMAT_LOW;
+        }
+        return FORMAT_DISCHARGING;
+      case battery_module::state::DISCHARGING: return FORMAT_DISCHARGING;
+      default: return FORMAT_CHARGING;
     }
   }
 
@@ -265,14 +276,18 @@ namespace modules {
       builder->node(m_animation_charging->get());
     } else if (tag == TAG_ANIMATION_DISCHARGING) {
       builder->node(m_animation_discharging->get());
+    } else if (tag == TAG_ANIMATION_LOW) {
+      builder->node(m_animation_low->get());
     } else if (tag == TAG_BAR_CAPACITY) {
       builder->node(m_bar_capacity->output(clamp_percentage(m_percentage, m_state)));
     } else if (tag == TAG_RAMP_CAPACITY) {
-      builder->node(m_ramp_capacity->get_by_percentage(clamp_percentage(m_percentage, m_state)));
+      builder->node(m_ramp_capacity->get_by_percentage_with_borders(m_percentage, m_lowat, m_fullat));
     } else if (tag == TAG_LABEL_CHARGING) {
       builder->node(m_label_charging);
     } else if (tag == TAG_LABEL_DISCHARGING) {
       builder->node(m_label_discharging);
+    } else if (tag == TAG_LABEL_LOW) {
+      builder->node(m_label_low);
     } else if (tag == TAG_LABEL_FULL) {
       builder->node(m_label_full);
     } else {
@@ -286,10 +301,11 @@ namespace modules {
    * Get the current battery state
    */
   battery_module::state battery_module::current_state() {
-    if (read(*m_capacity_reader) >= m_fullat) {
+    auto charge = read(*m_capacity_reader);
+    if (charge >= m_fullat) {
       return battery_module::state::FULL;
     } else if (!read(*m_state_reader)) {
-      return battery_module::state::DISCHARGING;
+      return charge <= m_lowat ? battery_module::state::LOW : battery_module::state::DISCHARGING;
     } else {
       return battery_module::state::CHARGING;
     }
@@ -358,6 +374,10 @@ namespace modules {
         m_animation_discharging->increment();
         broadcast();
         framerate = m_animation_discharging->framerate();
+      } else if (m_state == battery_module::state::LOW && m_animation_low) {
+        m_animation_low->increment();
+        broadcast();
+        framerate = m_animation_low->framerate();
       }
 
       // We don't count the the first part of the loop to be as close as possible to the framerate.

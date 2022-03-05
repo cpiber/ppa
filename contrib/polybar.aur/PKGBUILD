@@ -1,6 +1,6 @@
 # Maintainer: Patrick Ziegler <p.ziegler96@gmail.com>
 pkgname=polybar
-pkgver=3.4.3
+pkgver=3.5.7
 pkgrel=1
 pkgdesc="A fast and easy-to-use status bar"
 arch=("i686" "x86_64")
@@ -12,23 +12,25 @@ optdepends=("i3-wm: i3 module support"
             "ttf-unifont: Font used in example config"
             "siji-git: Font used in example config"
             "xorg-fonts-misc: Font used in example config")
-makedepends=("cmake" "git" "python" "pkg-config" "python-sphinx" "i3-wm")
+makedepends=("cmake" "python" "pkg-config" "python-sphinx" "python-packaging" "i3-wm")
 conflicts=("polybar-git")
 install="${pkgname}.install"
-source=(${url}/releases/download/${pkgver}/polybar-${pkgver}.tar)
-sha256sums=('d4ed121c1d3960493f8268f966d65a94d94c4646a4abb131687e37b63616822f')
+source=(${url}/releases/download/${pkgver}/${pkgname}-${pkgver}.tar.gz)
+sha256sums=('73210e6d74217acb953b253990b4302343b7b6a7870fe1da9a1855daa44123db')
+_dir="${pkgname}-${pkgver}"
 
 prepare() {
-  mkdir -p "${pkgname}/build"
+  mkdir -p "${_dir}/build"
 }
 
 build() {
-  cd "${pkgname}/build" || exit 1
-  cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release ..
+  cd "${_dir}/build" || exit 1
+  # Force cmake to use system python (to detect xcbgen)
+  cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=/usr/bin/python3 ..
   cmake --build .
 }
 
 package() {
-  cmake --build "${pkgname}/build" --target install -- DESTDIR="${pkgdir}"
-  install -Dm644 "${pkgname}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+  cmake --build "${_dir}/build" --target install -- DESTDIR="${pkgdir}"
+  install -Dm644 "${_dir}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }

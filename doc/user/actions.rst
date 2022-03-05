@@ -121,6 +121,23 @@ Available Actions
 The following modules have actions available. Most of them are already used by
 the module by default for click and scroll events.
 
+All Modules
+^^^^^^^^^^^
+
+These actions are available to all modules and are prefixed with ``module_``.
+
+:``module_show``, ``module_hide``:
+  Shows/Hides a module. The module is still running in the background when
+  hidden, it is just not drawn. The starting state can be configured with the
+  `hidden` configuration option.
+
+  .. versionadded:: 3.6.0
+
+:``module_toggle``:
+  Toggles the visibility of a module.
+
+  .. versionadded:: 3.6.0
+
 internal/date
 ^^^^^^^^^^^^^
 
@@ -240,6 +257,23 @@ custom/menu
 
            The data has the form ``N-M`` and the action will execute the command
            in ``menu-N-M-exec``.
+
+
+.. _actions-ipc:
+
+custom/ipc
+^^^^^^^^^^
+
+.. versionadded:: 3.6.0
+
+:``send``: *(Has Data)* Replace the contents of the module with the data passed in this action.
+:``hook``: *(Has Data)* Trigger the given hook.
+
+           The data is the 0-based index of the hook to trigger.
+:``next``: Switches to the next hook and wrap around when the last hook was displayed.
+:``prev``: Switches to the previous hook and wrap around when the first hook was displayed.
+:``reset``: Reset the module to its startup state: either empty or according to the ``initial`` setting.
+
 
 Deprecated Action Names
 -----------------------
