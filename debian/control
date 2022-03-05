@@ -3,7 +3,7 @@ Section: x11
 Priority: optional
 Maintainer: Michael Carlberg <c@rlberg.se>
 Uploaders: Constantin Piber <cp.piber@gmail.com>
-Build-Depends: debhelper (>= 10), cmake, python3, python3-sphinx, python3-packaging, libcairo2-dev, libxcb1-dev, libxcb-util0-dev, libxcb-randr0-dev, libxcb-composite0-dev, python-xcbgen, xcb-proto, libxcb-image0-dev, libxcb-ewmh-dev, libxcb-icccm4-dev, libxcb-xkb-dev, libxcb-xrm-dev, libxcb-cursor-dev, libasound2-dev, libpulse-dev, i3-wm, libjsoncpp-dev, libmpdclient-dev, libcurl4-openssl-dev, libnl-genl-3-dev, unifont
+Build-Depends: debhelper (>= 10), cmake, python3, python3-sphinx, python3-packaging, libcairo2-dev, libxcb1-dev, libxcb-util0-dev, libxcb-randr0-dev, libxcb-composite0-dev, python-xcbgen, xcb-proto, libxcb-image0-dev, libxcb-ewmh-dev, libxcb-icccm4-dev, libxcb-xkb-dev, libxcb-xrm-dev, libxcb-cursor-dev, libasound2-dev, libpulse-dev, i3-wm, libjsoncpp-dev, libmpdclient-dev, libcurl4-openssl-dev, libnl-genl-3-dev, unifont, libuv1-dev
 Standards-Version: 4.1.2
 Homepage: https://polybar.github.io/
 Vcs-Git: https://github.com/polybar/polybar.git

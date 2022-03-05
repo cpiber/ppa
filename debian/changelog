@@ -1,3 +1,9 @@
+polybar (3.6.1-1) bionic; urgency=medium
+
+  * Release 3.6.1
+
+ -- Constantin Piber <cp.piber@gmail.com>  Sat, 05 Mar 2022 14:51:13 +0100
+
 polybar (3.5.6-1) bionic; urgency=medium
 
   * Initial release 3.5.6
