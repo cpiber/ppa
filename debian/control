@@ -2,9 +2,8 @@ Source: rofi
 Section: x11
 Priority: optional
 Maintainer: Constantin Piber <cp.piber@gmail.com>
-Build-Depends: debhelper-compat (= 11), dh-autoreconf, bison, flex, libpango1.0-dev, libstartup-notification0-dev, libxkbcommon-dev (>= 0.5.0), libxkbcommon-x11-dev (>= 0.5.0), libxcb1-dev, libxcb-xkb-dev, libxcb-xinerama0-dev, libxcb-ewmh-dev, libxcb-icccm4-dev, libxcb-randr0-dev, libxcb-util0-dev, librsvg2-dev, libxcb-xrm-dev
+Build-Depends: debhelper-compat (= 11), dh-autoreconf, bison, flex, libpango1.0-dev, libstartup-notification0-dev, libxkbcommon-dev (>= 0.5.0), libxkbcommon-x11-dev (>= 0.5.0), libxcb1-dev, libxcb-xkb-dev, libxcb-xinerama0-dev, libxcb-ewmh-dev, libxcb-icccm4-dev, libxcb-randr0-dev, libxcb-util0-dev, librsvg2-dev, libxcb-xrm-dev, libxcb-cursor-dev
 Standards-Version: 4.4.1
-Homepage: <insert the upstream URL, if relevant>
 Vcs-Browser: https://github.com/davatorium/rofi
 Vcs-Git: https://github.com/davatorium/rofi.git
 
