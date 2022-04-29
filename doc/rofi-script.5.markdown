@@ -2,7 +2,7 @@
 
 ## NAME
 
-**rofi script mode** - Rofi format for scriptable modi. 
+**rofi script mode** - Rofi format for scriptable modi.
 
 
 ## DESCRIPTION
@@ -57,7 +57,7 @@ An integer number with the current state:
  * **0**: Initial call of script.
  * **1**: Selected an entry.
  * **2**: Selected a custom entry.
- * **10-28**: Custom keybinding 1-19
+ * **10-28**: Custom keybinding 1-19 ( need to be explicitly enabled by script ).
 
 ### `ROFI_INFO`
 
@@ -82,7 +82,8 @@ The following extra options exists:
  * **urgent**:      Mark rows as urgent. (for syntax see the urgent option in dmenu mode)
  * **active**:      Mark rows as active. (for syntax see the active option in dmenu mode)
  * **delim**:       Set the delimiter for for next rows. Default is '\n' and this option should finish with this. Only call this on first call of script, it is remembered for consecutive calls.
- * **no-custom**:   Only accept listed entries, ignore custom input.
+ * **no-custom**:   If set to 'true'; only accept listed entries, ignore custom input.
+ * **use-hot-keys**: If set to true, it enabled the Custom keybindings for script. Warning this breaks the normal rofi flow.
 
 ## Parsing row options
 
@@ -107,6 +108,18 @@ multiple entries can be passed using the `\x1f` separator.
 ```bash
     echo -en "aap\0icon\x1ffolder\x1finfo\x1ftest\n"
 ```
+
+## Executing external program
+
+If you want to launch an external program from the script, you need to make sure it is launched in the background.
+If not rofi will wait for its output (to display).
+
+In bash the best way to do this is using `coproc`.
+
+```bash
+ coproc ( myApp  > /dev/null  2>&1 )
+```
+
 
 ## DASH shell
 

@@ -3,6 +3,7 @@
  * User: Qball
  * Copyright: Dave Davenport
  */
+
 * {
     selected-normal-foreground:  rgba ( 245, 245, 245, 100 % );
     foreground:                  rgba ( 0, 43, 54, 100 % );
@@ -62,6 +63,10 @@ listview {
 element {
     border:  0;
     padding: 1px ;
+}
+element-text {
+    background-color: inherit;
+    text-color:       inherit;
 }
 element.normal.normal {
     background-color: @normal-background;

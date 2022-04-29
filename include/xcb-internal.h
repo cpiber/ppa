@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2020 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -29,38 +29,38 @@
 #define ROFI_XCB_INTERNAL_H
 /** Indication we accept that startup notification api is not yet frozen */
 #define SN_API_NOT_YET_FROZEN
+#include <glib.h>
 #include <libsn/sn.h>
 
+#include <libgwater-xcb.h>
 #include <xcb/xcb.h>
 #include <xcb/xcb_ewmh.h>
-#include "libgwater-xcb.h"
 
-#include "nkutils-bindings.h"
+#include <nkutils-bindings.h>
 
 /**
  * Structure to keep xcb stuff around.
  */
-struct _xcb_stuff
-{
-    GMainLoop             *main_loop;
-    GWaterXcbSource       *source;
-    xcb_connection_t      *connection;
-    xcb_ewmh_connection_t ewmh;
-    xcb_screen_t          *screen;
-    int                   screen_nbr;
-    SnDisplay             *sndisplay;
-    SnLauncheeContext     *sncontext;
-    struct _workarea      *monitors;
-    struct
-    {
-        /** Flag indicating first event */
-        uint8_t first_event;
-        /** Keyboard device id */
-        int32_t device_id;
-    }               xkb;
-    xcb_timestamp_t last_timestamp;
-    NkBindingsSeat  *bindings_seat;
-    gboolean        mouse_seen;
+struct _xcb_stuff {
+  GMainLoop *main_loop;
+  GWaterXcbSource *source;
+  xcb_connection_t *connection;
+  xcb_ewmh_connection_t ewmh;
+  xcb_screen_t *screen;
+  int screen_nbr;
+  SnDisplay *sndisplay;
+  SnLauncheeContext *sncontext;
+  struct _workarea *monitors;
+  struct {
+    /** Flag indicating first event */
+    uint8_t first_event;
+    /** Keyboard device id */
+    int32_t device_id;
+  } xkb;
+  xcb_timestamp_t last_timestamp;
+  NkBindingsSeat *bindings_seat;
+  gboolean mouse_seen;
+  xcb_window_t focus_revert;
 };
 
 #endif

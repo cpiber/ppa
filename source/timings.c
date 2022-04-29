@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2020 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -26,12 +26,12 @@
  */
 
 /** Log domain used by timings.*/
-#define G_LOG_DOMAIN    "Timings"
+#define G_LOG_DOMAIN "Timings"
 
-#include "config.h"
-#include <stdio.h>
-#include "rofi.h"
 #include "timings.h"
+#include "config.h"
+#include "rofi.h"
+#include <stdio.h>
 /**
  * Timer used to calculate time stamps.
  */
@@ -41,24 +41,23 @@ GTimer *global_timer = NULL;
  */
 double global_timer_last = 0.0;
 
-void rofi_timings_init ( void )
-{
-    global_timer = g_timer_new ();
-    double now = g_timer_elapsed ( global_timer, NULL );
-    g_debug ( "%4.6f (%2.6f): Started", now, 0.0 );
+void rofi_timings_init(void) {
+  global_timer = g_timer_new();
+  double now = g_timer_elapsed(global_timer, NULL);
+  g_debug("%4.6f (%2.6f): Started", now, 0.0);
 }
 
-void rofi_timings_tick ( const char *file, char const *str, int line, char const *msg )
-{
-    double now = g_timer_elapsed ( global_timer, NULL );
+void rofi_timings_tick(const char *file, char const *str, int line,
+                       char const *msg) {
+  double now = g_timer_elapsed(global_timer, NULL);
 
-    g_debug ( "%4.6f (%2.6f): %s:%s:%-3d %s", now, now - global_timer_last, file, str, line, msg );
-    global_timer_last = now;
+  g_debug("%4.6f (%2.6f): %s:%s:%-3d %s", now, now - global_timer_last, file,
+          str, line, msg);
+  global_timer_last = now;
 }
 
-void rofi_timings_quit ( void )
-{
-    double now = g_timer_elapsed ( global_timer, NULL );
-    g_debug ( "%4.6f (%2.6f): Stopped", now, 0.0 );
-    g_timer_destroy ( global_timer );
+void rofi_timings_quit(void) {
+  double now = g_timer_elapsed(global_timer, NULL);
+  g_debug("%4.6f (%2.6f): Stopped", now, 0.0);
+  g_timer_destroy(global_timer);
 }

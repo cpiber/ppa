@@ -29,73 +29,97 @@
 #define WIDGET_INTERNAL_H
 
 #include "theme.h"
+
+/** Macro for initializing the RofiDistance struct. */
+#define WIDGET_DISTANCE_INIT                                                   \
+  (RofiDistance){                                                              \
+    .base = {                                                                  \
+      .distance = 0,                                                           \
+      .type = ROFI_PU_PX,                                                      \
+      .modtype = ROFI_DISTANCE_MODIFIER_NONE,                                  \
+      .left = NULL,                                                            \
+      .right = NULL,                                                           \
+    },                                                                         \
+    .style = ROFI_HL_SOLID,                                                    \
+  }
+/* Macro for initializing the RofiPadding struct. */
+#define WIDGET_PADDING_INIT                                                    \
+  (RofiPadding){                                                               \
+    .top = WIDGET_DISTANCE_INIT,                                               \
+    .right = WIDGET_DISTANCE_INIT,                                             \
+    .bottom = WIDGET_DISTANCE_INIT,                                            \
+    .left = WIDGET_DISTANCE_INIT,                                              \
+  }
+
 /**
  * Data structure holding the internal state of the Widget
  */
-struct _widget
-{
-    /** The type of the widget */
-    WidgetType                  type;
-    /** X position relative to parent */
-    short                       x;
-    /** Y position relative to parent */
-    short                       y;
-    /** Width of the widget */
-    short                       w;
-    /** Height of the widget */
-    short                       h;
-    /** RofiPadding */
-    RofiPadding                 def_margin;
-    RofiPadding                 def_padding;
-    RofiPadding                 def_border;
-    RofiPadding                 def_border_radius;
-    RofiPadding                 margin;
-    RofiPadding                 padding;
-    RofiPadding                 border;
-    RofiPadding                 border_radius;
+struct _widget {
+  /** The type of the widget */
+  WidgetType type;
+  /** X position relative to parent */
+  short x;
+  /** Y position relative to parent */
+  short y;
+  /** Width of the widget */
+  short w;
+  /** Height of the widget */
+  short h;
+  /** RofiPadding */
+  RofiPadding def_margin;
+  RofiPadding def_padding;
+  RofiPadding def_border;
+  RofiPadding def_border_radius;
+  RofiPadding margin;
+  RofiPadding padding;
+  RofiPadding border;
+  RofiPadding border_radius;
 
-    /** enabled or not */
-    gboolean                    enabled;
-    /** Expand the widget when packed */
-    gboolean                    expand;
-    /** Place widget at end of parent */
-    gboolean                    end;
-    /** Parent widget */
-    struct _widget              *parent;
-    /** Internal */
-    gboolean                    need_redraw;
-    /** get width of widget implementation function */
-    int                         ( *get_width )( struct _widget * );
-    /** get height of widget implementation function */
-    int                         ( *get_height )( struct _widget * );
-    /** draw widget implementation function */
-    void                        ( *draw )( struct _widget *widget, cairo_t *draw );
-    /** resize widget implementation function */
-    void                        ( *resize )( struct _widget *, short, short );
-    /** update widget implementation function */
-    void                        ( *update )( struct _widget * );
+  /** Cursor that is set when the widget is hovered */
+  RofiCursorType cursor_type;
 
-    /** Handle mouse motion, used for dragging */
-    gboolean                    ( *motion_notify )( struct _widget *, gint x, gint y );
+  /** enabled or not */
+  gboolean enabled;
+  /** Expand the widget when packed */
+  gboolean expand;
+  /** Place widget at end of parent */
+  gboolean end;
+  /** Parent widget */
+  struct _widget *parent;
+  /** Internal */
+  gboolean need_redraw;
+  /** get width of widget implementation function */
+  int (*get_width)(struct _widget *);
+  /** get height of widget implementation function */
+  int (*get_height)(struct _widget *);
+  /** draw widget implementation function */
+  void (*draw)(struct _widget *widget, cairo_t *draw);
+  /** resize widget implementation function */
+  void (*resize)(struct _widget *, short, short);
+  /** update widget implementation function */
+  void (*update)(struct _widget *);
 
-    int                         ( *get_desired_height )( struct _widget * );
-    int                         ( *get_desired_width )( struct _widget * );
+  /** Handle mouse motion, used for dragging */
+  gboolean (*motion_notify)(struct _widget *, gint x, gint y);
 
-    void                        ( *set_state ) ( struct _widget *, const char * );
+  int (*get_desired_height)(struct _widget *, const int width);
+  int (*get_desired_width)(struct _widget *, const int height);
 
-    /** widget find_mouse_target callback */
-    widget_find_mouse_target_cb find_mouse_target;
-    /** widget trigger_action callback */
-    widget_trigger_action_cb    trigger_action;
-    /** user data for find_mouse_target and trigger_action callback */
-    void                        *trigger_action_cb_data;
+  void (*set_state)(struct _widget *, const char *);
 
-    /** Free widget callback */
-    void                        ( *free )( struct _widget *widget );
+  /** widget find_mouse_target callback */
+  widget_find_mouse_target_cb find_mouse_target;
+  /** widget trigger_action callback */
+  widget_trigger_action_cb trigger_action;
+  /** user data for find_mouse_target and trigger_action callback */
+  void *trigger_action_cb_data;
 
-    /** Name of widget (used for theming) */
-    char                        *name;
-    const char                  *state;
+  /** Free widget callback */
+  void (*free)(struct _widget *widget);
+
+  /** Name of widget (used for theming) */
+  char *name;
+  const char *state;
 };
 
 /**
@@ -107,7 +131,8 @@ struct _widget
  * Initializes the widget structure.
  *
  */
-void widget_init ( widget *wid, widget *parent, WidgetType type, const char *name );
+void widget_init(widget *wid, widget *parent, WidgetType type,
+                 const char *name);
 
 /**
  * @param widget The widget handle.
@@ -115,7 +140,7 @@ void widget_init ( widget *wid, widget *parent, WidgetType type, const char *nam
  *
  * Set the state of the widget.
  */
-void widget_set_state ( widget *widget, const char *state );
+void widget_set_state(widget *widget, const char *state);
 
 /**
  * @param wid The widget handle.
@@ -124,7 +149,7 @@ void widget_set_state ( widget *widget, const char *state );
  *
  * @returns the left padding in pixels.
  */
-int widget_padding_get_left ( const widget *wid );
+int widget_padding_get_left(const widget *wid);
 
 /**
  * @param wid The widget handle.
@@ -133,7 +158,7 @@ int widget_padding_get_left ( const widget *wid );
  *
  * @returns the right padding in pixels.
  */
-int widget_padding_get_right ( const widget *wid );
+int widget_padding_get_right(const widget *wid);
 
 /**
  * @param wid The widget handle.
@@ -142,7 +167,7 @@ int widget_padding_get_right ( const widget *wid );
  *
  * @returns the top padding in pixels.
  */
-int widget_padding_get_top ( const widget *wid );
+int widget_padding_get_top(const widget *wid);
 
 /**
  * @param wid The widget handle.
@@ -151,7 +176,7 @@ int widget_padding_get_top ( const widget *wid );
  *
  * @returns the bottom padding in pixels.
  */
-int widget_padding_get_bottom ( const widget *wid );
+int widget_padding_get_bottom(const widget *wid);
 
 /**
  * @param wid The widget handle.
@@ -160,7 +185,7 @@ int widget_padding_get_bottom ( const widget *wid );
  *
  * @returns the widget width, excluding padding.
  */
-int widget_padding_get_remaining_width ( const widget *wid );
+int widget_padding_get_remaining_width(const widget *wid);
 /**
  * @param wid The widget handle.
  *
@@ -168,7 +193,7 @@ int widget_padding_get_remaining_width ( const widget *wid );
  *
  * @returns the widget height, excluding padding.
  */
-int widget_padding_get_remaining_height ( const widget *wid );
+int widget_padding_get_remaining_height(const widget *wid);
 /**
  * @param wid The widget handle.
  *
@@ -176,7 +201,7 @@ int widget_padding_get_remaining_height ( const widget *wid );
  *
  * @returns the top and bottom padding of the widget in pixels.
  */
-int widget_padding_get_padding_height ( const widget *wid );
+int widget_padding_get_padding_height(const widget *wid);
 /**
  * @param wid The widget handle.
  *
@@ -184,5 +209,5 @@ int widget_padding_get_padding_height ( const widget *wid );
  *
  * @returns the left and right padding of the widget in pixels.
  */
-int widget_padding_get_padding_width ( const widget *wid );
+int widget_padding_get_padding_width(const widget *wid);
 #endif // WIDGET_INTERNAL_H

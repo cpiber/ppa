@@ -1,10 +1,14 @@
-ronn = find_program('ronn', required: false)
-if ronn.found()
+gomd2man = find_program('go-md2man', required: false)
+if gomd2man.found()
     run_target('update-manpage',
-        command: [ ronn, '--roff', files(
+        command: [ 'meson_build_manpages.sh', files(
             'rofi.1.markdown',
             'rofi-theme-selector.1.markdown',
             'rofi-theme.5.markdown',
+            'rofi-dmenu.5.markdown',
+            'rofi-keys.5.markdown',
+            'rofi-script.5.markdown',
+            'rofi-sensible-terminal.1.markdown'
         )]
     )
 endif

@@ -40,14 +40,6 @@ Settings config = {
 #else
     .modi                      = "run,ssh",
 #endif
-    /** Border width around the window. */
-    .menu_bw                   = 1,
-    /** The width of the switcher. (0100 in % > 100 in pixels) */
-    .menu_width                = 50,
-    /** Maximum number of options to show. */
-    .menu_lines                = 15,
-    /** Number of columns */
-    .menu_columns              = 1,
     /** Font */
     .menu_font                 = "mono 12",
 
@@ -81,8 +73,6 @@ Settings config = {
      *
      */
     .location                  = WL_CENTER,
-    /** Padding between elements */
-    .padding                   = 5,
     /** Y offset */
     .y_offset                  = 0,
     /** X offset */
@@ -112,10 +102,10 @@ Settings config = {
     /** Parse ~/.ssh/known_hosts file in ssh view. */
     .parse_known_hosts         = TRUE,
     /** Modi to combine into one view. */
-    .combi_modi      = "window,run",
-    .tokenize        = TRUE,
-    .matching        = "normal",
-    .matching_method = MM_NORMAL,
+    .combi_modi                = "window,run",
+    .tokenize                  = TRUE,
+    .matching                  = "normal",
+    .matching_method           = MM_NORMAL,
 
     /** Desktop entries to match in drun */
     .drun_match_fields         = "name,generic,exec,categories,keywords",
@@ -132,38 +122,23 @@ Settings config = {
     .window_match_fields       = "all",
     /** Monitor */
     .monitor                   = "-5",
-    /** set line margin */
-    .line_margin  = 2,
-    .line_padding = 1,
     /** Set filter */
     .filter                    = NULL,
-    /** Separator style: dash/solid */
-    .separator_style           = "dash",
-    /** Hide scrollbar */
-    .hide_scrollbar         = FALSE,
-    .fullscreen             = FALSE,
-    .fake_transparency      = FALSE,
-    .dpi                    = -1,
-    .threads                = 0,
-    .scroll_method          = 0,
-    .scrollbar_width        = 8,
-    .fake_background        = "screenshot",
-    .window_format          = "{w}    {c}   {t}",
-    .click_to_exit          = TRUE,
-    .show_match             = TRUE,
-    .theme                  = NULL,
-    .color_normal           = NULL,
-    .color_active           = NULL,
-    .color_urgent           = NULL,
-    .color_window           = NULL,
-    .plugin_path            = PLUGIN_PATH,
-    .max_history_size       = 25,
-    .combi_hide_mode_prefix = FALSE,
+    .dpi                       = -1,
+    .threads                   = 0,
+    .scroll_method             = 0,
+    .window_format             = "{w}    {c}   {t}",
+    .click_to_exit             = TRUE,
+    .theme                     = NULL,
+    .plugin_path               = PLUGIN_PATH,
+    .max_history_size          = 25,
+    .combi_hide_mode_prefix    = FALSE,
+    .combi_display_format      = "{mode} {text}",
 
     .matching_negate_char      = '-',
 
-    .cache_dir        = NULL,
-    .window_thumbnail = FALSE,
+    .cache_dir                 = NULL,
+    .window_thumbnail          = FALSE,
 
     /** drun cache */
     .drun_use_desktop_cache    = FALSE,
@@ -173,5 +148,9 @@ Settings config = {
     .benchmark_ui              = FALSE,
 
     /** normalize match */
-    .normalize_match           = FALSE
+    .normalize_match           = FALSE,
+    /** steal focus */
+    .steal_focus               = FALSE,
+    /** fallback icon */
+    .application_fallback_icon = NULL
 };

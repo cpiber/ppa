@@ -1,5 +1,5 @@
 project('rofi', 'c',
-    version: '1.6.1',
+    version: '1.7.3',
     meson_version: '>=0.47.0',
     license: [ 'MIT' ],
     default_options: [
@@ -41,6 +41,8 @@ plugins_deps = [
     dependency('cairo'),
 ]
 
+dep_lm = c_compiler.find_library('m', required : false)
+
 deps = [
     plugins_deps,
     dependency('gio-unix-2.0'),
@@ -48,27 +50,26 @@ deps = [
     dependency('pangocairo'),
     dependency('xkbcommon'),
     dependency('gdk-pixbuf-2.0'),
+    dep_lm,
 ]
 
 
-gwxcb = subproject('xcb')
+libgwater = subproject('libgwater')
 # XCB stuff
 deps += [
-    gwxcb.get_variable('libgwater_xcb'),
+    libgwater.get_variable('libgwater_xcb'),
+    dependency('xcb'),
     dependency('xcb-aux'),
     dependency('xcb-xkb'),
     dependency('xkbcommon-x11'),
     dependency('xcb-ewmh'),
     dependency('xcb-icccm'),
-    dependency('xcb-xrm'),
     dependency('xcb-randr'),
+    dependency('xcb-cursor'),
     dependency('xcb-xinerama'),
     dependency('cairo-xcb'),
     dependency('libstartup-notification-1.0'),
 ]
-
-libgif = c_compiler.find_library('libgif', required: false)
-deps += [ libgif ]
 
 check = dependency('check', version: '>= 0.11.0', required: get_option('check'))
 
@@ -80,7 +81,6 @@ header_conf.set_quoted('GETTEXT_PACKAGE', meson.project_name())
 header_conf.set_quoted('PACKAGE_BUGREPORT', 'https://github.com/davatorium/rofi/')
 header_conf.set_quoted('PACKAGE_URL', 'https://reddit.com/r/qtools/')
 
-header_conf.set('THEME_CONVERTER', true)
 header_conf.set('_GNU_SOURCE', true)
 
 header_conf.set('USE_NK_GIT_VERSION', true)
@@ -89,7 +89,6 @@ header_conf.set('GLIB_VERSION_MIN_REQUIRED', '(G_ENCODE_VERSION(@0@,@1@))'.forma
 header_conf.set('GLIB_VERSION_MAX_ALLOWED', '(G_ENCODE_VERSION(@0@,@1@))'.format(glib_min_major, glib_min_minor))
 
 header_conf.set('ENABLE_DRUN', get_option('drun'))
-header_conf.set('HAVE_LIBGIF', libgif.found())
 header_conf.set('WINDOW_MODE', get_option('window'))
 
 header_conf.set_quoted('MANPAGE_PATH', join_paths(get_option('prefix'), get_option('mandir')))
@@ -135,7 +134,7 @@ flex = generator(find_program('flex'),
 )
 bison = generator(find_program('bison'),
     output: [ '@BASENAME@.c', '@BASENAME@.h' ],
-    arguments: [ '-d', '@INPUT@', '--defines=@OUTPUT1@', '--output=@OUTPUT0@' ]
+    arguments: [ '--verbose', '-d', '@INPUT@', '--defines=@OUTPUT1@', '--output=@OUTPUT0@' ]
 )
 
 rofi_sources = files(
@@ -233,6 +232,8 @@ install_man(
     'doc/rofi-sensible-terminal.1',
     'doc/rofi-script.5',
     'doc/rofi-theme.5',
+    'doc/rofi-dmenu.5',
+    'doc/rofi-keys.5',
 )
 
 install_data(
@@ -249,6 +250,7 @@ install_data(
     'themes/blue.rasi',
     'themes/c64.rasi',
     'themes/dmenu.rasi',
+    'themes/docu.rasi',
     'themes/glue_pro_blue.rasi',
     'themes/gruvbox-common.rasi',
     'themes/gruvbox-dark-hard.rasi',
@@ -264,6 +266,8 @@ install_data(
     'themes/solarized.rasi',
     'themes/solarized_alternate.rasi',
     'themes/fancy.rasi',
+    'themes/iggy.rasi',
+    'themes/iggy.jpg',
     install_dir: themedir
 )
 
@@ -296,6 +300,8 @@ test('helper_pidfile test', executable('helper_pidfile.test', [
     ],
     objects: rofi.extract_objects([
         'config/config.c',
+        'source/theme.c',
+        'source/css-colors.c',
         'source/helper.c',
         'source/xrmoptions.c',
         'source/rofi-types.c',
@@ -308,11 +314,13 @@ test('widget test', executable('widget.test', [
         'test/widget-test.c',
         theme_parser,
         theme_lexer,
+        default_theme,
     ],
     objects: rofi.extract_objects([
         'source/widgets/widget.c',
         'source/widgets/textbox.c',
         'source/theme.c',
+        'source/css-colors.c',
         'source/rofi-types.c',
         'source/css-colors.c',
         'source/helper.c',
@@ -325,11 +333,13 @@ test('box test', executable('box.test', [
         'test/box-test.c',
         theme_parser,
         theme_lexer,
+        default_theme,
     ],
     objects: rofi.extract_objects([
         'source/widgets/widget.c',
         'source/widgets/box.c',
         'source/theme.c',
+        'source/css-colors.c',
         'source/rofi-types.c',
         'source/css-colors.c',
         'config/config.c',
@@ -341,11 +351,13 @@ test('scrollbar test', executable('scrollbar.test', [
         'test/scrollbar-test.c',
         theme_parser,
         theme_lexer,
+        default_theme,
     ],
     objects: rofi.extract_objects([
         'source/widgets/widget.c',
         'source/widgets/scrollbar.c',
         'source/theme.c',
+        'source/css-colors.c',
         'source/rofi-types.c',
         'source/css-colors.c',
         'config/config.c',
@@ -357,11 +369,13 @@ test('textbox test', executable('textbox.test', [
         'test/textbox-test.c',
         theme_parser,
         theme_lexer,
+        default_theme,
     ],
     objects: rofi.extract_objects([
         'source/widgets/widget.c',
         'source/widgets/textbox.c',
         'source/theme.c',
+        'source/css-colors.c',
         'source/rofi-types.c',
         'source/css-colors.c',
         'source/helper.c',
@@ -375,6 +389,8 @@ test('helper test', executable('helper.test', [
     ],
     objects: rofi.extract_objects([
         'config/config.c',
+        'source/theme.c',
+        'source/css-colors.c',
         'source/helper.c',
         'source/xrmoptions.c',
         'source/rofi-types.c',
@@ -387,6 +403,8 @@ test('helper_expand test', executable('helper_expand.test', [
     ],
     objects: rofi.extract_objects([
         'config/config.c',
+        'source/theme.c',
+        'source/css-colors.c',
         'source/helper.c',
         'source/xrmoptions.c',
         'source/rofi-types.c',
@@ -399,6 +417,8 @@ test('helper_config_cmdline_parser test', executable('helper_config_cmdline_pars
     ],
     objects: rofi.extract_objects([
         'config/config.c',
+        'source/theme.c',
+        'source/css-colors.c',
         'source/helper.c',
         'source/xrmoptions.c',
         'source/rofi-types.c',
@@ -413,12 +433,14 @@ if check.found()
             'test/theme-parser-test.c',
             theme_lexer,
             theme_parser,
+            default_theme,
         ],
         objects: rofi.extract_objects([
             'config/config.c',
             'source/helper.c',
             'source/xrmoptions.c',
             'source/theme.c',
+            'source/css-colors.c',
             'source/rofi-types.c',
             'source/css-colors.c',
         ]),
@@ -432,6 +454,8 @@ if check.found()
             'config/config.c',
             'source/dialogs/help-keys.c',
             'source/helper.c',
+            'source/theme.c',
+            'source/css-colors.c',
             'source/mode.c',
             'source/xrmoptions.c',
             'source/rofi-types.c',
@@ -446,6 +470,8 @@ if check.found()
         objects: rofi.extract_objects([
             'config/config.c',
             'source/helper.c',
+            'source/theme.c',
+            'source/css-colors.c',
             'source/xrmoptions.c',
             'source/rofi-types.c',
         ]),
@@ -453,20 +479,6 @@ if check.found()
     ))
 endif
 
-
-run_target('test-x', command: [ 'test/run_all_tests.sh' ], depends: [ rofi ])
-
-uncrustify = find_program('uncrustify', required: false)
-if uncrustify.found()
-    run_target('indent',
-        command: [
-            uncrustify,
-            '-c', join_paths(meson.source_root(), 'data', 'uncrustify.cfg'),
-            '--replace',
-            rofi_sources
-        ],
-    )
-endif
 
 rofi_sources += theme_lexer_sources
 rofi_sources += theme_parser_sources

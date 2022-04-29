@@ -37,14 +37,46 @@
 #include <mode-private.h>
 #include <dialogs/help-keys.h>
 #include <xkbcommon/xkbcommon.h>
+#include "theme.h"
 #include "rofi.h"
 #include "display.h"
 #include "xcb.h"
+#include "widgets/textbox.h"
 #include <keyb.h>
 #include <helper.h>
 
 #include <check.h>
+#include "rofi-icon-fetcher.h"
 
+ThemeWidget *rofi_theme = NULL;
+
+uint32_t rofi_icon_fetcher_query ( const char *name, const int size )
+{
+  return 0;
+}
+uint32_t rofi_icon_fetcher_query_advanced ( const char *name, const int wsize, const int hsize )
+{
+  return 0;
+}
+void rofi_clear_error_messages ( void ) {}
+cairo_surface_t * rofi_icon_fetcher_get ( const uint32_t uid )
+{
+  return NULL;
+}
+
+gboolean rofi_theme_parse_string ( const char *string )
+{
+  return FALSE;
+}
+
+double textbox_get_estimated_char_height ( void )
+{
+  return 16.0;
+}
+double textbox_get_estimated_ch ( void )
+{
+  return 9.0;
+}
 void rofi_add_error_message ( G_GNUC_UNUSED GString *msg )
 {
 }
@@ -57,11 +89,6 @@ int rofi_view_error_dialog ( const char *msg, G_GNUC_UNUSED int markup )
     fputs ( msg, stderr );
     return TRUE;
 }
-int textbox_get_estimated_char_height ( void );
-int textbox_get_estimated_char_height ( void )
-{
-    return 16;
-}
 void rofi_view_get_current_monitor ( G_GNUC_UNUSED int *width, G_GNUC_UNUSED int *height )
 {
 
@@ -70,9 +97,12 @@ RofiViewState * rofi_view_get_active ( void )
 {
     return NULL;
 }
-gboolean rofi_view_trigger_action ( G_GNUC_UNUSED RofiViewState *state, G_GNUC_UNUSED BindingsScope scope, G_GNUC_UNUSED guint action )
+gboolean rofi_view_check_action ( G_GNUC_UNUSED RofiViewState *state, G_GNUC_UNUSED BindingsScope scope, G_GNUC_UNUSED guint action )
 {
     return FALSE;
+}
+void rofi_view_trigger_action ( G_GNUC_UNUSED RofiViewState *state, G_GNUC_UNUSED BindingsScope scope, G_GNUC_UNUSED guint action )
+{
 }
 
 void display_startup_notification ( G_GNUC_UNUSED RofiHelperExecuteContext *context, G_GNUC_UNUSED GSpawnChildSetupFunc *child_setup, G_GNUC_UNUSED gpointer *user_data )
@@ -98,7 +128,7 @@ static void test_mode_setup ( void )
 {
     ck_assert_int_eq ( mode_init ( &help_keys_mode ), TRUE);
 }
-static void test_mode_teardown (void )
+static void test_mode_teardown ( void )
 {
     mode_destroy ( &help_keys_mode );
 }
@@ -119,8 +149,8 @@ END_TEST
 START_TEST(test_mode_num_items)
 {
     unsigned int rows = mode_get_num_entries ( &help_keys_mode);
-    ck_assert_int_eq ( rows, 72);
-    for ( unsigned int i =0; i < rows; i++  ){
+    ck_assert_int_eq ( rows, 74);
+    for ( unsigned int i =0; i < rows; i++ ) {
         int state = 0;
         GList *list = NULL;
         char *v = mode_get_display_value ( &help_keys_mode, i, &state, &list, TRUE );
@@ -193,7 +223,6 @@ static Suite * mode_suite (void)
 
     return s;
 }
-
 
 int main ( G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv )
 {

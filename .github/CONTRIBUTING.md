@@ -5,12 +5,12 @@ tone will be closed without discussion. Everybody has it own way of working;
 What might be the norm for you, might not be for others. Therefore be verbose in
 your description.
 
-
 **The issue tracker is for bugs only.**
 
 This is an attempt to keep the issue tracker clean and searchable.
 
 Questions or discussions about new features belong on
+[GITHUB Discussions](https://github.com/davatorium/rofi/discussions) or
 [FORUM](https://reddit.com/r/qtools/),
 [IRC](https://webchat.freenode.net/?channels=#rofi), frequently asked questions
 will be added to the [F.A.Q](https://github.com/DaveDavenport/rofi/wiki#faq) on
@@ -20,6 +20,7 @@ Questions filled in on the bug tracker will be marked `question`, locked and
 closed.
 
 It is preferred to have feature requests discussed via
+[GITHUB Discussions](https://github.com/davatorium/rofi/discussions) or
 [FORUM](https://reddit.com/r/qtools/) or
 [IRC](https://webchat.freenode.net/?channels=#rofi) first.
 
@@ -54,8 +55,6 @@ Issue high-jacking, e.g. adding a request/issue to an existing issue, is very
 disruptive.
 Please create a new issue, if it is similar it will be marked duplicate.
 
-
-
 # Creating a feature request
 
 
@@ -72,10 +71,10 @@ When reporting a feature request include the following information:
 * A use-case for the feature.
 
 If possible try to explain how you would expect to use feature.
-For example, should it be a configuration option or a hot-key. 
+For example, should it be a configuration option or a hot-key.
 
 Requesting a feature is no guarantee it will be added.
- 
+
 **Please do not submit reports related to wayland, see
 [here](https://github.com/DaveDavenport/rofi/wiki/Wayland) for more
 information.**

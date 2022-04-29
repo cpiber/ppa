@@ -37,6 +37,8 @@
 #include "xcb-internal.h"
 #include "rofi.h"
 #include "settings.h"
+#include "widgets/textbox.h"
+#include "rofi-icon-fetcher.h"
 
 static int       test = 0;
 
@@ -47,10 +49,47 @@ static int       test = 0;
 #define TASSERTE( a, b )    {                                                            \
         if ( ( a ) == ( b ) ) {                                                          \
             printf ( "Test %i passed (%s == %s) (%u == %u)\n", ++test, # a, # b, a, b ); \
-        }else {                                                                          \
+        } else {                                                                         \
             printf ( "Test %i failed (%s == %s) (%u != %u)\n", ++test, # a, # b, a, b ); \
             abort ( );                                                                   \
         }                                                                                \
+}
+#include "theme.h"
+ThemeWidget *rofi_theme = NULL;
+uint32_t rofi_icon_fetcher_query ( const char *name, const int size )
+{
+  return 0;
+}
+uint32_t rofi_icon_fetcher_query_advanced ( const char *name, const int wsize, const int hsize )
+{
+  return 0;
+}
+
+cairo_surface_t * rofi_icon_fetcher_get ( const uint32_t uid )
+{
+  return NULL;
+}
+void rofi_clear_error_messages (void )
+{
+}
+
+gboolean rofi_theme_parse_string ( const char *string )
+{
+  return FALSE;
+}
+
+double textbox_get_estimated_char_height ( void )
+{
+  return 12.0;
+}
+void rofi_view_get_current_monitor ( int *width, int *height )
+{
+*width = 1920;
+*height = 1080;
+}
+double textbox_get_estimated_ch ( void )
+{
+  return 9.0;
 }
 void rofi_add_error_message ( G_GNUC_UNUSED GString *msg )
 {
@@ -70,7 +109,7 @@ void display_startup_notification ( G_GNUC_UNUSED RofiHelperExecuteContext *cont
 {
 }
 
-int main ( G_GNUC_UNUSED int argc, G_GNUC_UNUSED char ** argv )
+int main ( G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv )
 {
 
     if ( setlocale ( LC_ALL, "" ) == NULL ) {
@@ -97,12 +136,12 @@ int main ( G_GNUC_UNUSED int argc, G_GNUC_UNUSED char ** argv )
     TASSERT ( strcmp ( list[9], "4" ) == 0 );
 
     cmd_set_arguments ( llength, list);
-    TASSERT( find_arg ( "-e")  == 2 );
-    TASSERT( find_arg ( "-x")  == -1 );
+    TASSERT ( find_arg ( "-e") == 2 );
+    TASSERT ( find_arg ( "-x") == -1 );
     char *str;
-    TASSERT( find_arg_str ( "-e", &str)  == TRUE );
+    TASSERT ( find_arg_str ( "-e", &str) == TRUE );
     TASSERT ( str == list[3] );
-    TASSERT( find_arg_str ( "-x", &str)  == FALSE );
+    TASSERT ( find_arg_str ( "-x", &str) == FALSE );
     // Should be unmodified.
     TASSERT ( str == list[3] );
 
