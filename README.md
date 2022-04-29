@@ -21,3 +21,5 @@ git remote add polybar https://github.com/polybar/polybar.git
 git remote add rofi https://github.com/davatorium/rofi.git
 git remote add vimpc https://github.com/boysetsfrog/vimpc.git
 ```
+
+NOTE: None of the source code in other branches is my property. I have only written some of the debian files.
