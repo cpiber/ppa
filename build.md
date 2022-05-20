@@ -32,3 +32,9 @@ deb will be in `/var/cache/pbuilder/result`, all other files will have a copy in
 `debsign <changesfile>`
 
 `dput ppa:<user>/<ppa> <changesfile>` ([Uploading](https://help.launchpad.net/Packaging/PPA/Uploading))
+
+
+# Useful Links
+
+https://www.debian.org/doc/manuals/maint-guide/update.en.html#newupstream
+
