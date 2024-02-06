@@ -1,5 +1,7 @@
 # Building the package
 
+See also [the debian manual](https://www.debian.org/doc/manuals/debmake-doc/)
+
 ## create persistent build environment (only once)
 
 `sudo pbuilder create --debootstrapopts --variant=buildd --distribution <series> --basetgz ../<series>.tgz` (e.g. `focal`)
@@ -12,7 +14,7 @@ Be sure to do this every once in a while. If you need new sources (in `/etc/apt/
 
 Launchpad.net adds your own ppa, the main ppa of the series, security and updates.
 
-## create orig tar and init debian (already done in this repo)
+## create orig tar and init debian
 
 `dh_make --createorig -p <name>_<version>`
 
