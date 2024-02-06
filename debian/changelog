@@ -1,11 +1,10 @@
-bluez (5.72-0ubuntu1.1) UNRELEASED; urgency=medium
+bluez (5.72-ppa1.1) jammy; urgency=medium
 
-  * Non-maintainer upload.
   * Add experimental flag
 
  -- Constantin Piber <cp.piber@gmail.com>  Tue, 06 Feb 2024 15:02:07 +0100
 
-bluez (5.72-0ubuntu1) jammy; urgency=medium
+bluez (5.72-ppa1) jammy; urgency=medium
 
   * New upstream release 5.72
     - Fix issue with BAP and handling stream IO linking.
@@ -17,7 +16,7 @@ bluez (5.72-0ubuntu1) jammy; urgency=medium
 
  -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
 
-bluez (5.71-0ubuntu1) jammy; urgency=medium
+bluez (5.71-ppa1) jammy; urgency=medium
 
   * New upstream release 5.71
     - Fix issue with not registering CSIS service.
@@ -26,7 +25,7 @@ bluez (5.71-0ubuntu1) jammy; urgency=medium
 
  -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
 
-bluez (5.70-0ubuntu1) jammy; urgency=medium
+bluez (5.70-ppa1) jammy; urgency=medium
 
   * New upstream release 5.70
     - Fix issue with not sending GATT confirmations.
@@ -36,7 +35,7 @@ bluez (5.70-0ubuntu1) jammy; urgency=medium
 
  -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
 
-bluez (5.69-0ubuntu1) jammy; urgency=medium
+bluez (5.69-ppa1) jammy; urgency=medium
 
   * New upstream release 5.69
     - Fix issue with BAP enabling state correctly when resuming.
@@ -47,14 +46,14 @@ bluez (5.69-0ubuntu1) jammy; urgency=medium
 
  -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
 
-bluez (5.68-0ubuntu1) jammy; urgency=medium
+bluez (5.68-ppa1) jammy; urgency=medium
 
   * New upstream release 5.68
     - Fix issue with A2DP and handling of Transport.Acquire.
 
  -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
 
-bluez (5.67-0ubuntu1) jammy; urgency=medium
+bluez (5.67-ppa1) jammy; urgency=medium
 
   * New upstream release 5.67
     - Fix issue with BAP and initiating QoS and Enable procedures.
@@ -72,7 +71,7 @@ bluez (5.67-0ubuntu1) jammy; urgency=medium
 
  -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
 
-bluez (5.66-0ubuntu1) jammy; urgency=medium
+bluez (5.66-ppa1) jammy; urgency=medium
 
   * New upstream release 5.66
     - Fix issue with A2DP and transport connection collisions.
@@ -84,7 +83,7 @@ bluez (5.66-0ubuntu1) jammy; urgency=medium
 
  -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
 
-bluez (5.65-0ubuntu1) jammy; urgency=medium
+bluez (5.65-ppa1) jammy; urgency=medium
 
   * New upstream release 5.65
     - Fix issue with A2DP cache invalidation handling.

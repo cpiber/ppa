@@ -27,6 +27,6 @@ lib/udev/rules.d/97-hid2hci.rules
 attrib/gatttool usr/bin
 #-- for systemd
 lib/systemd/system/bluetooth.service
-etc/dbus-1/system.d/bluetooth.conf
+usr/share/dbus-1/system.d/bluetooth.conf etc/dbus-1/system.d/bluetooth.conf
 usr/share/dbus-1/system-services/org.bluez.service
 debian/source_bluez.py usr/share/apport/package-hooks

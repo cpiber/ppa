@@ -2,7 +2,6 @@ Source: bluez
 Section: admin
 Priority: optional
 Maintainer: Constantin Piber <cp.piber@gmail.com>
-Original-Maintainer: Ubuntu Bluetooth team <ubuntu-bluetooth@lists.ubuntu.com>
 XSBC-Original-Maintainer: Debian Bluetooth Maintainers <pkg-bluetooth-maintainers@lists.alioth.debian.org>
 Uploaders: Nobuhiro Iwamatsu <iwamatsu@debian.org>
 Build-Depends: debhelper (>= 9.20160709),
@@ -21,6 +20,7 @@ Build-Depends: debhelper (>= 9.20160709),
 	systemd,
 	libebook1.2-dev (>= 3.12),
 	python3-docutils,
+        python3-pygments,
 	libjson-c-dev
 Vcs-Git: https://git.launchpad.net/~bluetooth/bluez
 Vcs-Browser: https://git.launchpad.net/~bluetooth/bluez
