@@ -13,6 +13,5 @@ ubuntu_error_restart.patch
 raspi-bcm43xx-load-firmware.patch
 raspi-bcm43xx-3wire.patch
 raspi-cypress-305-bdaddr.patch
-CVE-2023-45866.patch
 
 add-bluetoothd-experimential-flag.patch

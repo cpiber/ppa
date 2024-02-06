@@ -8,20 +8,11 @@ Description: Patches for loading the bcm43xx firmware
  also introduces a short wait after the firmware load before the module is
  reset.
 
-Index: bluez/tools/hciattach_bcm43xx.c
+Index: ppa/tools/hciattach_bcm43xx.c
 ===================================================================
---- bluez.orig/tools/hciattach_bcm43xx.c
-+++ bluez/tools/hciattach_bcm43xx.c
-@@ -31,7 +31,7 @@
- #include "hciattach.h"
- 
- #ifndef FIRMWARE_DIR
--#define FIRMWARE_DIR "/etc/firmware"
-+#define FIRMWARE_DIR "/lib/firmware"
- #endif
- 
- #define FW_EXT ".hcd"
-@@ -356,9 +356,6 @@ int bcm43xx_init(int fd, int def_speed,
+--- ppa.orig/tools/hciattach_bcm43xx.c
++++ ppa/tools/hciattach_bcm43xx.c
+@@ -352,9 +352,6 @@ int bcm43xx_init(int fd, int def_speed,
  	if (bcm43xx_locate_patch(FIRMWARE_DIR, chip_name, fw_path)) {
  		fprintf(stderr, "Patch not found, continue anyway\n");
  	} else {
@@ -31,3 +22,16 @@ Index: bluez/tools/hciattach_bcm43xx.c
  		if (bcm43xx_load_firmware(fd, fw_path))
  			return -1;
  
+Index: ppa/tools/hciattach.h
+===================================================================
+--- ppa.orig/tools/hciattach.h
++++ ppa/tools/hciattach.h
+@@ -41,7 +41,7 @@
+ #define HCI_UART_VND_DETECT	5
+ 
+ #ifndef FIRMWARE_DIR
+-#define FIRMWARE_DIR "/etc/firmware"
++#define FIRMWARE_DIR "/lib/firmware"
+ #endif
+ 
+ int read_hci_event(int fd, unsigned char *buf, int size);

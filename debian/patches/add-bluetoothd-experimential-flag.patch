@@ -1,7 +1,9 @@
 ===================================================================
---- a/src/bluetooth.service.in
-+++ b/src/bluetooth.service.in
-@@ -6,7 +6,7 @@ ConditionPathIsDirectory=/sys/class/bluetooth
+Index: ppa/src/bluetooth.service.in
+===================================================================
+--- ppa.orig/src/bluetooth.service.in
++++ ppa/src/bluetooth.service.in
+@@ -6,7 +6,7 @@ ConditionPathIsDirectory=/sys/class/blue
  [Service]
  Type=dbus
  BusName=org.bluez
@@ -9,4 +11,4 @@
 +ExecStart=@pkglibexecdir@/bluetoothd --experimental
  NotifyAccess=main
  #WatchdogSec=10
- #Restart=on-failure
+ Restart=on-failure
