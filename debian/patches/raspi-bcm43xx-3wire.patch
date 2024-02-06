@@ -1,0 +1,22 @@
+Author: Simon Long <simon@raspberrypi.org>
+Forwarded: https://patchwork.kernel.org/project/bluetooth/patch/20201218190609.107898-2-dave.jones@canonical.com/
+Last-Update: 2017-04-05
+Description: Patches to add BCM43xx 3-wire variant
+ This patch adds the bcm43xx-3wire variant to the hciattach tool; this is
+ for use when the mini-UART (which lacks flow-control) is used instead of the
+ PL011 UART to drive the bluetooth module
+
+Index: bluez/tools/hciattach.c
+===================================================================
+--- bluez.orig/tools/hciattach.c
++++ bluez/tools/hciattach.c
+@@ -1078,6 +1078,9 @@ struct uart_t uart[] = {
+ 	{ "bcm43xx",    0x0000, 0x0000, HCI_UART_H4,   115200, 3000000,
+ 				FLOW_CTL, DISABLE_PM, NULL, bcm43xx, NULL  },
+ 
++	{ "bcm43xx-3wire",    0x0000, 0x0000, HCI_UART_3WIRE,   115200, 3000000,
++				0, DISABLE_PM, NULL, bcm43xx, NULL  },
++
+ 	{ "ath3k",    0x0000, 0x0000, HCI_UART_ATH3K, 115200, 115200,
+ 			FLOW_CTL, DISABLE_PM, NULL, ath3k_ps, ath3k_pm  },
+ 

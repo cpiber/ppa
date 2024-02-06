@@ -1,0 +1,18 @@
+work-around-Logitech-diNovo-Edge-keyboard-firmware-i.patch
+bluetooth.conf.patch
+allow-using-obexd-without-systemd-in-the-user-sessio.patch
+obex-Use-GLib-helper-function-to-manipulate-paths.patch
+change_path_of_hogsuspend.patch
+lp1759836.patch
+
+# This currently stays specific for Ubuntu
+0002-hostname-handle-chassis-type-handset.patch
+
+ubuntu_error_restart.patch
+
+raspi-bcm43xx-load-firmware.patch
+raspi-bcm43xx-3wire.patch
+raspi-cypress-305-bdaddr.patch
+CVE-2023-45866.patch
+
+add-bluetoothd-experimential-flag.patch

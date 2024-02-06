@@ -1,0 +1,20 @@
+From: Phil Elwell <phil@raspberrypi.com>
+Forwarded: https://patchwork.kernel.org/project/bluetooth/patch/20201218190609.107898-3-dave.jones@canonical.com/
+Subject: Patch Cypress 305 devices to behave as Broadcom devices
+
+---
+ tools/bdaddr.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+Index: bluez/tools/bdaddr.c
+===================================================================
+--- bluez.orig/tools/bdaddr.c
++++ bluez/tools/bdaddr.c
+@@ -303,6 +303,7 @@ static struct {
+ 	{ 48,		st_write_bd_addr,	generic_reset_device	},
+ 	{ 57,		ericsson_write_bd_addr,	generic_reset_device	},
+ 	{ 72,		mrvl_write_bd_addr,	generic_reset_device	},
++	{ 305,		bcm_write_bd_addr,	generic_reset_device	},
+ 	{ 65535,	NULL,			NULL			},
+ };
+ 

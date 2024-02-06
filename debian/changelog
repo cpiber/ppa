@@ -1,0 +1,1916 @@
+bluez (5.72-0ubuntu1.1) UNRELEASED; urgency=medium
+
+  * Non-maintainer upload.
+  * Add experimental flag
+
+ -- Constantin Piber <cp.piber@gmail.com>  Tue, 06 Feb 2024 15:02:07 +0100
+
+bluez (5.72-0ubuntu1) jammy; urgency=medium
+
+  * New upstream release 5.72
+    - Fix issue with BAP and handling stream IO linking.
+    - Fix issue with BAP and setup of multiple streams per endpoint.
+    - Fix issue with AVDTP and potential incorrect transaction label.
+    - Fix issue with A2DP and handling crash on suspend.
+    - Fix issue with GATT database and an invalid pointer.
+    - Add support for AICS service.
+
+ -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
+
+bluez (5.71-0ubuntu1) jammy; urgency=medium
+
+  * New upstream release 5.71
+    - Fix issue with not registering CSIS service.
+    - Fix issue with registering pairing callbacks.
+    - Fix issue with corruption during discovery filter parsing.
+
+ -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
+
+bluez (5.70-0ubuntu1) jammy; urgency=medium
+
+  * New upstream release 5.70
+    - Fix issue with not sending GATT confirmations.
+    - Fix issue with not handling initiator properly.
+    - Fix issue with not checking PBAP counter length.
+    - Add support for MICP profile and MICS service.
+
+ -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
+
+bluez (5.69-0ubuntu1) jammy; urgency=medium
+
+  * New upstream release 5.69
+    - Fix issue with BAP enabling state correctly when resuming.
+    - Fix issue with detaching source ASEs only after Stop Ready.
+    - Fix issue with handling VCP audio location and descriptor.
+    - Fix issue with generating IRK for adapter with privacy enabled.
+    - Add support for BAP broadcast sink.
+
+ -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
+
+bluez (5.68-0ubuntu1) jammy; urgency=medium
+
+  * New upstream release 5.68
+    - Fix issue with A2DP and handling of Transport.Acquire.
+
+ -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
+
+bluez (5.67-0ubuntu1) jammy; urgency=medium
+
+  * New upstream release 5.67
+    - Fix issue with BAP and initiating QoS and Enable procedures.
+    - Fix issue with BAP and detaching streams when PAC is removed.
+    - Fix issue with BAP and reading all instances of PAC.
+    - Fix issue with BAP and not being able to reconfigure.
+    - Fix issue with BAP and transport configuration changes.
+    - Fix issue with BAP and handling unexpected disconnect.
+    - Fix issue with GATT and not removing pending services.
+    - Fix issue with GATT and client ready handling.
+    - Fix issue with handling fallback to transient hostname.
+    - Add support for SecureConnections configuration option.
+    - Add support for Mesh Remove Provisioning.
+    - Add support for Mesh Private Beacons.
+
+ -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
+
+bluez (5.66-0ubuntu1) jammy; urgency=medium
+
+  * New upstream release 5.66
+    - Fix issue with A2DP and transport connection collisions.
+    - Fix issue with allowing application specific error codes.
+    - Fix issue with not setting initiator flag correctly.
+    - Fix issue with HoG Report MAP size handling.
+    - Add initial support for Basic Audio Profile.
+    - Add initial support for Volume Control Profile.
+
+ -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
+
+bluez (5.65-0ubuntu1) jammy; urgency=medium
+
+  * New upstream release 5.65
+    - Fix issue with A2DP cache invalidation handling.
+    - Fix issue with A2DP and not initialized SEP codec.
+    - Fix issue with A2DP and multiple SetConfiguration to same SEP
+    - Fix issue with AVRCP and not properly initialized volume.
+    - Fix issue with SDP records when operating in LE only mode.
+    - Fix issue with HoG and not reading report map of instances.
+    - Fix issue with GATT server crashing while disconnecting.
+    - Fix issue with not removing connected devices.
+    - Fix issue with enabling wake support without RPA Resolution.
+    - Fix issue with pairing failed due to the error of Already Paired.
+    - Add support for CONFIGURATION_DIRECTORY environment variable.
+    - Add support for STATE_DIRECTORY environment variable.
+    - Add support for "Bonded" property with Device API.
+    - Add experimental support for ISO socket.
+
+ -- Constantin Piber <cp.piber@gmail.com>  Tue, 6 Feb 2024 14:55:50 +0200
+
+bluez (5.64-0ubuntu1.1) jammy-security; urgency=medium
+
+  * SECURITY UPDATE: make conf compliant to HID specification
+    - debian/patches/CVE-2023-45866.patch: input.conf: Change default of
+      ClassicBondedOnly
+    - CVE-2023-45866
+
+ -- Nishit Majithia <nishit.majithia@canonical.com>  Wed, 29 Nov 2023 17:01:28 +0530
+
+bluez (5.64-0ubuntu1) jammy; urgency=medium
+
+  * New upstream release 5.64 (LP: #1965740):
+    - Fix issue with handling A2DP discover procedure.
+    - Fix issue with media endpoint replies and SetConfiguration.
+    - Fix issue with HoG queuing events before report map is read.
+    - Fix issue with HoG and read order of GATT attributes.
+    - Fix issue with HoG and not using UHID_CREATE2 interface.
+    - Fix issue with failed scanning for 5 minutes after reboot.
+  * Drop upstreamed patches:
+    - hog-Fix-read-order-of-attributes.patch
+    - media-Fix-crash-when-endpoint-replies-with-an-error-to-Se.patch
+    - gdbus-Emit-InterfacesAdded-of-parents-objects-first.patch
+  * Refreshed patches:
+    - ubuntu_error_restart.patch
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Thu, 24 Mar 2022 14:30:38 +0800
+
+bluez (5.63-0ubuntu2) jammy; urgency=medium
+
+  * Cherry-pick 3 patches to fix some crash & reconnect issues
+    (LP: #1962542)
+
+ -- Jeremy Bicha <jeremy.bicha@canonical.com>  Wed, 02 Mar 2022 10:26:23 +0100
+
+bluez (5.63-0ubuntu1) jammy; urgency=medium
+
+  * New upstream release 5.63 (LP: #1957160):
+    - Fix issue with storing IRK causing invalid read access.
+    - Fix issue with disconnecting due to GattCharacteristic1.MTU.
+    - Add support for Device{Found,Lost} of advertising monitoring.
+  * Drop upstreamed patches:
+    - 0001-obexd-plugins-import-PBAP-ebook-support-from-upstrea.patch
+    - 0001-obexd-plugins-port-ebook-support-to-the-latest-EDS.patch
+    - CVE-2021-41229.patch
+  * Refreshed patches:
+    - allow-using-obexd-without-systemd-in-the-user-sessio.patch
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 12 Jan 2022 18:28:06 +0800
+
+bluez (5.62-0ubuntu2) jammy; urgency=medium
+
+  * SECURITY UPDATE: DoS via memory leak in sdp_cstate_alloc_buf
+    - debian/patches/CVE-2021-41229.patch: fix leaking buffers stored in
+      cstates cache in src/sdpd-request.c, src/sdpd-server.c, src/sdpd.h,
+      unit/test-sdp.c.
+    - CVE-2021-41229
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 17 Nov 2021 10:06:07 -0500
+
+bluez (5.62-0ubuntu1) jammy; urgency=medium
+
+  * New upstream release 5.62 (LP: #1941708):
+    - Fix issue with handling truncation when loading LTKs.
+    - Fix issue with accepting Exchange MTU on EATT bearer.
+    - Fix issue with clearing DeviceLost timers on power down.
+    - Fix issue with AVCTP browsing channel and missing ERTM.
+    - Fix issue with AVDTP and local SEID pool for each adapter.
+    - Add support for BR/EDR and LE connection failure reasons.
+  * Drop patch git_glibc234_buildfix.patch as it is included in 5.62.
+  * New upstream release 5.61:
+    - Fix issue with A2DP while waiting for command response.
+    - Fix issue with A2DP when SetConfiguration fails.
+    - Fix issue with device removal handling.
+    - Fix issue with storing discoverable setting.
+    - Add support for Central Address Resolution characteristic.
+    - Add support for admin policy plugin.
+  * Merges from Debian 5.61-1:
+    - Change debian/watch to use HTTPS.
+    - Add to debian/README.Debian
+    - Replace 0001-Allow-using-obexd-without-systemd-in-the-user-sessio.patch
+      with allow-using-obexd-without-systemd-in-the-user-sessio.patch which
+      also fixes LP: #1945887.
+    - Rename 0001-obex-Use-GLib-helper-function-to-manipulate-paths.patch
+      to obex-Use-GLib-helper-function-to-manipulate-paths.patch
+    - Rename 0001-work-around-Logitech-diNovo-Edge-keyboard-firmware-i.patch
+      to work-around-Logitech-diNovo-Edge-keyboard-firmware-i.patch although
+      Ubuntu still carries an additional fix that's not in the Debian branch.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Fri, 15 Oct 2021 15:18:43 +0800
+
+bluez (5.60-0ubuntu2) impish; urgency=medium
+
+  * debian/patches/git_glibc234_buildfix.patch:
+    - Fix build with glibc >= 2.34
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Mon, 20 Sep 2021 13:48:13 +0200
+
+bluez (5.60-0ubuntu1) impish; urgency=medium
+
+  * New upstream release 5.60 (LP: #1935794):
+    - Fix issue with reading from RFKILL device node.
+    - Fix issue with AVDTP and parsing capabilities.
+    - Fix issue with UnregisterApplication handling.
+    - Fix issue with RegisterProfile if UUID already exists.
+    - Fix issue with GATT client attribute read with offset.
+    - Fix issue with non-discoverable device and advertising monitor.
+  * Drop upstreamed patch: Fix-reading-from-rfkill-socket.patch
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Mon, 12 Jul 2021 16:36:13 +0800
+
+bluez (5.59-0ubuntu1) impish; urgency=medium
+
+  * New upstream release 5.59 (LP: #1933078):
+    - Fix issue with string to UUID-32 conversion.
+    - Fix issue with connect request if SDP search failed.
+    - Fix issue with accepting invalid AVDTP capabilities.
+    - Fix issue with unregister handling of AVRCP player.
+  * Add new build-dep 'python3-docutils' required for rst2man.
+  * Add new package 'bluez-meshd' and --enable-mesh (LP: #1929833).
+    - Requires new build-dep 'libjson-c-dev'.
+  * Cleanups from upstream debian:
+    - Remove empty packages 'libbluetooth3-dbg' and 'bluez-dbg'.
+    - Lots of benign formatting changes in debian/control to shrink the diff.
+  * Add binaries 'b1ee', 'btvirt', 'hfp' to 'bluez-tests' (LP: #1932022).
+  * Add binary 'avinfo' to 'bluez' (LP: #1907886).
+  * Add patch Fix-reading-from-rfkill-socket.patch to resolve Bluetooth
+    on/off toggle issues with newer kernel versions (LP: #1926062).
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Mon, 21 Jun 2021 17:02:38 +0800
+
+bluez (5.58-0ubuntu1) impish; urgency=medium
+
+  * New upstream release 5.58 (LP: #1923564):
+    - Fix issue with usage of deprecated GLib functions.
+  * New upstream release 5.57:
+    - Fix issue with handling GATT notification PDU parsing.
+    - Fix issue with registering DIS without a valid source.
+    - Fix issue with removing remote SEPs when loading from cache.
+  * Drop hog-lib-Fix-crash-when-receiving-UHID_GET_REPORT.patch because
+    it is upstreamed in version 5.57.
+  * Drop a couple of nonexistent symbols (in sixaxis.so) from
+    libbluetooth3.symbols to quieten lintian.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Tue, 04 May 2021 15:23:46 +0800
+
+bluez (5.56-0ubuntu4) hirsute; urgency=medium
+
+  * Add hog-lib-Fix-crash-when-receiving-UHID_GET_REPORT.patch to fix crashes
+    when connecting Bluetooth keyboards (LP: #1924217)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Thu, 15 Apr 2021 14:47:04 +0800
+
+bluez (5.56-0ubuntu3) hirsute; urgency=medium
+
+  * Mark symbols as option, not seen when building with lto.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 22 Mar 2021 19:59:17 +0100
+
+bluez (5.56-0ubuntu2) hirsute; urgency=medium
+
+  * Drop build-dependency on obsolete dh-systemd.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 02 Mar 2021 14:39:18 -0800
+
+bluez (5.56-0ubuntu1) hirsute; urgency=medium
+
+  * New upstream release 5.56 (LP: #1916570)
+    - Fix issue with setting AVDTP disconnect timer.
+    - Fix issue with AVDTP not sending GetCapabilities.
+    - Fix issue with AVDTP connecting using streaming mode.
+    - Fix issue with handling A2DP and remote SEP disappearing.
+    - Fix issue with handling session of A2DP channels.
+    - Fix issue with GATT and handling device removal.
+    - Fix issue with GATT not accepting multiple requests.
+    - Fix issue with HID report value callback registration.
+    - Add support for new advertising management command.
+    - Add support for battery D-Bus interface.
+  * Refreshed patches:
+    - 0001-Allow-using-obexd-without-systemd-in-the-user-sessio.patch
+    - 0001-obex-Use-GLib-helper-function-to-manipulate-paths.patch
+    - 0002-hostname-handle-chassis-type-handset.patch
+    - bluetooth.conf.patch
+    - change_path_of_hogsuspend.patch
+    - raspi-bcm43xx-3wire.patch
+    - raspi-bcm43xx-load-firmware.patch
+    - raspi-cypress-305-bdaddr.patch
+  * Removed packaging of deprecated files bccmd*
+  * debian/libbluetooth3.symbols: Added new function bt_malloc0
+  * Dropped patch migrate_scripts_python3.patch because nobody was maintaining
+    or using it, and it caused conflicts. If you want to run tests using
+    python3 then please propose it upstream. Otherwise we do still package
+    bluez-tests, and if you really need to run them then use your own python2.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Tue, 23 Feb 2021 17:58:00 +0800
+
+bluez (5.55-0ubuntu5) hirsute; urgency=medium
+
+  * Correctly include the updated patches now
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Thu, 04 Feb 2021 13:37:23 +0100
+
+bluez (5.55-0ubuntu3.2) hirsute; urgency=medium
+
+  * Add the refined Raspi patches currently awaiting review upstream
+    (LP: #1903048)
+
+ -- Dave Jones <dave.jones@canonical.com>  Tue, 26 Jan 2021 15:24:25 +0000
+
+bluez (5.55-0ubuntu3.1) hirsute; urgency=medium
+
+  * Restore the Raspi patches to avoid any potential delay in the SRU,
+    we will block the update in proposed instead which should be enough as
+    a reminder that things need to be sorted out in the current serie.
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Fri, 13 Nov 2020 15:08:07 +0100
+
+bluez (5.55-0ubuntu3) hirsute; urgency=medium
+
+  * Revert the previous upload until the changes are properly reviewed and
+    upstreamed, see the bug report for some more detailled discussions
+    (reopen bug 1903048)
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Thu, 12 Nov 2020 11:59:23 +0100
+
+bluez (5.55-0ubuntu2) hirsute; urgency=medium
+
+  * Added patches from the Raspberry Pi Foundation
+    - d/p/raspi-bcm43xx-load-firmware.patch
+    - d/p/raspi-bcm43xx-3wire.patch
+    - d/p/raspi-cypress-305-bdaddr.patch
+  * These patches fix Bluetooth operation on the Pi 400 (LP: #1903048)
+
+ -- Dave Jones <dave.jones@canonical.com>  Thu, 05 Nov 2020 13:39:07 +0000
+
+bluez (5.55-0ubuntu1) groovy; urgency=medium
+
+  * New upstream release 5.55 (LP: #1895640)
+    - Fix issue with handling security level for HoG.
+    - Fix issue with handling HIDSDPDisable attribute.
+    - Fix issue with handling HID virtual cable unplug.
+    - Fix issue with handling HID channel disconnect order.
+    - Fix issue with handling AVDTP delay reporting states.
+    - Fix issue with handling AVRCP notification events.
+    - Fix issue with handling AVRCP list player attributes.
+    - Fix issue with handling AVRCP category 1 player settings.
+    - Fix issue with handling AVRCP media player passthrough bitmask.
+    - Fix issue with handling HFP 1.7 default features.
+    - Fix issue with handling GATT disconnecting handling.
+    - Fix issue with handling GATT database hash.
+    - Fix issue with handling service changed characteristic.
+    - Fix issue with handling read of multiple characteristic values.
+    - Fix issue with handling Just-Works auto-accept pairing.
+    - Fix issue with handling authentication of bonded devices.
+    - Fix issue with handling L2CAP streaming mode for AVDTP.
+    - Fix issue with handling SysEx parser for MIDI support.
+    - Fix issue with handling configured scan parameter values.
+    - Fix issue with handling temporary devices removal.
+    - Fix issue with handling advertising flags.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Tue, 15 Sep 2020 17:17:32 +0800
+
+bluez (5.54-0ubuntu1) groovy; urgency=medium
+
+  * New upstream release 5.54 (LP: #1877536)
+    - Fix issue with HOGP to accept data only from bonded devices.
+    - Fix issue with A2DP sessions being connected at the same time.
+    - Fix issue with class UUID matches before connecting profile.
+    - Add support for handling MTU auto-tuning option for AVDTP.
+    - Add support for new policy for Just-Works repairing.
+    - Add support for Enhanced ATT bearer (EATT).
+  * Dropped CVE-2020-0556-[1-4].patch as release 5.54 onward is not affected.
+  * Dropped (already unused) CVE-2017-1000250.patch as release 5.47 onward
+    is not affected.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Fri, 08 May 2020 16:28:03 +0800
+
+bluez (5.53-0ubuntu3) focal; urgency=medium
+
+  * debian/patches/ubuntu_error_restart.patch:
+    - restart the service on errors
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Fri, 03 Apr 2020 08:47:01 +0200
+
+bluez (5.53-0ubuntu2) focal; urgency=medium
+
+  * SECURITY UPDATE: privilege escalation via improper access control
+    - debian/patches/CVE-2020-0556-1.patch: HOGP must only accept data from
+      bonded devices in profiles/input/hog.c.
+    - debian/patches/CVE-2020-0556-2.patch: HID accepts bonded device
+      connections only in profiles/input/device.c, profiles/input/device.h,
+      profiles/input/input.conf, profiles/input/manager.c.
+    - debian/patches/CVE-2020-0556-3.patch: attempt to set security level
+      if not bonded in profiles/input/hog.c.
+    - debian/patches/CVE-2020-0556-4.patch: add LEAutoSecurity setting to
+      input.conf in profiles/input/device.h, profiles/input/hog.c,
+      profiles/input/input.conf, profiles/input/manager.c.
+    - CVE-2020-0556
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Mon, 23 Mar 2020 07:50:02 -0400
+
+bluez (5.53-0ubuntu1) focal; urgency=medium
+
+  * New upstream release 5.53 (LP: #1864824)
+    - Fix issue with handling unregistration for advertisment.
+    - Fix issue with A2DP and handling recovering process.
+    - Fix issue with udpating input device information.
+    - Add support for loading blocked keys.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 26 Feb 2020 17:57:54 +0800
+
+bluez (5.52-0ubuntu2) focal; urgency=medium
+
+  * Don't build bluez-cups on i386.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Fri, 20 Dec 2019 00:01:27 -0600
+
+bluez (5.52-0ubuntu1) focal; urgency=medium
+
+  * New upstream release 5.52 (LP: #1854689):
+    - Fix issue with AVDTP session disconnect timeout handling.
+    - Mark media endpoint APIs as stable interfaces.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Thu, 12 Dec 2019 09:42:09 +0100
+
+bluez (5.51-0ubuntu2) focal; urgency=medium
+
+  * Make autopkgtests cross-test-friendly.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Sat, 07 Dec 2019 13:49:35 -0800
+
+bluez (5.51-0ubuntu1) focal; urgency=medium
+
+  * New upstream release 5.51 (LP: #1849641):
+    - Many fixes
+    - Improved Bluetooth Mesh support
+    - Support for the GATT Database Hash feature
+  * Refreshed patches and fixed conflicts:
+    - bluetooth.conf.patch
+    - 0001-Allow-using-obexd-without-systemd-in-the-user-sessio.patch
+  * Drop upstreamed patches:
+    - tools-Fix-build-after-y2038-changes-in-glibc.patch
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Thu, 24 Oct 2019 17:15:15 +0800
+
+bluez (5.50-0ubuntu4) eoan; urgency=medium
+
+  * d/p/lp1759836.patch: avoid endless udev events from new bind uevents
+    (LP: #1759836)
+
+ -- Dan Streetman <ddstreet@canonical.com>  Tue, 10 Sep 2019 17:22:37 -0400
+
+bluez (5.50-0ubuntu3) eoan; urgency=medium
+
+  * d/p/tools-Fix-build-after-y2038-changes-in-glibc.patch: fix build
+    failure due to linux header changes for y2038 bug.
+
+ -- Dan Streetman <ddstreet@canonical.com>  Wed, 28 Aug 2019 02:43:38 -0400
+
+bluez (5.50-0ubuntu2) disco; urgency=medium
+
+  * No-change rebuild for readline soname change.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 14 Jan 2019 19:58:14 +0000
+
+bluez (5.50-0ubuntu1) cosmic; urgency=medium
+
+  * New upstream release 5.50:
+    - Fix issue with GATT and reading long values.
+    - Fix issue with GATT and reading multiple includes.
+    - Fix issue with GATT and service changes when offline.
+    - Fix issue with handling secondary service discovery.
+    - Fix issue with handling persistency of CCC values.
+    - Fix issue with handling Mesh session on disconnection.
+    - Fix issue with handling Mesh proxy PDU SAR message length.
+    - Fix issue with handling Mesh default heartbeat TTL value.
+    - Add support for Mesh node-reset operation handling.
+    - Add support for GATT authorization request handling.
+    - Add support for GATT minimum key size requirements.
+    - Add support for GATT server and included services.
+    - Add support for handling additional advertising data.
+    - Add support for handling separate discoverable state.
+    - Add support for enabling HFP version 1.7 features.
+    - Add support for dedicated Bluetooth logging daemon.
+  * Refreshed debian/patches to work with 5.50 and apply cleanly.
+  * Fixed lintian errors:
+    - dpkg-maintscript-helper missing in postinst and postrm.
+    - Synchronized (some) man pages from Debian.
+  * New upstream release 5.49 (LP: #1759961):
+    - Fix issue with configuring discoverable advertising flag.
+    - Fix issue with bearer selection and single mode controllers.
+    - Fix issue with Connect and ConnectProfile returning in progress.
+    - Fix issue with missing Paired property change when not bonded.
+    - Fix issue with storage for controllers without public address.
+    - Fix issue with handling AVCTP disconnecting the channel queue.
+    - Fix issue with not clearing connectable setting on power off.
+    - Fix issue with creating multiple mgmt socket instances.
+    - Fix issue with GATT server and BR/EDR only devices.
+    - Fix issue with InterfaceAdded event ordering. (LP: #1759628)
+    - Add support for generic ConnectDevice method call.
+    - Add support for Mesh heartbeat client functionality.
+  * Drop upstreamed patch:
+    - fix-lp1750308-upstream-commit-1bf03369.patch
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 06 Jun 2018 16:26:40 +0800
+
+bluez (5.48-0ubuntu3) bionic; urgency=medium
+
+  * Add fix-lp1750308-upstream-commit-1bf03369.patch to fix command piping
+    regression (mostly affecting python-dbusmock). (LP: #1750308)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 21 Feb 2018 15:08:50 +0800
+
+bluez (5.48-0ubuntu2) bionic; urgency=medium
+
+  * debian/control: Don't mention artful in Vcs fields
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Mon, 05 Feb 2018 13:36:28 +0800
+
+bluez (5.48-0ubuntu1) bionic; urgency=medium
+
+  * Drop upstreamed patch:
+    - 0001-device-Fix-crash-when-connecting-ATT-with-BR-EDR-onl.patch
+  * New upstream release 5.48:
+    - Fix issue with subscriptions for unpaired devices.
+    - Fix issue with handling A2DP and no available SEP.
+    - Fix issue with handling AVCTP change path support.
+    - Fix issue with handling AVCTP browsing channel.
+    - Fix issue with handling AVCTP passthrough PDUs.
+    - Fix issue with handling detaching of controller.
+    - Fix issue with handling start discovery results.
+    - Fix issue with handling non-connectable devices.
+    - Fix issue with handling unused parameter in WriteValue.
+    - Add support for service side AcquireWrite and AcquireNotify.
+    - Add support for providing address type information.
+    - Add support for cable based authentication and pairing.
+    - Add support for Bluetooth Low-Energy battery service.
+    - Add support for BTP client for qualification testing.
+    - Add support for additional Mesh control functionality.
+    - Mark advertising manager APIs as stable interfaces.
+  * New upstream release 5.47:
+    - Fix issue with handling AcquireNotify registration.
+    - Fix issue with handling support for reconnection interval.
+    - Fix issue with handling A2DP transport and accepting streams.
+    - Fix issue with fallback from BR/EDR to LE bearer handling.
+    - Add support for appearance and local name advertising data.
+    - Add support for retrieving the supported discovery filters.
+    - Add support for decoding Bluetooth 5.0 commands and events.
+    - Add support for decoding Bluetooth Mesh advertising bearer.
+    - Add support for Bluetooth Mesh control application.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Mon, 05 Feb 2018 13:08:06 +0800
+
+bluez (5.46-0ubuntu4) bionic; urgency=medium
+
+  * No-change rebuild for libical soname change.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sat, 09 Dec 2017 11:51:41 +0000
+
+bluez (5.46-0ubuntu3) artful; urgency=medium
+
+  * SECURITY UPDATE: information disclosure in service discovery
+    protocol daemon.
+    - debian/patches/CVE-2017-1000250.patch: validate continuation
+      request size before sending response.
+    - CVE-2017-1000250
+
+ -- Steve Beattie <sbeattie@ubuntu.com>  Tue, 12 Sep 2017 00:56:06 -0700
+
+bluez (5.46-0ubuntu2) artful; urgency=medium
+
+  [ Konrad Zapałowicz ]
+  * debian/patches/0001-device-Fix-crash-when-connecting-ATT-with-BR-EDR-onl.patch
+    - Fix crash when connecting ATT with BR/EDR-only device. Cherry-picked
+      from upstream.
+
+  [ Daniel van Vugt ]
+  * Delete unused patches.
+
+ -- Timo Aaltonen <tjaalton@debian.org>  Thu, 24 Aug 2017 16:11:20 +0300
+
+bluez (5.46-0ubuntu1) artful; urgency=medium
+
+  [ Konrad Zapałowicz ]
+  * New upstream version (lp: #1706598)
+
+  [ Daniel van Vugt ]
+  * debian/control:
+    - update the vcs information
+
+ -- Simon Fels <simon.fels@canonical.com>  Wed, 19 Jul 2017 11:46:21 +0200
+
+bluez (5.45-0ubuntu4) artful; urgency=medium
+
+  * Drop deprecated rfcomm.conf and upstart config. (LP: #1674680)
+
+ -- Dariusz Gadomski <dariusz.gadomski@canonical.com>  Mon, 07 Aug 2017 13:29:41 +0200
+
+bluez (5.45-0ubuntu3) artful; urgency=medium
+
+  * debian/bluez-obexd.links:
+    - include a symlink from obex.service to dbus-org.bluez.obex.service
+      which is the name used for dbus activation (lp: #1645631)
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Mon, 24 Jul 2017 17:10:33 +0200
+
+bluez (5.45-0ubuntu2) artful; urgency=medium
+
+  * No-change rebuild against evolution-data-server 3.24
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 13 Jun 2017 13:55:31 -0400
+
+bluez (5.45-0ubuntu1) artful; urgency=medium
+
+  * New upstream version 5.45, and also:
+    - Refreshed 0004-obexd-enable-ebook-backend-conditionally.patch
+    - Refreshed migrate_scripts_python3.patch
+    - Explicitly enable 'deprecated' and 'testing' tools that upstream
+      doesn't build by default any more (but Debian/Ubuntu expects).
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Tue, 06 Jun 2017 16:08:34 +0800
+
+bluez (5.43-0ubuntu1) zesty; urgency=medium
+
+  [ Konrad Zapałowicz ]
+  * New upstream version
+
+ -- Simon Fels <simon.fels@canonical.com>  Tue, 24 Jan 2017 09:26:20 +0100
+
+bluez (5.41-0ubuntu3) yakkety; urgency=medium
+
+  * No-change rebuild for readline soname change.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sat, 17 Sep 2016 11:58:53 +0000
+
+bluez (5.41-0ubuntu2) yakkety; urgency=medium
+
+  * No-change rebuild against latest evolution-data-server
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Fri, 19 Aug 2016 22:39:37 -0400
+
+bluez (5.41-0ubuntu1) yakkety; urgency=medium
+
+  * New upstream version
+
+ -- Konrad Zapałowicz <konrad.zapalowicz@canonial.com>  Tue, 21 Jun 2016 10:21:22 +0200
+
+bluez (5.40-0ubuntu2) UNRELEASED; urgency=medium
+
+  * debian/50-bluetooth-hci-auto-poweron.rules:
+    - Get rid of legacy udev rule to power on bluetooth controllers on
+      startup. Using hciconfig for that is the legacy way and will lead
+      to different problems as the kernel side stack wont initialize
+      all needed subsystems when used. BlueZ introduced a replacement
+      for this with 5.36 which basically tells the bluetoothd through
+      a config option to turn on all found Bluetooth controllers by
+      default. With changing this there should be no change in terms
+      of functionality.
+
+ -- Simon Fels <simon.fels@canonical.com>  Wed, 02 Mar 2016 08:20:11 +0100
+
+
+bluez (5.40-0ubuntu1) UNRELEASED; urgency=medium
+
+  * New upstream version
+
+ -- Konrad Zapałowicz <konrad.zapalowicz@canonial.com>  Tue, 21 Jun 2016 10:21:22 +0200
+
+bluez (5.37-0ubuntu5) xenial; urgency=medium
+
+  [Tony Espy ]
+  * debian/control: fixup 'Architecture:' and 'Depends:' for bluez-
+    tests, as it now includes binary commands and thus can no
+    longer be 'Architecture: all'.
+
+ -- Simon Fels <simon.fels@canonical.com>  Tue, 01 Mar 2016 16:17:24 +0100
+
+bluez (5.37-0ubuntu4) xenial; urgency=medium
+
+  * debian/patches/0001-profiles-audio-add-big-endian-structure-definition-f.patch:
+    - Fix the build on big endian architectures.
+
+ -- Simon Fels <simon.fels@canonical.com>  Thu, 11 Feb 2016 14:47:18 +0100
+
+bluez (5.37-0ubuntu3) xenial; urgency=medium
+
+  * debian/patches/0004-obexd-enable-ebook-backend-conditionally.patch:
+    - Fix FBTS on vivid
+
+ -- Simon Fels <simon.fels@canonical.com>  Thu, 04 Feb 2016 12:59:23 +0100
+
+bluez (5.37-0ubuntu2) xenial; urgency=medium
+
+  [ Tony Espy ]
+  * New upstream version
+  * Add 0001-obexd-plugins-import-PBAP-ebook-support-from-upstrea.patch:
+    - Pull in obexd ebook plugin from upstream git.
+  * Add 0001-obexd-plugins-port-ebook-support-to-the-latest-EDS.patch
+  * Add 0002-hostname-handle-chassis-type-handset.patch
+  * Add 0003-tools-mpris-proxy-allow-user-to-specify-different-mp.patch:
+    - Allow use of an alternate DBus name by MPRIS if 'org.mpris' is not
+      available.
+  * Add 0004-obexd-enable-ebook-backend-conditionally.patch:
+    - Add a new configuration switch for EDS support.
+  * Add 0005-audio-media-return-empty-string-when-player-name-is-.patch:
+    - If the name for the player is set as NULL we will crash later on
+      so taking a valid default is required.
+  * Update bluez.install to include new btattach binary and manpage.
+  * Update rules:
+        - enable obex phonebook-ebook by default
+        - add enable-experimental to build and install additional
+          tools/test scripts
+  * Update control:
+    - add libebook-dev (>= 3.12) to Build-Depends
+    - rename bluez-test-scripts to bluez-tests to reflect it does not only
+      contain scripts but more utilities which can be used for wider testing
+      of the BlueZ stack.
+
+  [ Simon Fels ]
+  * debian/control:
+    - Point to correct Vcs used for bluez packaging
+
+ -- Simon Fels <simon.fels@canonical.com>  Wed, 03 Feb 2016 10:36:16 +0100
+
+bluez (5.36-0ubuntu1) xenial; urgency=medium
+
+  * New upstream version
+  * 0001-systemd-Check-if-bluetooth-is-supported-in-the-kerne.patch:
+   - the change is in the new version
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Mon, 09 Nov 2015 13:57:48 +0100
+
+bluez (5.35-0ubuntu2) wily; urgency=medium
+
+  * Add 0001-systemd-Check-if-bluetooth-is-supported-in-the-kerne.patch:
+    bluetooth.service: Check if bluetooth is supported in the kernel, to avoid
+    failing package installation on a kernel without bluetooth support.
+    (LP: #1506774)
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Tue, 20 Oct 2015 12:27:06 +0200
+
+bluez (5.35-0ubuntu1) wily; urgency=medium
+
+  * New upstream version 
+    (include mostly bugfixes and a new option off by default)
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Wed, 07 Oct 2015 10:06:16 +0200
+
+bluez (5.34-0ubuntu1) wily; urgency=medium
+
+  * New upstream version, 
+    backported some of the debian packaging improvements
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Wed, 16 Sep 2015 15:39:52 +0200
+
+bluez (5.33-1) unstable; urgency=medium
+
+  * Update to 5.33.
+  * Remove patches/fix_ftbfs_with_c99.patch.
+  * Update patches/bluetooth.conf.patch and
+    patches/change_path_of_hogsuspend.patch.
+  * Update libbluetooth3.symbols.
+  * Update control.
+    - Bumped Standards-Version to 3.9.6.
+  * Add manpage of gatttool. (Closes: #786489)
+  * Add bluemoon, hex2hcd and mpris-proxy to bluez. (Closes: #780015)
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 18 Aug 2015 20:59:23 +0900
+
+bluez (5.33-0ubuntu4) wily; urgency=medium
+
+  * Really have bluez Conflict/Replace bluez-alsa this time.
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Sat, 15 Aug 2015 10:07:31 -0400
+
+bluez (5.33-0ubuntu3) wily; urgency=medium
+
+  * debian/control: add Conflicts/Replaces for bluez-alsa, ALSA support was
+    dropped in BlueZ 5.
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Fri, 14 Aug 2015 10:34:46 -0400
+
+bluez (5.33-0ubuntu2) wily; urgency=medium
+
+  * debian/tests/bluez_response:
+    - Stop setting up private D-BUS. An autopkgtest must test what's
+      installed, including the real system bus.
+    - Stop calling bluetoothd (which hangs in 5.x, as it doesn't fork), and
+      just call "service bluetooth start" to actually test our packaged
+      startup scripts.
+  * debian/tests/control: Drop unused Python 2 and GI dependencies.
+  * debian/tests/control: Add "isolation-container", this shouldn't be
+    attempted in a schroot.
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Fri, 14 Aug 2015 11:10:42 +0200
+
+bluez (5.33-0ubuntu1) wily; urgency=medium
+
+  * New upstream version, drop patch included in the update
+
+ -- Sebastien Bacher <seb128@ubuntu.com>  Wed, 12 Aug 2015 15:26:11 +0200
+
+bluez (5.23-2ubuntu1~ppa1) wily; urgency=medium
+
+  * Merge with Debian unstable, remaining changes:
+    - Upstart support:
+      o Add debian/bluez.bluetooth.upstart and drop
+        debian/bluez.bluetooth.default.
+    - Add debian/source_bluez.py Apport package hook. Install in
+      debian/bluez.install.
+    - debian/bluez.dirs: add /var/lib/bluetooth, we need to have it created
+      on Ubuntu Touch so that discovery writes cache data.
+    - debian/patches/migrate_scripts_python3.patch: migrate test scripts to
+      python3.
+    - debian/control: enable autopkgtest tests; add XS-Testsuite. 
+    - debian/tests/control, debian/tests/bluez_response: add new tests for
+      bluez adapter and device support.
+  * debian/tests/bluez_response: update paths to the new location of the test
+    scripts.
+  * debian/patches/migrate_scripts_python3.path: update patch again to cover
+    all the test scripts and fix more 2-to-3 issues.
+  * debian/bluez.bluetooth.upstart: remove the expect clause; bluetoothd does
+    not fork anymore.
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Mon, 17 Nov 2014 15:49:34 -0500
+
+bluez (5.23-2) unstable; urgency=medium
+
+  * debian/control.
+    - Remove Provides: obex-server, obexd-client from bluez-obexd.
+      (Closes: #771290)
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 16 Sep 2014 14:17:30 +0900
+
+bluez (5.23-1) unstable; urgency=high
+
+  * New upstream release. Update to 5.23.
+  * Add patches/change_path_of_hogsuspend.patch. (Closes: #759188, #758979)
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 16 Sep 2014 09:01:37 +0900
+
+bluez (5.21-3) unstable; urgency=medium
+
+  * Remove old conf files. (Closes: #737502, #756890)
+  * Remove rfcomm support from init script. (Closes: #754830)
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Sat, 09 Aug 2014 03:48:22 +0900
+
+bluez (5.21-2) unstable; urgency=medium
+
+  * Fix FTBFS with C99. (Closes: #755345)
+    Add patches/fix_ftbfs_with_c99.patch.
+  * Add support user session of obexd. (Closes: #754675)
+    Add patches/0001-obex-Use-GLib-helper-function-to-manipulate-paths.patch
+    and patches/0001-Allow-using-obexd-without-systemd-in-the-user-sessio.patch.
+  * Update bluez.bluetooth.init. (Closes: #754830, #712386, #737502)
+    Remove -f option of rfcomm.
+  * Move hciconfig from /usr to /bin.
+  * Update path of hciconfig in 50-bluetooth-hci-auto-poweron.rules.
+    (Closes: #755274)
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 22 Jul 2014 09:25:12 +0900
+
+bluez (5.21-1) unstable; urgency=medium
+
+  * Upload to unstable.
+  * Update README.Debian.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Mon, 14 Jul 2014 08:21:17 +0900
+
+bluez (5.21-1~exp0) experimental; urgency=medium
+
+  * New upstream release. Update to 5.21.
+  * Remove version from obexd-server and obexd-client.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 08 Jul 2014 07:34:03 +0900
+
+bluez (5.20-1~exp0) experimental; urgency=medium
+
+  * New upstream release. Update to 5.20.
+  * Update debian/bluez.bluetooth.init
+    Remove function to start hci device at startup in sysvinit.
+  * Add 50-bluetooth-hci-auto-poweron.rules.
+    This supports start hci device at startup.
+  * Update libbluetooth3.symbols.
+  * Add patches/bluetooth.conf.patch.
+    This add permission of bluetooth control to user into bluetooth group.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Wed, 02 Jul 2014 11:22:04 +0900
+
+bluez (5.19-1~exp0) experimental; urgency=medium
+
+  * New upstream release. Update to 5.19.
+  * Move bluetoothd daemon and obexd to /usr/lib/bluetooth/. (Closes: #749283)
+    - Change bluez-obexd.install and bluez.install.
+    - Add --libexec to CONFIGURE_FLAGS in rules.
+    - Move bluez.links.in to bluez.links, and remove DEB_HOST_MULTIARCH.
+    - Remove sed function from override_dh_auto_configure target in rules.
+  * Fix FTBFS on ppc64el. (Closes: 745628)
+    - Add dh-autoreconf to Build-Depends.
+    - Enable autoreconf addon for dh.
+  * Install sixaxis plugin.
+    - Add path of sixaxis plugin to libbluetooth3.install and
+      libbluetooth-dev.install.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Wed, 25 Jun 2014 01:58:30 +0900
+
+bluez (5.17-1~exp0) experimental; urgency=medium
+
+  * New upstream release. Update to 5.17. (Closes: #732453)
+  * debian/rules.
+    - Add '--with systemd' to dh option.
+    - Enable threads and sixaxis support at configure.
+    - Update override_dh_installinit in debian/rules.
+    - Add override_dh_systemd_enable and override_dh_systemd_start.
+      target in debian/rules.
+    - Remove old configure.
+    - Add --enable-experimental to option of confiugre. (Closes: #712385)
+    - Install gatttool (Closes: #720486)
+  * debian/bluez.bluetooth.init
+    Add function to start hci device at startup in sysvinit
+  * debian/control
+    - Add dh-systemd (>= 1.5) to Build-Depends.
+    - Update Standards-Version to 3.9.5.
+    - Remove quilt from Build-Depends.
+    - Remove libusb-dev from Build-Depends.
+    - Update libglib2.0-dev to 2.28.
+    - Update Vcs-Svn and Vcs-Browser field.
+  * Update libbluetooth3.symbols.
+  * Add 0001-work-around-Logitech-diNovo-Edge-keyboard-firmware-i.patch
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 08 Apr 2014 10:00:50 +0900
+
+bluez (5.5-1~exp1) experimental; urgency=low
+
+  * Fix install path of bluetoothd.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 21 May 2013 14:11:46 +0900
+
+bluez (5.5-1~exp0) experimental; urgency=low
+
+  * New upstream release. Update to 5.5. (Closes: #705519, #690749, #706986)
+  * Remove unnecessary patches.
+    - patches/01_lower_sink_ranking.patch
+    - patches/02_disable_hal.patch
+    - patches/06-alsalib.patch
+    - patches/07-fix-639356.patch
+    - patches/08-0001-systemd-install-systemd-unit-files.patch
+  * Update debian/control.
+    - Update Standards-Version to 3.9.4.
+    - Update version of debhelper to 9.
+    - Add bluez-hcidump, bluez-obexd and bluez-test-scripts packages.
+      (Closes: #690120)
+    - Remove bluez-utils, bluez-compat, bluez-alsa, bluez-audio,
+      bluez-pcmcia-support and bluez-gstreamer packages.
+    - Add udev, systemd and libical-dev to Build-Depends.
+    - Remove libnl-dev from Build-Depends. (Closes: #688160)
+    - Remove libsndfile1-dev from Build-Depends.
+    - Remove libasound2-dev from Build-Depends.
+    - Remove bluez-alsa from Recommends of bluetooth.
+    - Downgrade bluez-cups and bluez-obexd to Suggests. (Closes: #702081)
+    - Add ${misc:Depends} to Depends of bluetooth package. (Closes: #692550)
+    - Remove ${python:Depends} from Depends of bluez.
+    - Remove python-gi and python-dbus from Depends of bluez.
+      (Closes: #697752)
+  * Move api document from bluez to libbluetooth-dev.
+  * Update watch file
+  * Remove unnecessary manpages.
+    - bluetooth-agent.1, bluez-simple-agent.1 and hcitrace.1.
+  * Add manpage of bluetoothctl and btmon.
+  * Remove bluez.lintian-overrides and bluez_agent.udev.
+  * Update debian/rules.
+    - Convert from CDBS to dh, and cleanup.
+    - Add --enable-pie to configure option.
+    - Remove --enable-test from configure.
+  * Add man for btmon and update bluez.manpages
+  * Update libbluetooth3.symbols
+  * Add bluez.links
+  * Update compat to 9.
+  * Update README.examples. (Closes: #673191)
+  * Update bluez.bluetooth.init.
+    bluetoothd needs --background option of start-stop-daemon.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Sun, 19 May 2013 04:05:46 +0900
+
+bluez (4.101-0ubuntu20) utopic; urgency=medium
+
+  * debian/patches/telephony_ofono_disable_inband_default.patch:
+    - Disabling default inband ringtone option on telephony-ofono,
+      as that is not yet supported by our userspace (LP: #1363046)
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Thu, 09 Oct 2014 00:18:38 -0300
+
+bluez (4.101-0ubuntu19) utopic; urgency=medium
+
+  * debian/patches/ssp_parameter.patch:
+    Add ssp parameter fix, add a missing parameter entered in agent dbus API.
+    Fixed Logitech Bluetooth Keyboard K760, Logitech Bluetooth Keyboard K810,
+    HP Bluetooth Keyboard K4000 secure simple pairing failed issue.
+    (LP: #1035431, #1291756)
+
+ -- Jian-Ding Chen (timchen119) <tim.chen119@canonical.com>  Tue, 12 Aug 2014 09:47:45 -0400
+
+bluez (4.101-0ubuntu18) utopic; urgency=medium
+
+  * debian/patch/series: includding missing patch for sco workaround
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 22 Jul 2014 14:10:23 -0300
+
+bluez (4.101-0ubuntu17) utopic; urgency=medium
+
+  * debian/patches/migrate_scripts_python3.patch: migrate test scripts to
+    python3.
+  * debian/rules: add the list-devices tests script to the test scripts to
+    be installed with the bluez binary.
+  * debian/patches/sco_watch_hup_workaround_mako.patch: watch for HUP on the
+    SCO channel to get notified of the remote disconnection. This seems to be
+    required by Nexus devices.
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Fri, 18 Jul 2014 12:26:12 -0400
+
+bluez (4.101-0ubuntu16) utopic; urgency=medium
+
+  * debian/patches/avrcp.patch
+    Fix for de-reference pdu parameter in AVRCP code.
+
+ -- Michael Frey <michael.frey@canonical.com>  Thu, 03 Jul 2014 10:37:41 -0400
+
+bluez (4.101-0ubuntu15) utopic; urgency=high
+
+  * No change rebuild against new dh_installinit, to call update-rc.d at
+    postinst.
+
+ -- Dimitri John Ledkov <xnox@ubuntu.com>  Wed, 28 May 2014 10:39:11 +0100
+
+bluez (4.101-0ubuntu14) utopic; urgency=medium
+
+  * Remove obsolete and unused udev helpers for bluetoothd and hid2hci.
+  * Enable systemd service file on installation. This hooks up the service in
+    bluetooth.target which is activated by systemd when bluetooth hardware is
+    attached. (Closes: #729808, LP: #1312032)
+    - Add Build-Depends on dh-systemd.
+    - Bump Build-Depends on cdbs to (>= 0.4.122) to get dh-systemd support.
+    - Workaround a bug in cdbs, which doesn't run dh_install and dh_systemd
+      the correct order, by pointing dh_systemd_enable and dh_systemd_start at
+      the uninstalled service file. See #715504 for details.
+    - Taken from Debian's 4.101-4.1, thanks Michael Biebl!
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Thu, 24 Apr 2014 11:40:37 +0200
+
+bluez (4.101-0ubuntu13) trusty; urgency=medium
+
+  * debian/rules: Disable pnat, it shouldn't have been compiled in the first
+    place; since it's only really useful on Maemo. (LP: #1280584)
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Thu, 10 Apr 2014 16:10:13 -0400
+
+bluez (4.101-0ubuntu12) trusty; urgency=low
+
+  * debian/patches/13_reset_default_adapter_id.patch: Reset default_adapter_id
+    when there is no adapter. (LP: #1303819)
+
+ -- Shih-Yuan Lee (FourDollars) <sylee@canonical.com>  Tue, 08 Apr 2014 10:54:11 +0800
+
+bluez (4.101-0ubuntu11) trusty; urgency=low
+
+  * debian/patches/12_check_device_before_removing_from_devices.patch:
+    The power of some Bluetooth device will be cut and the device will be
+    removed from the devices list when suspending, so it has to check if
+    the device still exists in the devices list. (LP: #1300623)
+
+ -- Shih-Yuan Lee (FourDollars) <sylee@canonical.com>  Wed, 02 Apr 2014 23:53:58 -0400
+
+bluez (4.101-0ubuntu10) trusty; urgency=low
+
+  * debian/patches/telephony_ofono_add_watch.patch: fix telephony-ofono code
+    to have the add_watch function not be conditioned out, since it's used.
+  * debian/rules: explicitly specify to use ofono a the telephony service. 
+  * debian/bluez.dirs: add /var/lib/bluetooth, we need to have it created
+    on Ubuntu Touch so that discovery writes cache data for classes, seen
+    addresses, etc. (LP: #1234361)
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Thu, 19 Dec 2013 21:36:00 -0500
+
+bluez (4.101-0ubuntu9) trusty; urgency=medium
+
+  * Use dh-autoreconf for current libtool.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Mon, 16 Dec 2013 01:20:58 -0800
+
+bluez (4.101-0ubuntu8b1) raring; urgency=low
+
+  * No-change rebuild against libudev1
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Wed, 13 Mar 2013 06:59:51 +0000
+
+bluez (4.101-0ubuntu8) raring; urgency=low
+
+  * debian/patches/enable_audio_profiles.patch: refreshed to *really* fix the
+    socket API being enabled when it shouldn't as per upstream...
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Thu, 06 Dec 2012 11:14:39 -0500
+
+bluez (4.101-0ubuntu7) raring; urgency=low
+
+  * debian/patches/socket_audio.patch: drop patch; PulseAudio has grown support
+    for MediaEndpoint and the cohabitation of the socket and dbus APIs does not
+    work well in PulseAudio 2.99. Furthermore, the socket API gets dropped in
+    the next bluez release, so let's not force a deprecated API enabled now
+    that's we have an alternative.
+  * debian/patches/enable_audio_profiles.patch: refreshed.
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Fri, 30 Nov 2012 20:58:15 -0500
+
+bluez (4.101-0ubuntu6) quantal; urgency=low
+
+  * debian/rules: add --enable-gatt (and remove the unrecognized configure
+    options left over from previous releases). This fixes a regression in the
+    support for Low Energy bluetooth devices such as thermometer probes and the
+    like. (LP: #1055616)
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Fri, 28 Sep 2012 17:03:12 -0400
+
+bluez (4.101-0ubuntu5) quantal; urgency=low
+
+  * debian/source_bluez.py: suggest installing bluez-hcidump as a step to get
+    hci debugging information. (LP: #652057)
+  * debian/control: add bluez-hcidump to Suggests for bluez, since it can be
+    useful for debugging bluetooth issues (and suggested by the apport hook).
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Wed, 15 Aug 2012 14:08:16 -0400
+
+bluez (4.101-0ubuntu4) quantal; urgency=low
+
+  * debian/patches/git-57170b3-fix_network_connect_method.patch: set the correct
+    parameters and return values for the org.bluez.Network Connect() method.
+    (LP: #1036241)
+  * debian/patches/git-2f92669-permit_concurrent_ag_hf.patch: allow AG and HF
+    roles to be enabled concurrently; should fix cases where HFP/HSP doesn't
+    show in pulseaudio (where the plugin fails to start) (LP: #1026378)
+  * debian/patches/git-a66a557-gdbus_missing_flags.patch: upstream converted
+    to using GDBus macros, but some flags got lost in the process. Fix them.
+  * debian/patches/git-b57c64f-network-null-deref.patch: fix an issue with
+    NULL dereferencing when evaluating network interface names/indexes.
+  * debian/patches/git-ea793cb-input_io_channel_watches.patch: Ensure input
+    IO channel watches are always properly added when channels are connected.
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Mon, 13 Aug 2012 17:16:30 -0400
+
+bluez (4.101-0ubuntu3) quantal; urgency=low
+
+  * debian/patches/dinovo_edge_keyboard.patch: support diNovo Edge
+    keyboard. (LP: #269851)
+
+ -- Tommy <mesilliac@gmail.com>  Fri, 27 Jul 2012 15:15:48 +1200
+
+bluez (4.101-0ubuntu2) quantal; urgency=low
+
+  * debian/control: enable autopkgtest tests; add XS-Testsuite. 
+  * debian/tests/control, debian/tests/bluez_response: add new tests for bluez
+    adapter and device support.
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Thu, 12 Jul 2012 14:53:13 -0400
+
+bluez (4.101-0ubuntu1) quantal-proposed; urgency=low
+
+  * New upstream release
+  * debian/libbluetooth3.symbols:
+    - Updated
+  * debian/patches/10-unregister_interface_on_exit.patch:
+  * debian/patches/11-explicitly_close.patch:
+  * debian/patches/python3.patch:
+    - Applied upstream
+
+ -- Robert Ancell <robert.ancell@canonical.com>  Wed, 04 Jul 2012 13:28:49 +1200
+
+bluez (4.99-2ubuntu2) quantal; urgency=low
+
+  * debian/source_bluez.py: Drop tabs to fix compatibility with Python 3.
+    Thanks Edward Donovan! (LP: #1013171)
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Mon, 18 Jun 2012 14:58:49 +0200
+
+bluez (4.99-2ubuntu1) quantal; urgency=low
+
+  [ Iain Lane ]
+  
+  * Merge with Debian unstable, remaining changes:
+    - Upstart support:
+      o Add debian/bluez.bluetooth.upstart and drop
+        debian/bluez.bluetooth.default.
+      o debian/rules: Drop -DEB_UPDATE_RCD_PARAMS
+      o Disable 07-fix-639356.patch and don't install 97-bluetooth.rules (in
+        debian/bluez.install) and debian/bluez-udev (in debian/rules), we
+        don't want to use the udev rules to start bluez. The upstart job does
+        that already.
+    - debian/bluez-alsa.install: Install ALSA bluetooth configuration into the
+      right place for ALSA 1.0.25.
+    - Add debian/source_bluez.py Apport package hook. Install in
+      debian/bluez.install.
+    - debian/control: Build against libnl3-dev, not libnl-dev.
+    - debian/patches/socket_audio.patch: re-enable the socket API for the
+      bluetooth audio manager. This reverts an upstream change that switches to
+      the MediaEndpoint DBus API by default, but it looks like PulseAudio isn't
+      quite ready to use that yet.
+    - Add sbc_mmx.patch: Fix building with gcc 4.7.
+    - debian/patches/10-unregister_interface_on_exit.patch: unregister the SAP
+      interface on exit.
+    - debian/patches/11-explicitly_close.patch: make sure the io channel for
+      HFP is properly closed on exit.
+    - debian/patches/enable_audio_profiles.patch: properly enable the Source
+      profile, its state is checked twice, once in audio/a2dp.c again which was
+      not taken into account in the previous upload.
+    - Drop debian/bluez.preinst and debian/bluez-alsa.preinst: Obsolete
+      conffile migrations, 10.04 LTS has a much newer version.
+    - Transition the BLUETOOTH_ENABLED variable to an Upstart override
+      variable if it's been changed. 
+  * debian/control: Continue depending on module-init-tools instead of kmod
+    (reverts Debian change), as we do not have the latter yet.
+  * debian/patches/python3.diff: Some additional changes
+
+  [ Steve Langasek ]
+  
+  * Switch to python3.
+
+ -- Iain Lane <iain.lane@canonical.com>  Tue, 01 May 2012 15:42:57 +0100
+
+bluez (4.99-2) unstable; urgency=low
+
+  * Update debian/control.
+    - Drop obsolete python-gobject dependency. (Closes: #663744)
+      python-gi is used instead.
+    - Change module-init-tools dependency to kmod. (Closes: #663359)
+  * Fix FTBFS with -std=c99 option. (Closes: #661879)
+    Add patches/09_fix_ftbfs_with_c99.patch
+  * Update debian/README.Debian. (Closes: #663955)
+    Add more infomation about alsa.conf.
+  * Update bluez.postint. (Closes: #663066)
+    Remove udev reload and makedev from postinst.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Fri, 23 Mar 2012 17:51:50 +0900
+
+bluez (4.99-1) unstable; urgency=low
+
+  * New upstream release.
+  * Update debian/control.
+    - Update Standards-Version to 3.9.3.
+    - Use architecture wild-card linux-any. (Closes: #662095)
+    - Update version of cdbs to >= 0.4.97.
+  * Remove some patches. Applied to version 4.99.
+    - 09_fix_compile_with_C++.patch
+    - 10-audio-Fix-disabling-local-A2DP-endpoints-when-UNIX-s.patch
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Thu, 08 Mar 2012 08:01:05 +0900
+
+bluez (4.98-3) unstable; urgency=low
+
+  * Fix A2DP not working on default. (Closes: #659897, #657255)
+    Add patches/10-audio-Fix-disabling-local-A2DP-endpoints-when-UNIX-s.patch.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Sat, 25 Feb 2012 16:49:54 +0900
+
+bluez (4.98-2ubuntu7) precise; urgency=low
+
+  * debian/patches/10-unregister_interface_on_exit.patch: unregister the SAP
+    interface on exit. Thanks to Jesse Sung for the patch.
+  * debian/patches/11-explicitly_close.patch: make sure the io channel for
+    HFP is properly closed on exit. Thanks to Jesse Sung for the patch.
+    (LP: #907818)
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Wed, 21 Mar 2012 15:27:57 -0400
+
+bluez (4.98-2ubuntu6) precise; urgency=low
+
+  * debian/control: Drop unused python-gobject dependency.
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Tue, 13 Mar 2012 19:41:36 +0100
+
+bluez (4.98-2ubuntu5) precise; urgency=low
+
+  * Fix the version number in debian/bluez.maintscript so it actually
+    cleans up the file. (LP: #953448)
+
+ -- Evan Broder <evan@ebroder.net>  Mon, 12 Mar 2012 15:07:44 -0700
+
+bluez (4.98-2ubuntu4) precise; urgency=low
+
+  [ Pali Rohár ]
+  * Respawn bluetooth daemon if crashed.
+
+  [ Evan Broder ]
+  * Eliminate the /etc/default/bluetooth conffile as it's not the Upstart
+    way. Transition the BLUETOOTH_ENABLED variable to an Upstart override
+    variable if it's been changed.
+
+ -- Evan Broder <evan@ebroder.net>  Wed, 07 Mar 2012 11:33:02 -0800
+
+bluez (4.98-2ubuntu3) precise; urgency=low
+
+  * debian/patches/enable_audio_profiles.patch: properly enable the Source
+    profile, its state is checked twice, once in audio/a2dp.c again which was
+    not taken into account in the previous upload. (LP: #948613)
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Wed, 07 Mar 2012 14:36:24 -0500
+
+bluez (4.98-2ubuntu2) precise; urgency=low
+
+  * debian/patches/enable_audio_profiles.patch: enable the Gateway and Source
+    audio profiles by default. (LP: #948613)
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Wed, 07 Mar 2012 10:44:35 -0500
+
+bluez (4.98-2ubuntu1) precise; urgency=low
+
+  * Merge with Debian unstable. Remaining Ubuntu changes:
+    - Upstart support:
+      o Add debian/bluez.bluetooth.upstart.
+      o debian/rules: Drop -DEB_UPDATE_RCD_PARAMS
+      o Disable 07-fix-639356.patch and don't install 97-bluetooth.rules (in
+        debian/bluez.install) and debian/bluez-udev (in debian/rules), we
+        don't want to use the udev rules to start bluez. The upstart job does
+        that already.
+    - debian/bluez-alsa.install: Install ALSA bluetooth configuration into the
+      right place for ALSA 1.0.25.
+    - Add debian/source_bluez.py Apport package hook. Install in
+      debian/bluez.install.
+    - debian/control: Build against libnl3-dev, not libnl-dev.
+    - debian/socket_audio.patch: re-enable the socket API for the bluetooth
+      audio manager. This reverts an upstream change that switches to the
+      MediaEndpoint DBus API by default, but it looks like PulseAudio isn't
+      quite ready to use that yet. (LP #918736)
+    - Add sbc_mmx.patch: Fix building with gcc 4.7. Not applied right now.
+    - Drop debian/bluez.preinst and debian/bluez-alsa.preinst: Obsolete
+      conffile migrations, 10.04 LTS has a much newer version.
+  * 4.98-2 fixes building C++ apps. (LP: #927097)
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Wed, 22 Feb 2012 10:51:07 +0100
+
+bluez (4.98-2) unstable; urgency=low
+
+  * Provides proximity.conf by bluez. (Closes: #656889)
+    Update debian/bluez.install. proximity.conf was installed to
+    etc/bluetooth/proximity.conf.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Wed, 01 Feb 2012 05:24:00 +0900
+
+bluez (4.98-1) unstable; urgency=low
+
+  * New upstream release.
+  * Update debian/bluetooth-dbus.conf.
+  * Update debian/control.
+    Add Multi-Arch: foreign to bluez.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 24 Jan 2012 05:35:09 +0900
+
+bluez (4.97-1) experimental; urgency=low
+
+  * New upstream release.
+  * Update debian/contorl.
+    - Add check (>= 0.9.8-1.1) to Build-Depends.
+  * Update debian/rules.
+    - Remove --enable-attrib, --enable-udevrules and --enable-configfiles 
+      from configure.
+    - Add --enable-time, --enable-alert and --enable-gatt-example to
+      configure.
+  * Update bluez-cups.install.
+    Fix cups backend into multiarch path. (Closes: #645884)
+  * Update man for l2test. (Closes: #649432)
+  * Update debian/patches/06-alsalib.patch
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 27 Dec 2011 17:19:00 +0900
+
+bluez (4.96-3) unstable; urgency=low
+
+  * Install debian/bluez-udev to /lib/udev/bluez-udev.
+    (Closes #639356, #643829)
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Fri, 30 Sep 2011 12:35:45 +0900
+
+bluez (4.96-2) unstable; urgency=low
+
+  * Add support static library of libbluetooth-dev. (Closes: #558742)
+    Don't include static library in bluez-alsa and bluez-gstreamer.
+  * Fix bluez udev rules attempt to access /usr when /usr may not be mounted.
+    Thanks to anomie@users.sourceforge.net. (Closes: #639356)
+  * Fix typo in debian/bluez.preinst. (Closes: #643321)
+    Thanks to Trent W. Buck.
+  * Remove dh-autoreconf and add '-Wl,--as-needed' to LDFLAGS.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Sun, 28 Sep 2011 01:50:05 +0900
+
+bluez (4.96-1) unstable; urgency=low
+
+  * New upstream release.
+    Applied some patch from Daniel Schaal. Thanks! (Closes: #636633)
+  * Add debug packages.
+    bluez-dbg and libbluetooth3-dbg.
+  * Add support systemd.
+  * Update debian/control.
+    - Add s390x to Architecture. (Closes: #636545)
+    - Add libreadline-dev to Build-Depends.
+  * Drop patchsys-quilt.mk snippet: superfluous with source
+    format 3.0 "(quilt)".
+  * Refresh patch.
+  * Switch to multiarch.
+  * Update debian/rules.
+    - Remove obsolete configure flags.
+    - Add new plugins (proximity, sap, wiimote, thermometer, dbusoob).
+    - Strip and move to .install files.
+    - Add LDFLAGS=-Wl,--as-needed to configure option.
+  * Add usr/bin/gatttool into bluez package.
+  * Update bluez.lintian-overrides.
+  * Update debian/copyright.
+    Update path of license file.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Thu, 04 Aug 2011 11:46:35 +0900
+
+bluez (4.94-3) unstable; urgency=low
+
+  * Add dh-autoreconf to Build-Depends. To support dh-autoreconf,
+    update debian/control and debian/rules.
+  * Update version and the install path for which libasound depended.
+    Add patch/06-alsalib.patch. Thanks for Steve Langasek and Jordi Mallach.
+    (Closes: #634976).
+  * Remove Andrea Veri from Uploaders.
+    Thank you for having maintained this package. (Closes: #635095)
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Sun, 24 Jul 2011 18:31:59 +0900
+
+bluez (4.94-2) unstable; urgency=medium
+
+  * Add udev to Replaces and Breaks field (Closes: #628904).
+  * Fix typo from deamon to daemon (Closes: 629901).
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Thu, 09 Jun 2011 21:48:21 +0900
+
+bluez (4.94-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Update debian/control.
+    - Add ppc64 to Architecture.
+    - Add version depency of udev (Closes: #628904, #628765).
+  * Remove debian/patches/03_fix_udevdir.patch.
+    Applied to upstream.
+  * Update debian/bluez.bluetooth.init.
+    Applied patch from Cristian Ionescu-Idbohrn (Closes: #628491).
+  * Update debian/bluez.postinst.
+    Add abort-upgrade, abort-remove and abort-deconfigure target
+    to bluez.postinst.
+  * Fix return code of hid2hci.
+    Add patch 03-Fix-return-code-of-hid2hci.patch
+  * Fix work Logitech keyboard (Closes: #626975)
+    Add patch 04-Fix-bluetooth-hid2hci.rules.patch
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Wed, 01 Jun 2011 15:30:01 +0900
+
+bluez (4.93-3) unstable; urgency=low
+
+  * Fix install hid2hci to /lib/udev. 
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 31 May 2011 19:42:33 +0900
+
+bluez (4.93-2) unstable; urgency=low
+
+  * Update debian/README.Debian.gz.
+    Add description of bluez-simple-agent (Closes: #488306, #384680).
+  * Update debian/bluez_agent.udev and debian/bluez.bluetooth.init.
+    Fix path of hid2hci (Closes: #628491).
+  * Add debian/patches/03_fix_udevdir.patch.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 31 May 2011 18:04:29 +0900
+
+bluez (4.93-1) unstable; urgency=low
+
+  * New upstream release.
+  * Update debian/control.
+    - Add libudev-dev to Build-Depends.
+  * Update debian/bluetooth-dbus.conf.
+    Add policy for lp group.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Fri, 20 May 2011 10:31:07 +0900
+
+bluez (4.91-1) unstable; urgency=low
+
+  * New upstream release.
+  * Updte debian/control
+    + Update to S-V 3.9.2: no changes needed.
+    + Remove libdbus-1-dev from Build-Depends.
+      This is interpolated by libdbus-1-dev.
+  * Update debian/libbluetooth3.symbols.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 12 Apr 2011 11:50:49 +0900
+
+bluez (4.89-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Sat, 05 Mar 2011 17:08:40 +0900
+
+bluez (4.87-2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Wed, 09 Feb 2011 01:38:45 +0900
+
+bluez (4.87-1) experimental; urgency=low
+
+  * New upstream release.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Wed, 26 Jan 2011 07:58:27 +0900
+
+bluez (4.86-1) experimental; urgency=low
+
+  * New upstream release.
+  * Update debian/rules.
+    - Enable health plugin and attrib plugin.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Mon, 24 Jan 2011 11:49:55 +0900
+
+bluez (4.84-1) experimental; urgency=low
+
+  * New upstream release.
+  * Update README.Debian.
+    - Update section of Keyboard and mouse support
+      (Closes: #599894, #535929).
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Wed, 12 Jan 2011 17:23:25 +0900
+
+bluez (4.82-1) experimental; urgency=low
+
+  * New upstream release.
+  * Add manpages of bluetooth-agent.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Mon, 20 Dec 2010 01:39:43 +0900
+
+bluez (4.81-1) experimental; urgency=low
+
+  * New upstream release.
+  * Drop patches/010_udev_rules_agent.patch (Closes: ##588034).
+    Connection of bluetooth is cut off after system start,
+    if applied this patch. And this patch is not already necessary.
+  * Disabled HAL (Closes: 599023).
+    Add patches/02_disable_hal.patch
+  * Update debian/rules
+    - Provide again bluetooth-agent utility (Closes: #598982).
+    - Remove --enable-netlink option of configure.
+      This option was not provided.
+  * Update debian/bluez.install
+    Remove path of plugins.
+  * Update libbluetooth-dev.install
+    Remove path of plugins.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Thu, 02 Dec 2010 12:17:48 +0900
+
+bluez (4.70-1) unstable; urgency=low
+
+  * New upstream release.
+  * Update debian/bluez.bluetooth.init (Closes: #593172).
+  * Update debian/bluez.preinst (Closes: #592982, #568301).
+  * Update debian/control.
+    - python-gobject and python-dbus move from Suggests to Depends.
+  * Replase bluetooth-agent to bluez-simple-agent.
+  * Some test program move to usr/bin.
+ 
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Fri, 03 Sep 2010 08:43:02 +0900
+
+bluez (4.69-1) unstable; urgency=low
+
+  * New upstream release (Closes: #589727).
+  * Update debian/control.
+    - bumped standards-version to 3.9.1.
+  * Update libbluetooth3.symbols.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Wed, 28 Jul 2010 13:44:34 +0900
+
+bluez (4.66-1) unstable; urgency=low
+
+  * New upstream release.
+  * Update debian/control.
+    - Add libcap-ng-dev to Build-depends. 
+  * Update debian/rules.
+    - Add serial.conf (Closes: #559672).
+    - Update configure option.
+      Remove --enable-manpages.
+      Change --enable-pcmciarules to --enable-pcmcia.
+      Add --enable-pnat, --enable-tracer, --enable-udevrules,
+          --enable-configfiles and --enable-capng.
+  * Add man file of hcitrace.
+  * Update udev rule (Closes: #535075).
+    Thanks to Sjoerd Simons.
+  * Add patch 01_lower_sink_ranking.patch (Closes: #571595).
+    Thanks to Sebastian Dröge.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 22 Jun 2010 12:45:57 +0900
+
+bluez (4.64-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Sat, 15 May 2010 15:44:23 +0900
+
+bluez (4.63-2) unstable; urgency=low
+
+  * Remove some contents from debian/NEWS. (Closes: #579817)
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Thu, 06 May 2010 06:50:14 +0900
+
+bluez (4.63-1) unstable; urgency=low
+
+  * Update debian/control.
+    - Remove Filippo Giunchedi <filippo@debian.org> from uploaders.
+    - bumped standards-version to 3.8.4.
+  * Add man files.
+    bluetooth-agent.1, l2test.1.
+  * Update libbluetooth3.symbols.
+    Add hci_bustostr@Base, hci_read_inq_response_tx_power_level@Base,
+    hci_typetostr@Base, sdp_get_supp_feat@Base, sdp_set_supp_feat@Base
+  * Update debian/NEWS.
+  * Add debian/source/format.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 20 Apr 2010 06:08:24 +0900
+
+bluez (4.60-1) unstable; urgency=low
+
+  * New upstream release.
+  * debian/control:
+    - Add Nobuhiro Iwamatsu to Uploaders (Closes #564569).
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Sat, 23 Jan 2010 16:03:01 +0900
+
+bluez (4.57-1) unstable; urgency=low
+
+  * New upstream bug fix release.
+
+ -- Andrea Veri <andrea.veri89@gmail.com>  Thu, 12 Nov 2009 21:27:54 +0100
+
+bluez (4.56-2) unstable; urgency=low
+
+  * debian/control:
+    - makedev re-added as alternate depend of udev, as
+      it's needed by postints. Thanks to Guillem Jover
+      for the report. (Closes: #546860)
+
+ -- Andrea Veri <andrea.veri89@gmail.com>  Wed, 14 Oct 2009 00:19:19 +0200
+
+bluez (4.56-1) unstable; urgency=low
+
+  * New upstream release. (Closes: #539361)
+  * rctest man page is no more missing. (Closes: #535949)
+  * debian/control:
+    - bumped standards-version to 3.8.3. No changes needed.
+    - added myself into uploaders plus DM tag.
+    - removed makedev depends. (Closes: #546860)
+  * debian/copyright:
+    - added missing copyright holders.
+  * debian/patches/001_agent_fixes.patch:
+    - removed, applied upstream
+  * debian/patches/002_a2dpsink_marginal.patch:
+    - removed, applied upstream.
+  * debian/patches/005_l2ping_section.patch:
+    - removed, applied upstream.
+  * debian/rules:
+    - removed the hack to have man page installed correctly.
+      It has been fixed upstream and points to the right section. (8)
+  * debian/libbluetooth3.symbols:
+    - refreshed.
+  * debian/bluez.examples:
+    - test/test-* removed and added all needed examples by hand to avoid
+      the installation of useless stuff.
+
+ -- Andrea Veri <andrea.veri89@gmail.com>  Mon, 12 Oct 2009 15:40:02 +0200
+
+bluez (4.42-2) unstable; urgency=low
+
+  * Fix "Bashisms in init script" (Closes: #534511)
+  * Handle upgrade of old /etc/modprobe.d/bluez (Closes: #523050)
+  * Conflict/Replace bluez-audio in bluez (Closes: #535089)
+
+ -- Filippo Giunchedi <filippo@debian.org>  Tue, 30 Jun 2009 20:05:13 +0200
+
+bluez (4.42-1) unstable; urgency=low
+
+  * New upstream release
+    + drop not needed debian/patches/003_configure_amd64_rpath.patch
+  * Provide transitional bluez-audio to migrate to bluez-alsa and
+    bluez-gstreamer (Closes: #531449)
+  * Install README.Debian in binary bluez (Closes: #532018)
+  * Make bluez-{alsa,gstreamer} depend on bluez
+  * Switch to group bluetooth from netdev for authorized users
+    (Closes: #534118)
+  * Mention pand/hidd/dund move to bluez-compat in init script and default
+    (Closes: #532622)
+  * debian/patches/002_test_agent_newapi.patch port bluetooth-agent to new
+    D-Bus API
+  * Update to S-V 3.8.2: no changes  
+  * Introduce common SSD_OPTIONS in init script and sleep 1 on restart 
+
+ -- Filippo Giunchedi <filippo@debian.org>  Sun, 21 Jun 2009 14:01:04 +0200
+
+bluez (4.40-2) unstable; urgency=low
+
+  * Ship a libbluetooth3.symbols file instead of shlibs
+  * Ship more examples from test/, thus suggest: python-gobject and
+    python-dbus together with README.examples
+  * Provide a script in /lib/udev/bluez for waiting on /usr being available
+    and a patch udev rules to use it
+
+ -- Filippo Giunchedi <filippo@debian.org>  Tue, 26 May 2009 00:02:53 +0200
+
+bluez (4.40-1) unstable; urgency=low
+
+  * New upstream release
+    - scripts/bluetooth.rules -> scripts/bluetooth-serial.rules
+  * Upload to unstable
+  * Change usage for hid2hci: install udev rules and issue a warning from init
+    script
+
+ -- Filippo Giunchedi <filippo@debian.org>  Fri, 22 May 2009 14:56:07 +0200
+
+bluez (4.34-0exp1) experimental; urgency=low
+
+  * First upload of bluez 4.x (Closes: #499529)
+    - include parts of the packaging from ubuntu, thanks!
+    - bluez-utils and bluez-libs are now a single source package 
+    - libbluetooth2 -> libbluetooth3 bump
+    - conflict bluez with bluez-utils (<= 3.36-3)
+    - update debian/copyright, thanks to Nobuhiro Iwamatsu
+  * Remove hid2hci patches/script
+  * Remove broken link to documentation (Closes: #504675)
+  * Install a sample commandline agent from test/ into bluetooth-agent
+    - add 001_test_agent_default_adapter.patch to get the default adapter
+  * Install test/simple-agent and test/list-devices as examples
+  * Remove old commented code from maintainer scripts (pcmcia-support postinst
+    and bluez preinst)
+  * Update watch file to match bluez only
+  * Add #DEBHELPER# to debian/bluez-utils.postrm
+  * Update to S-V 3.8.1: no changes needed
+  * Fix lintian warnings:
+    - add -e to remaining maintainer scripts
+    - remove full path to update-rc.d in debian/bluez.postinst
+    - override "bluez-utils: maintainer-script-empty postrm" for transitional
+      bluez-utils postrm
+  * Use 7 in debian/compat
+  * Fix debian/bluez.preinst to use dpkg-query, thus removing the lintian
+    override
+
+ -- Filippo Giunchedi <filippo@debian.org>  Wed, 01 Apr 2009 12:20:01 +0200
+
+bluez (4.29-0ubuntu1) jaunty; urgency=low
+
+  * New upstream version (LP: #326811)
+    - Use AVRCP version 1.0 for now.
+    - Decrease AVDTP idle timeout to one second.
+    - Delay AVRCP connection when remote device connects A2DP.
+    - Add workaround for AVDTP stream setup with broken headsets.
+    - Add missing three-way calling feature bit for Handsfree.
+    - Fix handsfree callheld indicator updating.
+    - Fix parsing of all AT commands within the buffer.
+    - Fix authentication replies when disconnected.
+    - Fix handling of debug combination keys.
+    - Fix handling of changed combination keys.
+    - Fix handling of link keys when using no bonding.
+    - Fix handling of invalid/unknown authentication requirements.
+    - Fix closing of L2CAP raw socket used for dedicated bonding. 
+
+ -- Baptiste Mille-Mathias <baptiste.millemathias@gmail.com>  Sun, 08 Feb 2009 10:48:36 +0100
+
+bluez (4.28-0ubuntu1) jaunty; urgency=low
+
+  * New upstream version. (LP: #324492)
+    - Add AVDTP signal fragmentation support.
+    - Add more SBC performance optimizations.
+    - Add more SBC audio quality improvements.
+    - Use native byte order for audio plugins.
+    - Set the adapter alias only after checking the EIR data.
+    - Fix auto-disconnect issue with explicit A2DP connections.
+    - Fix invalid memory access of ALSA plugin.
+    - Fix compilation with -Wsign-compare.
+
+ -- Baptiste Mille-Mathias <baptiste.millemathias@gmail.com>  Mon, 02 Feb 2009 21:57:08 +0100
+
+bluez (4.27-0ubuntu1) jaunty; urgency=low
+
+  * New upstream version. (LP: #304784)
+    - Improves interoperability and security handling
+      with Bluetooth 2.1 based devices.
+
+ -- Mario Limonciello <mario_limonciello@dell.com>  Tue, 27 Jan 2009 12:44:39 -0600
+
+bluez (4.25-0ubuntu6) jaunty; urgency=low
+
+  * Drop previous patch, bluez is a bit strange and this is basically ok.
+
+ -- Scott James Remnant <scott@ubuntu.com>  Mon, 19 Jan 2009 17:01:14 +0000
+
+bluez (4.25-0ubuntu5) jaunty; urgency=low
+
+  * debian/patches/ubuntu_dbus_policy.patch:
+    - Drop send_interface allow which isn't service-specific.  LP: #318740. 
+
+ -- Scott James Remnant <scott@ubuntu.com>  Mon, 19 Jan 2009 15:38:43 +0000
+
+bluez (4.25-0ubuntu4) jaunty; urgency=low
+
+  * Add Breaks to ensure the right udev version is used.
+
+ -- Scott James Remnant <scott@ubuntu.com>  Fri, 09 Jan 2009 11:35:06 +0000
+
+bluez (4.25-0ubuntu3) jaunty; urgency=low
+
+  * debian/hid2hci.rules: Update to use ATTRS{} instead of SYSFS{}
+
+ -- Scott James Remnant <scott@ubuntu.com>  Wed, 07 Jan 2009 14:18:52 +0000
+
+bluez (4.25-0ubuntu2) jaunty; urgency=low
+
+  * debian/rules: Install rules into /lib/udev/rules.d
+  * debian/bluez.preinst: Remove old rule if unchanged.
+
+ -- Scott James Remnant <scott@ubuntu.com>  Wed, 07 Jan 2009 11:35:39 +0000
+
+bluez (4.25-0ubuntu1) jaunty; urgency=low
+
+  * New upstream release. (LP: #312087)
+
+ -- Baptiste Mille-Mathias <baptiste.millemathias@gmail.com>  Tue, 30 Dec 2008 19:53:44 +0100
+
+bluez (4.21-0ubuntu1) jaunty; urgency=low
+
+  * New upstream version. (LP: #304109)
+
+ -- Mario Limonciello <mario_limonciello@dell.com>  Wed, 03 Dec 2008 15:56:03 -0600
+
+bluez (4.17-0ubuntu1) jaunty; urgency=low
+
+  * New upstream version. (LP: #284039)
+  * Drop the following patches that landed upstream:
+    - logitech_5500_ids.patch
+    - dell_bt_365.patch
+    - sco_connect_git.patch
+
+ -- Mario Limonciello <mario_limonciello@dell.com>  Wed, 05 Nov 2008 13:28:35 -0600
+
+bluez (4.12-0ubuntu5) intrepid; urgency=low
+
+  * Add debian/hid2hci.rules to enable running hid2hci
+    as soon as some bluetooth dongles get plugged in. (LP: #288294)
+  * debian/bluez.postinst:
+    - Update udev rules on postinst.
+  * debian/rules:
+    - Install debian/hid2hci.rules to 62-bluez-hid2hci.rules
+
+ -- Mario Limonciello <superm1@ubuntu.com>  Sat, 25 Oct 2008 23:32:00 -0500
+
+bluez (4.12-0ubuntu4) intrepid; urgency=low
+
+  * Add hid2hci.patch to enable hid2hci to be ran after
+    suspending a machine. (LP: #268877)
+  * debian/rules:
+    - Install new script from above patch.
+  * Add logitech_5500_ids.patch for enabling hid2hci on
+    more logitech devices. (LP: #272352)
+
+ -- Mario Limonciello <mario_limonciello@dell.com>  Wed, 22 Oct 2008 16:01:59 -0500
+
+bluez (4.12-0ubuntu3) intrepid; urgency=low
+
+  * debian/bluez.postinst:
+    - Don't show output for MAKEDEV. (LP: 280360)
+  * Add dell_bt_365.patch which will enable putting the Dell BT365
+    adapter into HCI mode upon bootup. (LP: #286724)
+  * debian/control:
+    - Add one more binary package for old compatibility binaries. (LP: #281580)
+  * debian/rules:
+    - Enable compatibility binaries.  These are HIGHLY discouraged from usage
+      and will not necessarily be here in the future.
+  * debian/bluez.install:
+    - Adjust what binaries get installed, to be able to pull out hidd, dund,
+      and pand as necessary.
+
+ -- Mario Limonciello <mario_limonciello@dell.com>  Mon, 20 Oct 2008 20:37:24 -0500
+
+bluez (4.12-0ubuntu2) intrepid; urgency=low
+
+  * debian/control:
+    - Move libbluetooth3 to the top of the list so that it is the
+      package that gets to keep the real changelog rather than symlinks.
+    - Only Replaces: packages rather than conflicts to help with 
+      upgrades (LP: #279954)
+
+ -- Mario Limonciello <mario_limonciello@dell.com>  Tue, 07 Oct 2008 16:32:31 -0500
+
+bluez (4.12-0ubuntu1) intrepid; urgency=low
+
+  * Initial Release. (LP: #274950)
+    - This package replaces bluez-utils and bluez-libs source packages.
+    - It was generated by merging the contents of bluez-utils and bluez-libs
+      and updating content.
+    - Legacy functionality for hidd, dund, and pand are not present, and 
+      have been removed from all configuration files.
+  * This release introduces encryption (LP: #182191)
+  * debian/patches:
+    - bluez-utils-oui-usage.patch was borrowed from the Fedora 10 packaging.
+    - sco-connect-git.patch was taken from bluez git shortly after 4.12 release.
+      It should "help" with some sco headset issues.
+  * debian/control:
+    - Update different packages per upstream's recommendations.
+    - Update conflicts/replaces for earlier packages.
+    - Add a transitional bluez-utils package to help with the transition.
+
+ -- Mario Limonciello <superm1@ubuntu.com>  Tue, 07 Oct 2008 12:10:29 -0500

@@ -1,0 +1,33 @@
+Author: Simon Long <simon@raspberrypi.org>
+Forwarded: https://patchwork.kernel.org/project/bluetooth/patch/20201218190609.107898-4-dave.jones@canonical.com/
+Last-Update: 2020-12-18
+Description: Patches for loading the bcm43xx firmware
+ This patch corrects the location of the firmware from /etc/firmware to
+ /lib/firmware, and disables setting the UART interface speed *before* loading
+ the firmware (a later call sets the speed of the interface as requested). It
+ also introduces a short wait after the firmware load before the module is
+ reset.
+
+Index: bluez/tools/hciattach_bcm43xx.c
+===================================================================
+--- bluez.orig/tools/hciattach_bcm43xx.c
++++ bluez/tools/hciattach_bcm43xx.c
+@@ -31,7 +31,7 @@
+ #include "hciattach.h"
+ 
+ #ifndef FIRMWARE_DIR
+-#define FIRMWARE_DIR "/etc/firmware"
++#define FIRMWARE_DIR "/lib/firmware"
+ #endif
+ 
+ #define FW_EXT ".hcd"
+@@ -356,9 +356,6 @@ int bcm43xx_init(int fd, int def_speed,
+ 	if (bcm43xx_locate_patch(FIRMWARE_DIR, chip_name, fw_path)) {
+ 		fprintf(stderr, "Patch not found, continue anyway\n");
+ 	} else {
+-		if (bcm43xx_set_speed(fd, ti, speed))
+-			return -1;
+-
+ 		if (bcm43xx_load_firmware(fd, fw_path))
+ 			return -1;
+ 
