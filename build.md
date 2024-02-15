@@ -22,7 +22,7 @@ Launchpad.net adds your own ppa, the main ppa of the series, security and update
 
 Don't forget to `git submodule update --init`.
 
-`pdebuild -- --basetgz ../<series>.tgz`
+`pdebuild -- --distribution <series> --basetgz ../<series>.tgz`
 
 deb will be in `/var/cache/pbuilder/result`, all other files will have a copy in parent directory
 
