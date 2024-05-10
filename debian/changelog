@@ -1,23 +1,197 @@
-polybar (3.6.3-1) bionic; urgency=medium
+polybar (3.7.1-1ppa1) focal; urgency=medium
 
-  * Release 3.6.3
+  * Version 3.7.1
 
- -- Constantin Piber <cp.piber@gmail.com>  Fri, 20 May 2022 20:27:50 +0200
+ -- Constantin Piber <cp.piber@gmail.com>  Fri, 10 May 2024 20:34:06 +0200
 
-polybar (3.6.2-1) bionic; urgency=medium
+polybar (3.7.1-1build3) noble; urgency=medium
 
-  * Release 3.6.2
+  * No-change rebuild for CVE-2024-3094
 
- -- Constantin Piber <cp.piber@gmail.com>  Fri, 29 Apr 2022 15:03:12 +0100
+ -- William Grant <wgrant@ubuntu.com>  Mon, 01 Apr 2024 18:20:22 +1100
 
-polybar (3.6.1-1) bionic; urgency=medium
+polybar (3.7.1-1build2) noble; urgency=medium
 
-  * Release 3.6.1
+  * No-change rebuild against libcurl4t64
 
- -- Constantin Piber <cp.piber@gmail.com>  Sat, 05 Mar 2022 14:51:13 +0100
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Sat, 16 Mar 2024 06:56:36 +0000
 
-polybar (3.5.6-1) bionic; urgency=medium
+polybar (3.7.1-1build1) noble; urgency=medium
 
-  * Initial release 3.5.6
+  * No-change rebuild against libasound2t64
 
- -- Constantin Piber <cp.piber@gmail.com>  Wed, 01 Sep 2021 13:32:08 +0200
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 12 Mar 2024 07:00:10 +0000
+
+polybar (3.7.1-1) unstable; urgency=medium
+
+  * New upstream version 3.7.1
+
+ -- Samuel Henrique <samueloph@debian.org>  Fri, 22 Dec 2023 12:41:40 -0300
+
+polybar (3.7.0-1) unstable; urgency=medium
+
+  * New upstream version 3.7.0
+  * Bump Standards-Version to 4.6.2
+  * d/control: Rename build-dep libxcb-util0-dev => libxcb-util-dev
+
+ -- Samuel Henrique <samueloph@debian.org>  Mon, 06 Nov 2023 09:36:52 +0000
+
+polybar (3.6.3-1) unstable; urgency=medium
+
+  * New upstream version 3.6.3
+
+ -- Samuel Henrique <samueloph@debian.org>  Fri, 06 May 2022 17:32:25 +0100
+
+polybar (3.6.2-1) unstable; urgency=medium
+
+  * New upstream version 3.6.2
+
+ -- Samuel Henrique <samueloph@debian.org>  Sun, 03 Apr 2022 19:50:25 +0100
+
+polybar (3.6.1-1) unstable; urgency=medium
+
+  * New upstream version 3.6.1
+  * Remove patches applied upstream
+
+ -- Samuel Henrique <samueloph@debian.org>  Sat, 05 Mar 2022 19:26:21 +0000
+
+polybar (3.6.0-3) unstable; urgency=medium
+
+  * d/p/fix_ldflags_override.patch: New upstream patch to fix ldflags override
+    and hopefully a FTBFS on mipsel and armel
+
+ -- Samuel Henrique <samueloph@debian.org>  Fri, 04 Mar 2022 19:39:01 +0000
+
+polybar (3.6.0-2) unstable; urgency=medium
+
+  * d/p/fix_missing_includes.patch: New upstream patch to fix FTBFS
+
+ -- Samuel Henrique <samueloph@debian.org>  Wed, 02 Mar 2022 21:38:12 +0000
+
+polybar (3.6.0-1) unstable; urgency=medium
+
+  * New upstream version 3.6.0
+  * Remove unneeded patches in favor of config flags
+  * d/control: Add new B-D libuv1-dev
+  * d/p/fix_doc_flags.patch: New patch to allow skipping installation of docs
+  * d/polybar.install: Remove file, upstream now installs config example
+  * d/copyright: Update file
+  * d/salsa-ci.yml: Remove file in favor of configuring salsa by pointing to
+    salsa-ci project instead of file
+
+ -- Samuel Henrique <samueloph@debian.org>  Tue, 01 Mar 2022 22:20:40 +0000
+
+polybar (3.5.7-1) unstable; urgency=medium
+
+  * New upstream version 3.5.7
+  * Bump Standards-Version to 4.6.0
+
+ -- Samuel Henrique <samueloph@debian.org>  Fri, 24 Sep 2021 20:11:29 +0100
+
+polybar (3.5.6-1) unstable; urgency=medium
+
+  * New upstream version 3.5.6
+
+ -- Samuel Henrique <samueloph@debian.org>  Sat, 14 Aug 2021 18:20:54 +0100
+
+polybar (3.5.5-1) unstable; urgency=medium
+
+  * New upstream version 3.5.5
+
+ -- Utkarsh Gupta <utkarsh@debian.org>  Tue, 02 Mar 2021 02:52:57 +0530
+
+polybar (3.5.4-1) unstable; urgency=medium
+
+  * New upstream version 3.5.4
+
+ -- Utkarsh Gupta <utkarsh@debian.org>  Thu, 07 Jan 2021 19:26:45 +0530
+
+polybar (3.5.3-1) unstable; urgency=medium
+
+  * New upstream version 3.5.3
+  * Drop BD on git
+
+ -- Utkarsh Gupta <utkarsh@debian.org>  Thu, 24 Dec 2020 00:31:51 +0530
+
+polybar (3.5.2-1) unstable; urgency=medium
+
+  * New upstream version 3.5.2
+  * d/watch: Upstream now provides compressed tarballs
+
+ -- Samuel Henrique <samueloph@debian.org>  Tue, 22 Dec 2020 00:11:49 +0000
+
+polybar (3.5.0-2) unstable; urgency=medium
+
+  [ Adrian Bunk ]
+  * Link against atomic on platforms that doesn't have __atomic*
+    (closes: #976988)
+
+ -- Samuel Henrique <samueloph@debian.org>  Wed, 09 Dec 2020 18:23:48 +0000
+
+polybar (3.5.0-1) unstable; urgency=medium
+
+  [ Utkarsh Gupta ]
+  * New upstream version 3.5.0
+  * Drop patch that has been merged upstream
+  * Refresh d/patches
+
+  [ Samuel Henrique ]
+  * Bump Standards-Version to 4.5.1
+  * d/control: Add git build-dep
+  * d/p/disable_config_generation.patch: Add Forwarded field with
+    'not-needed' value
+  * d/p/dont_build_html_doc.patch: Add Forwarded field with 'not-needed'
+    value
+  * d/copyright: Remove mention of libjsoncpp, not vendored anymore
+
+ -- Samuel Henrique <samueloph@debian.org>  Tue, 08 Dec 2020 18:47:21 +0000
+
+polybar (3.4.3-2) unstable; urgency=medium
+
+  * With this release, the only reproducible build issue left is a differing
+    NT_GNU_BUILD_ID.
+  * d/rules: Add reproducible=+fixfilepath flag for reproducibility.
+  * d/p/redact_build_flags.patch: New patch for reproducible builds.
+  * d/watch: Fix d/watch to correctly get upstream's tarball.
+
+ -- Samuel Henrique <samueloph@debian.org>  Tue, 09 Jun 2020 23:04:58 +0100
+
+polybar (3.4.3-1) unstable; urgency=medium
+
+  [ Samuel Henrique ]
+  * d/watch: Fix to get the correct tarball with the git submodules included
+
+  [ Utkarsh Gupta ]
+  * New upstream version 3.4.3
+  * Bump dh-compat to 13
+  * Refresh d/patches
+
+ -- Utkarsh Gupta <utkarsh@debian.org>  Fri, 15 May 2020 06:37:45 +0530
+
+polybar (3.4.2-4) unstable; urgency=medium
+
+  * Source-only upload.
+
+ -- Utkarsh Gupta <utkarsh@debian.org>  Mon, 13 Apr 2020 01:51:36 +0530
+
+polybar (3.4.2-3) unstable; urgency=medium
+
+  * Stop generating example config at build time
+  * d/p/disable_config_generation.patch: New patch, unblock reproducible build
+
+ -- Samuel Henrique <samueloph@debian.org>  Sun, 12 Apr 2020 19:13:27 +0100
+
+polybar (3.4.2-2) unstable; urgency=medium
+
+  * d/copyright: Add license information for lib/i3ipcpp/3rd/auss
+
+ -- Samuel Henrique <samueloph@debian.org>  Thu, 09 Apr 2020 22:14:11 +0100
+
+polybar (3.4.2-1) unstable; urgency=medium
+
+  * Initial release. (Closes: #856179),
+    Many thanks to Ayose <ayosec@gmail.com> and Jason Pleau <jason@jpleau.ca>
+    for having worked on the packaging of polybar for Debian, which was used
+    as a base for this one.
+
+ -- Samuel Henrique <samueloph@debian.org>  Sat, 22 Feb 2020 16:14:56 +0000
