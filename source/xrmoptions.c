@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -76,12 +76,18 @@ typedef struct {
  * Currently supports string, boolean and number (signed and unsigned).
  */
 static XrmOption xrmOptions[] = {
-    {xrm_String, "switchers", {.str = &config.modi}, NULL, "", CONFIG_DEFAULT},
+    {xrm_String, "switchers", {.str = &config.modes}, NULL, "", CONFIG_DEFAULT},
     {xrm_String,
      "modi",
-     {.str = &config.modi},
+     {.str = &config.modes},
      NULL,
-     "Enabled modi",
+     "Enabled modes",
+     CONFIG_DEFAULT},
+    {xrm_String,
+     "modes",
+     {.str = &config.modes},
+     NULL,
+     "Enable modes",
      CONFIG_DEFAULT},
     {xrm_String,
      "font",
@@ -99,13 +105,15 @@ static XrmOption xrmOptions[] = {
      "yoffset",
      {.snum = &config.y_offset},
      NULL,
-     "Y-offset relative to location",
+     "Y-offset relative to location. *DEPRECATED* see rofi-theme manpage for "
+     "new option",
      CONFIG_DEFAULT},
     {xrm_SNumber,
      "xoffset",
      {.snum = &config.x_offset},
      NULL,
-     "X-offset relative to location",
+     "X-offset relative to location. *DEPRECATED* see rofi-theme manpage for "
+     "new option",
      CONFIG_DEFAULT},
     {xrm_Boolean,
      "fixed-num-lines",
@@ -282,7 +290,13 @@ static XrmOption xrmOptions[] = {
      CONFIG_DEFAULT},
     {xrm_String,
      "combi-modi",
-     {.str = &config.combi_modi},
+     {.str = &config.combi_modes},
+     NULL,
+     "Set the modi to combine in combi mode",
+     CONFIG_DEFAULT},
+    {xrm_String,
+     "combi-modes",
+     {.str = &config.combi_modes},
      NULL,
      "Set the modi to combine in combi mode",
      CONFIG_DEFAULT},
@@ -411,6 +425,19 @@ static XrmOption xrmOptions[] = {
      {.str = &(config.application_fallback_icon)},
      NULL,
      "Fallback icon to use when the application icon is not found in run/drun.",
+     CONFIG_DEFAULT},
+    {xrm_Number,
+     "refilter-timeout-limit",
+     {.num = &(config.refilter_timeout_limit)},
+     NULL,
+     "When there are more entries then this limit, only refilter after a "
+     "timeout.",
+     CONFIG_DEFAULT},
+    {xrm_Boolean,
+     "xserver-i300-workaround",
+     {.snum = &(config.xserver_i300_workaround)},
+     NULL,
+     "Workaround for XServer issue #300 (issue #611 for rofi.)",
      CONFIG_DEFAULT},
 };
 
@@ -603,7 +630,7 @@ void config_parse_cmd_options(void) {
 static gboolean __config_parser_set_property(XrmOption *option,
                                              const Property *p, char **error) {
   if (option->type == xrm_String) {
-    if (p->type != P_STRING && p->type != P_LIST) {
+    if (p->type != P_STRING && (p->type != P_LIST && p->type != P_INTEGER)) {
       *error =
           g_strdup_printf("Option: %s needs to be set with a string not a %s.",
                           option->name, PropertyTypeName[p->type]);
@@ -613,15 +640,17 @@ static gboolean __config_parser_set_property(XrmOption *option,
     if (p->type == P_LIST) {
       for (GList *iter = p->value.list; iter != NULL;
            iter = g_list_next(iter)) {
-        Property *p = (Property *)iter->data;
+        Property *p2 = (Property *)iter->data;
         if (value == NULL) {
-          value = g_strdup((char *)(p->value.s));
+          value = g_strdup((char *)(p2->value.s));
         } else {
-          char *nv = g_strjoin(",", value, (char *)(p->value.s), NULL);
+          char *nv = g_strjoin(",", value, (char *)(p2->value.s), NULL);
           g_free(value);
           value = nv;
         }
       }
+    } else if (p->type == P_INTEGER) {
+      value = g_strdup_printf("%d", p->value.i);
     } else {
       value = g_strdup(p->value.s);
     }
@@ -715,13 +744,13 @@ gboolean config_parse_set_property(const Property *p, char **error) {
        iter = g_list_next(iter)) {
     if (g_strcmp0(((Property *)(iter->data))->name, p->name) == 0) {
       rofi_theme_property_free((Property *)(iter->data));
-      iter->data = (void *)rofi_theme_property_copy(p);
+      iter->data = (void *)rofi_theme_property_copy(p, NULL);
       return FALSE;
     }
   }
   g_debug("Adding option: %s to backup list.", p->name);
   extra_parsed_options =
-      g_list_append(extra_parsed_options, rofi_theme_property_copy(p));
+      g_list_append(extra_parsed_options, rofi_theme_property_copy(p, NULL));
 
   return FALSE;
 }

@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -48,11 +48,11 @@
 extern const char *cache_dir;
 
 /**
- * Get the number of enabled modi.
+ * Get the number of enabled modes.
  *
- * @returns the number of enabled modi.
+ * @returns the number of enabled modes.
  */
-unsigned int rofi_get_num_enabled_modi(void);
+unsigned int rofi_get_num_enabled_modes(void);
 
 /**
  * @param index The mode to return. (should be smaller then
@@ -75,6 +75,18 @@ void rofi_add_error_message(GString *str);
  * Clear the list of stored error messages.
  */
 void rofi_clear_error_messages(void);
+
+/**
+ * @param str A GString with an warning message to display.
+ *
+ * Queue an warning.
+ */
+void rofi_add_warning_message(GString *str);
+
+/**
+ * Clear the list of stored warning messages.
+ */
+void rofi_clear_warning_messages(void);
 /**
  * @param code the code to return
  *
@@ -90,7 +102,7 @@ void rofi_quit_main_loop(void);
  *
  * @return returns Mode * when found, NULL if not.
  */
-Mode *rofi_collect_modi_search(const char *name);
+Mode *rofi_collect_modes_search(const char *name);
 /** Reset terminal */
 #define color_reset "\033[0m"
 /** Set terminal text bold */

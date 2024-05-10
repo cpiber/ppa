@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -54,8 +54,6 @@ typedef enum {
   MENU_NORMAL_WINDOW = 2,
   /** ERROR dialog */
   MENU_ERROR_DIALOG = 4,
-  /** INDICATOR */
-  MENU_INDICATOR = 8,
 } MenuFlags;
 
 /**

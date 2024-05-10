@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -50,6 +50,8 @@ typedef enum {
   THEME_MEDIA_TYPE_MIN_ASPECT_RATIO,
   /** Maximum aspect ratio constraint. */
   THEME_MEDIA_TYPE_MAX_ASPECT_RATIO,
+  /** Boolean option for use with env. */
+  THEME_MEDIA_TYPE_BOOLEAN,
   /** Invalid entry. */
   THEME_MEDIA_TYPE_INVALID,
 } ThemeMediaType;
@@ -60,6 +62,7 @@ typedef enum {
 typedef struct ThemeMedia {
   ThemeMediaType type;
   double value;
+  gboolean boolv;
 } ThemeMedia;
 
 /**
@@ -141,7 +144,7 @@ void rofi_theme_property_free(Property *p);
  *
  * @returns a copy of p
  */
-Property *rofi_theme_property_copy(const Property *p);
+Property *rofi_theme_property_copy(const Property *p, void *);
 /**
  * @param widget
  *
@@ -411,6 +414,11 @@ char *rofi_theme_parse_prepare_file(const char *file, const char *parent_file);
  * Process conditionals.
  */
 void rofi_theme_parse_process_conditionals(void);
+
+/**
+ * Process links.
+ */
+void rofi_theme_parse_process_links(void);
 
 /**
  * @param parent target theme tree

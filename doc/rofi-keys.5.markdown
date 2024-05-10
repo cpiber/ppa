@@ -136,12 +136,12 @@ Accept entry
 **Default**: 	Control+j,Control+m,Return,KP_Enter 
 
 ### **kb-accept-custom**
-Use entered text as command (in ssh/run modi)
+Use entered text as command (in ssh/run modes)
 
 **Default**: 	Control+Return 
 
 ### **kb-accept-custom-alt**
-Use entered text as command (in ssh/run modi)
+Use entered text as command (in ssh/run modes)
 
 **Default**: 	Control+Shift+Return 
 
@@ -183,7 +183,7 @@ Go to the next column
 ### **kb-row-up**
 Select previous entry
 
-**Default**: 	Up,Control+p,ISO_Left_Tab 
+**Default**: 	Up,Control+p 
 
 ### **kb-row-down**
 Select next entry
@@ -193,7 +193,17 @@ Select next entry
 ### **kb-row-tab**
 Go to next row, if one left, accept it, if no left next mode.
 
-**Default**: 	Tab 
+**Default**: 	
+
+### **kb-element-next**
+Go to next row.
+
+**Default**: Tab	
+
+### **kb-element-prev**
+Go to previous row.
+
+**Default**: ISO_Left_Tab
 
 ### **kb-page-prev**
 Go to the previous page
@@ -438,7 +448,7 @@ Qball Cow <qball@gmpclient.org>
 
 Rasmus Steinke <rasi@xssn.at>
 
-Quentin Glidic <sardemff7+rofi@sardemff7.net>
+Morgane Glidic <sardemff7+rofi@sardemff7.net>
 
 
 Original code based on work by: Sean Pringle <sean.pringle@gmail.com>

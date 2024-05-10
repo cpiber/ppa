@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -27,6 +27,7 @@
 
 #ifndef ROFI_MODE_PRIVATE_H
 #define ROFI_MODE_PRIVATE_H
+#include "mode.h"
 #include <gmodule.h>
 G_BEGIN_DECLS
 
@@ -59,6 +60,7 @@ typedef char *(*_mode_get_display_value)(const Mode *sw,
 /**
  * @param sw The #Mode pointer
  * @param selected_line The selected line
+ * @param height The height of the icon
  *
  * Obtains the icon if available
  *
@@ -66,7 +68,7 @@ typedef char *(*_mode_get_display_value)(const Mode *sw,
  */
 typedef cairo_surface_t *(*_mode_get_icon)(const Mode *sw,
                                            unsigned int selected_line,
-                                           int height);
+                                           unsigned int height);
 
 /**
  * @param sw The #Mode pointer
@@ -80,11 +82,9 @@ typedef char *(*_mode_get_completion)(const Mode *sw,
                                       unsigned int selected_line);
 
 /**
+ * @param data The #Mode pointer
  * @param tokens  List of (input) tokens to match.
- * @param input   The entry to match against.
- * @param case_sensitive Whether case is significant.
  * @param index   The current selected index.
- * @param data    User data.
  *
  * Function prototype for the matching algorithm.
  *
@@ -202,6 +202,10 @@ struct rofi_mode {
 
   /** Module */
   GModule *module;
+
+  /** Fallack icon.*/
+  uint32_t fallback_icon_fetch_uid;
+  uint32_t fallback_icon_not_found;
 };
 G_END_DECLS
 #endif // ROFI_MODE_PRIVATE_H

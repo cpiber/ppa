@@ -80,15 +80,15 @@ SOURCES=\
 	source/xrmoptions.c\
 	source/xcb.c\
 	source/css-colors.c\
-	source/dialogs/run.c\
-	source/dialogs/ssh.c\
-	source/dialogs/drun.c\
-	source/dialogs/dmenu.c\
-	source/dialogs/combi.c\
-	source/dialogs/window.c\
-	source/dialogs/script.c\
-	source/dialogs/help-keys.c\
-	source/dialogs/filebrowser.c\
+	source/modes/run.c\
+	source/modes/ssh.c\
+	source/modes/drun.c\
+	source/modes/dmenu.c\
+	source/modes/combi.c\
+	source/modes/window.c\
+	source/modes/script.c\
+	source/modes/help-keys.c\
+	source/modes/filebrowser.c\
 	include/display.h\
 	include/xcb.h\
 	include/xcb-internal.h\
@@ -116,17 +116,17 @@ SOURCES=\
 	include/widgets/listview.h\
 	include/widgets/scrollbar.h\
 	include/xrmoptions.h\
-	include/dialogs/ssh.h\
-	include/dialogs/run.h\
-	include/dialogs/drun.h\
-	include/dialogs/dmenu.h\
-	include/dialogs/combi.h\
-	include/dialogs/script.h\
-	include/dialogs/window.h\
-	include/dialogs/dialogs.h\
-	include/dialogs/help-keys.h\
-	include/dialogs/filebrowser.h\
-	include/dialogs/dmenuscriptshared.h\
+	include/modes/ssh.h\
+	include/modes/run.h\
+	include/modes/drun.h\
+	include/modes/dmenu.h\
+	include/modes/combi.h\
+	include/modes/script.h\
+	include/modes/window.h\
+	include/modes/modes.h\
+	include/modes/help-keys.h\
+	include/modes/filebrowser.h\
+	include/modes/dmenuscriptshared.h\
 	resources/resources.c\
 	resources/resources.h
 
@@ -177,12 +177,14 @@ dist_man1_MANS=\
 
 dist_man5_MANS=\
 	doc/rofi-theme.5\
+	doc/rofi-debugging.5\
 	doc/rofi-keys.5\
 	doc/rofi-dmenu.5\
 	doc/rofi-script.5
 
 EXTRA_DIST += \
 	doc/rofi-theme.5.markdown \
+	doc/rofi-debugging.5.markdown \
 	doc/rofi-script.5.markdown \
 	doc/rofi-keys.5.markdown \
 	doc/rofi-dmenu.5.markdown \
@@ -200,7 +202,6 @@ theme_DATA=\
 		   themes/Arc.rasi\
 		   themes/Arc-Dark.rasi\
 		   themes/DarkBlue.rasi\
-		   themes/Pop-Dark.rasi\
 		   themes/Indego.rasi\
 		   themes/Monokai.rasi\
 		   themes/Paper.rasi\
@@ -222,6 +223,7 @@ theme_DATA=\
 		   themes/paper-float.rasi\
 		   themes/purple.rasi\
 		   themes/sidebar.rasi\
+		   themes/sidebar-v2.rasi\
 		   themes/solarized.rasi\
 		   themes/solarized_alternate.rasi\
 		   themes/fancy.rasi\
@@ -249,10 +251,11 @@ EXTRA_DIST+=\
 # Indent
 ##
 
-update-manpage: $(top_srcdir)/doc/rofi-theme-selector.1.markdown $(top_srcdir)/doc/rofi.1.markdown $(top_srcdir)/doc/rofi-theme.5.markdown $(top_srcdir)/doc/rofi-script.5.markdown ${top_srcdir}/doc/rofi-sensible-terminal.1.markdown ${top_srcdir}/doc/rofi-keys.5.markdown ${top_srcdir}/doc/rofi-dmenu.5.markdown
+update-manpage: $(top_srcdir)/doc/rofi-theme-selector.1.markdown $(top_srcdir)/doc/rofi.1.markdown $(top_srcdir)/doc/rofi-theme.5.markdown $(top_srcdir)/doc/rofi-script.5.markdown ${top_srcdir}/doc/rofi-sensible-terminal.1.markdown ${top_srcdir}/doc/rofi-keys.5.markdown ${top_srcdir}/doc/rofi-dmenu.5.markdown $(top_srcdir)/doc/rofi-debugging.5.markdown
 	go-md2man -in $(top_srcdir)/doc/rofi.1.markdown -out $(top_srcdir)/doc/rofi.1
 	go-md2man -in $(top_srcdir)/doc/rofi-theme-selector.1.markdown -out $(top_srcdir)/doc/rofi-theme-selector.1
 	go-md2man -in $(top_srcdir)/doc/rofi-theme.5.markdown -out $(top_srcdir)/doc/rofi-theme.5
+	go-md2man -in $(top_srcdir)/doc/rofi-debugging.5.markdown -out $(top_srcdir)/doc/rofi-debugging.5
 	go-md2man -in $(top_srcdir)/doc/rofi-keys.5.markdown -out $(top_srcdir)/doc/rofi-keys.5
 	go-md2man -in $(top_srcdir)/doc/rofi-script.5.markdown -out $(top_srcdir)/doc/rofi-script.5
 	go-md2man -in $(top_srcdir)/doc/rofi-dmenu.5.markdown -out $(top_srcdir)/doc/rofi-dmenu.5
@@ -534,7 +537,7 @@ mode_test_LDADD=$(textbox_test_LDADD) $(check_LIBS)
 mode_test_SOURCES=\
 				  config/config.c\
 				  test/mode-test.c\
-				  source/dialogs/help-keys.c\
+				  source/modes/help-keys.c\
 				  source/helper.c\
 				  source/theme.c\
 					source/css-colors.c\
@@ -623,6 +626,15 @@ coverage-clean:
 .PHONY: .FORCE
 .FORCE:
 
+icondir=$(datadir)/icons/hicolor/apps/
+icon_DATA=\
+	data/rofi.svg
+
+desktopdir=$(datadir)/applications/
+desktop_DATA=\
+	data/rofi.desktop\
+	data/rofi-theme-selector.desktop
+
 EXTRA_DIST += \
 	doc/meson.build \
 	subprojects/libgwater/mpd/meson.build \
@@ -646,5 +658,9 @@ EXTRA_DIST += \
 	subprojects/libgwater/alsa-mixer/libgwater-alsa-mixer.h \
 	subprojects/libgwater/alsa-mixer/libgwater-alsa-mixer.c \
 	doc/meson_build_manpages.sh \
+	data/rofi.png\
 	meson_options.txt \
 	meson.build
+
+EXTRA_DIST += ${desktop_DATA}\
+							${icon_DATA}

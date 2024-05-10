@@ -55,6 +55,7 @@ typedef enum {
 
 /**
  * @param tb The textbox to set
+ * @param ico The icon to set
  * @param entry The position of the textbox
  * @param udata User data
  * @param type The textbox font style to apply to this entry (normal, selected,
@@ -67,6 +68,16 @@ typedef void (*listview_update_callback)(textbox *tb, icon *ico,
                                          unsigned int entry, void *udata,
                                          TextBoxFontType *type, gboolean full);
 
+/**
+ * @param lv The listview
+ * @param index the selected row
+ * @param udata user data
+ *
+ * Selection changed callback.
+ */
+typedef void (*listview_selection_changed_callback)(listview *lv,
+                                                    unsigned int index,
+                                                    void *udata);
 /**
  * Callback when a element is activated.
  */
@@ -85,6 +96,12 @@ typedef void (*listview_mouse_activated_cb)(listview *, gboolean, void *);
 listview *listview_create(widget *parent, const char *name,
                           listview_update_callback cb, void *udata,
                           unsigned int eh, gboolean reverse);
+
+/**
+ * Set the selection changed callback.
+ */
+void listview_set_selection_changed_callback(
+    listview *lv, listview_selection_changed_callback cb, void *udata);
 
 /**
  * @param lv The listview handle
@@ -110,6 +127,21 @@ void listview_set_selected(listview *lv, unsigned int selected);
  * @returns the selected row.
  */
 unsigned int listview_get_selected(listview *lv);
+
+/**
+ * @param lv The listview handle
+ *
+ * Move the selection next element.
+ * - Wrap around.
+ */
+void listview_nav_next(listview *lv);
+/**
+ * @param lv The listview handle
+ *
+ * Move the selection previous element.
+ * - Wrap around.
+ */
+void listview_nav_prev(listview *lv);
 
 /**
  * @param lv The listview handle
@@ -200,13 +232,6 @@ void listview_set_mouse_activated_cb(listview *lv,
                                      listview_mouse_activated_cb cb,
                                      void *udata);
 /**
- * @param lv Handler to the listview object
- * @param enable boolean to enable/disable multi-select
- *
- * Enable,disable multi-select.
- */
-void listview_set_multi_select(listview *lv, gboolean enable);
-/**
  * @param lv Handler to the listview object.
  * @param num_lines the maximum number of lines to display.
  *
@@ -252,6 +277,13 @@ void listview_toggle_ellipsizing(listview *lv);
  */
 
 void listview_set_ellipsize_start(listview *lv);
+
+/**
+ * @param lv Handler to the listview object.
+ * @param filtered boolean indicating if list is filtered.
+ *
+ */
+void listview_set_filtered(listview *lv, gboolean filtered);
 /** @} */
 
 #endif // ROFI_LISTVIEW_H

@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -53,8 +53,8 @@ typedef enum { SORT_NORMAL = 0, SORT_FZF = 1 } SortingMethod;
  * @ingroup CONFIGURATION
  */
 typedef struct {
-  /** List of enabled modi */
-  char *modi;
+  /** List of enabled modes */
+  char *modes;
   /** Font string (pango format) */
   char *menu_font;
 
@@ -116,7 +116,7 @@ typedef struct {
   unsigned int cycle;
   /** Height of an element in number of rows */
   int element_height;
-  /** Sidebar mode, show the modi */
+  /** Sidebar mode, show the modes */
   unsigned int sidebar_mode;
   /** Mouse hover automatically selects */
   gboolean hover_select;
@@ -129,7 +129,7 @@ typedef struct {
   /** Knonw_hosts file parsing */
   unsigned int parse_known_hosts;
   /** Combi Modes */
-  char *combi_modi;
+  char *combi_modes;
   char *matching;
   MatchingMethod matching_method;
   unsigned int tokenize;
@@ -177,6 +177,13 @@ typedef struct {
   gboolean steal_focus;
   /** fallback icon */
   char *application_fallback_icon;
+
+  /** refilter timeout limit, when more then these entries,go into timeout mode.
+   */
+  unsigned int refilter_timeout_limit;
+
+  /** workaround for broken xserver (#300 on xserver, #611) */
+  gboolean xserver_i300_workaround;
 } Settings;
 
 /** Default number of lines in the list view */

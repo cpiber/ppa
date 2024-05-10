@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -36,6 +36,8 @@
 #include "rofi-icon-fetcher.h"
 #include "rofi-types.h"
 #include "settings.h"
+#include <cairo.h>
+#include <pango/pangocairo.h>
 
 #include "keyb.h"
 #include "view.h"
@@ -292,6 +294,32 @@ static void rofi_icon_fetcher_worker(thread_state *sdata,
 
   if (g_path_is_absolute(sentry->entry->name)) {
     icon_path = sentry->entry->name;
+  } else if (g_str_has_prefix(sentry->entry->name, "<span")) {
+    cairo_surface_t *surface = cairo_image_surface_create(
+        CAIRO_FORMAT_ARGB32, sentry->wsize, sentry->hsize);
+    cairo_t *cr = cairo_create(surface);
+    PangoLayout *layout = pango_cairo_create_layout(cr);
+    pango_layout_set_markup(layout, sentry->entry->name, -1);
+
+    int width, height;
+    pango_layout_get_size(layout, &width, &height);
+    double ws = sentry->wsize / ((double)width / PANGO_SCALE);
+    double wh = sentry->hsize / ((double)height / PANGO_SCALE);
+    double scale = MIN(ws, wh);
+
+    cairo_move_to(
+        cr, (sentry->wsize - ((double)width / PANGO_SCALE) * scale) / 2.0,
+        (sentry->hsize - ((double)height / PANGO_SCALE) * scale) / 2.0);
+    cairo_scale(cr, scale, scale);
+    pango_cairo_update_layout(cr, layout);
+    pango_layout_get_size(layout, &width, &height);
+    pango_cairo_show_layout(cr, layout);
+    g_object_unref(layout);
+    cairo_destroy(cr);
+    sentry->surface = surface;
+    rofi_view_reload();
+    return;
+
   } else {
     icon_path = icon_path_ = nk_xdg_theme_get_icon(
         rofi_icon_fetcher_data->xdg_context, themes, NULL, sentry->entry->name,

@@ -1,5 +1,5 @@
 project('rofi', 'c',
-    version: '1.7.3',
+    version: '1.7.5',
     meson_version: '>=0.47.0',
     license: [ 'MIT' ],
     default_options: [
@@ -22,6 +22,7 @@ flags = [
     '-Wunreachable-code',
     '-Werror=missing-prototypes',
     '-Wno-inline', # A bit too noisy with Bison…
+    '-Wextra'
 ]
 foreach f : flags
     if c_compiler.has_argument(f)
@@ -29,8 +30,10 @@ foreach f : flags
     endif
 endforeach
 
-plugindir = join_paths(get_option('libdir'), meson.project_name())
-themedir = join_paths(get_option('datadir'), meson.project_name(), 'themes')
+plugindir  = join_paths(get_option('libdir'), meson.project_name())
+themedir   = join_paths(get_option('datadir'), meson.project_name(), 'themes')
+desktop_install_dir = join_paths(get_option('datadir'), 'applications')
+icondir    = join_paths(get_option('datadir'), 'icons','hicolor', 'scalable', 'apps')
 
 glib_min_major=2
 glib_min_minor=40
@@ -106,7 +109,9 @@ nk_options = [
 nk = subproject('libnkutils', default_options: nk_options)
 nk_subproject_options = nk.get_variable('nk_options')
 foreach o : nk_options + nk_subproject_options
-    if not nk_options.contains(o) or not nk_subproject_options.contains(o)
+    if ( o.startswith('git-work-tree=') )
+        continue
+    elif not nk_options.contains(o) or not nk_subproject_options.contains(o)
         error('You must not change libnkutils options @0@ != @1@'.format('|'.join(nk_options), '|'.join(nk_subproject_options)))
     endif
 endforeach
@@ -128,13 +133,23 @@ install_data(
     install_dir: join_paths(get_option('prefix'), get_option('bindir'))
 )
 
+install_data(
+  'data/rofi-theme-selector.desktop',
+  'data/rofi.desktop',
+  install_dir: desktop_install_dir
+  )
+install_data(
+  'data/rofi.svg',
+  install_dir: icondir
+)
+
 flex = generator(find_program('flex'),
     output: '@BASENAME@.c',
     arguments: [ '-o', '@OUTPUT@', '@INPUT@' ]
 )
 bison = generator(find_program('bison'),
     output: [ '@BASENAME@.c', '@BASENAME@.h' ],
-    arguments: [ '--verbose', '-d', '@INPUT@', '--defines=@OUTPUT1@', '--output=@OUTPUT0@' ]
+    arguments: [ '--report=all', '--report-file=bison.log', '-Wall', '--verbose', '-d', '@INPUT@', '--defines=@OUTPUT1@', '--output=@OUTPUT0@' ]
 )
 
 rofi_sources = files(
@@ -159,15 +174,15 @@ rofi_sources = files(
         'source/xrmoptions.c',
         'source/rofi-types.c',
         'source/xcb.c',
-        'source/dialogs/run.c',
-        'source/dialogs/ssh.c',
-        'source/dialogs/drun.c',
-        'source/dialogs/dmenu.c',
-        'source/dialogs/combi.c',
-        'source/dialogs/window.c',
-        'source/dialogs/script.c',
-        'source/dialogs/help-keys.c',
-        'source/dialogs/filebrowser.c',
+        'source/modes/run.c',
+        'source/modes/ssh.c',
+        'source/modes/drun.c',
+        'source/modes/dmenu.c',
+        'source/modes/combi.c',
+        'source/modes/window.c',
+        'source/modes/script.c',
+        'source/modes/help-keys.c',
+        'source/modes/filebrowser.c',
         'include/display.h',
         'include/xcb.h',
         'include/xcb-internal.h',
@@ -195,17 +210,17 @@ rofi_sources = files(
         'include/widgets/listview.h',
         'include/widgets/scrollbar.h',
         'include/xrmoptions.h',
-        'include/dialogs/ssh.h',
-        'include/dialogs/run.h',
-        'include/dialogs/drun.h',
-        'include/dialogs/dmenu.h',
-        'include/dialogs/combi.h',
-        'include/dialogs/script.h',
-        'include/dialogs/window.h',
-        'include/dialogs/dialogs.h',
-        'include/dialogs/help-keys.h',
-        'include/dialogs/filebrowser.h',
-        'include/dialogs/dmenuscriptshared.h',
+        'include/modes/ssh.h',
+        'include/modes/run.h',
+        'include/modes/drun.h',
+        'include/modes/dmenu.h',
+        'include/modes/combi.h',
+        'include/modes/script.h',
+        'include/modes/window.h',
+        'include/modes/modes.h',
+        'include/modes/help-keys.h',
+        'include/modes/filebrowser.h',
+        'include/modes/dmenuscriptshared.h',
 )
 theme_lexer_sources = files('lexer/theme-lexer.l')
 theme_parser_sources = files('lexer/theme-parser.y')
@@ -232,6 +247,7 @@ install_man(
     'doc/rofi-sensible-terminal.1',
     'doc/rofi-script.5',
     'doc/rofi-theme.5',
+    'doc/rofi-debugging.5',
     'doc/rofi-dmenu.5',
     'doc/rofi-keys.5',
 )
@@ -241,7 +257,6 @@ install_data(
     'themes/Arc.rasi',
     'themes/Arc-Dark.rasi',
     'themes/DarkBlue.rasi',
-    'themes/Pop-Dark.rasi',
     'themes/Indego.rasi',
     'themes/Monokai.rasi',
     'themes/Paper.rasi',
@@ -263,6 +278,7 @@ install_data(
     'themes/paper-float.rasi',
     'themes/purple.rasi',
     'themes/sidebar.rasi',
+    'themes/sidebar-v2.rasi',
     'themes/solarized.rasi',
     'themes/solarized_alternate.rasi',
     'themes/fancy.rasi',
@@ -452,7 +468,7 @@ if check.found()
         ],
         objects: rofi.extract_objects([
             'config/config.c',
-            'source/dialogs/help-keys.c',
+            'source/modes/help-keys.c',
             'source/helper.c',
             'source/theme.c',
             'source/css-colors.c',

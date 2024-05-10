@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -138,8 +138,8 @@ char *mode_get_display_value(const Mode *mode, unsigned int selected_line,
  *
  * @returns allocated new cairo_surface_t if applicable
  */
-cairo_surface_t *mode_get_icon(const Mode *mode, unsigned int selected_line,
-                               int height);
+cairo_surface_t *mode_get_icon(Mode *mode, unsigned int selected_line,
+                               unsigned int height);
 
 /**
  * @param mode The mode to query

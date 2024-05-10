@@ -158,13 +158,6 @@ Force **rofi** mode to first read all data from stdin before showing the selecti
 Note: the default asynchronous mode will also be automatically disabled if used with conflicting options,
 such as `-dump`, `-only-match` or `-auto-select`.
 
-`-async-pre-read` *number*
-
-Reads the first *number* entries blocking, then switches to async mode.
-This makes it feel more 'snappy'.
-
-*default*: 25
-
 `-window-title` *title*
 
 Set name used for the window title. Will be shown as Rofi - *title*
@@ -177,6 +170,27 @@ Position **rofi** over the window with the given X11 window ID.
 
 Set ellipsize mode to start. So, the end of the string is visible.
 
+`-display-columns`
+
+A comma seperated list of columns to show.
+
+`-display-column-separator`
+
+The column separator. This is a regex. 
+
+*default*: '\t'
+
+`-ballot-selected-str` *string*
+
+When multi-select is enabled, prefix this string when element is selected.
+
+*default*: "☑ "
+
+`-ballot-unselected-str` *string*
+
+When multi-select is enabled, prefix this string when element is not selected.
+
+*default*: "☐ "
 
 ## RETURN VALUE
 
@@ -187,7 +201,7 @@ Set ellipsize mode to start. So, the end of the string is visible.
 
 ## SEE ALSO
 
-rofi(1), rofi-sensible-terminal(1), dmenu(1), rofi-theme(5), rofi-script(5), rofi-theme-selector(1)
+rofi(1), rofi-sensible-terminal(1), dmenu(1), rofi-theme(5), rofi-script(5), rofi-theme-selector(1), ascii(7)
 
 ## AUTHOR
 
@@ -195,7 +209,7 @@ Qball Cow <qball@gmpclient.org>
 
 Rasmus Steinke <rasi@xssn.at>
 
-Quentin Glidic <sardemff7+rofi@sardemff7.net>
+Morgane Glidic <sardemff7+rofi@sardemff7.net>
 
 
 Original code based on work by: Sean Pringle <sean.pringle@gmail.com>

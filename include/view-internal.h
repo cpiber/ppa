@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -95,17 +95,20 @@ struct RofiViewState {
   /** Monitor #workarea the view is displayed on */
   workarea mon;
 
-  /** #box holding the different modi buttons */
+  /** #box holding the different modes buttons */
   box *sidebar_bar;
-  /** number of modi to display */
-  unsigned int num_modi;
-  /** Array of #textbox that act as buttons for switching modi */
-  textbox **modi;
+  /** number of modes to display */
+  unsigned int num_modes;
+  /** Array of #textbox that act as buttons for switching modes */
+  textbox **modes;
 
   /** Total rows. */
   textbox *tb_total_rows;
   /** filtered rows */
   textbox *tb_filtered_rows;
+
+  textbox *tb_current_entry;
+  icon *icon_current_entry;
 
   /** Settings of the menu */
   MenuFlags menu_flags;

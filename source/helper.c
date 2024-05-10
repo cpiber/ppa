@@ -3,7 +3,7 @@
  *
  * MIT/X11 License
  * Copyright © 2012 Sean Pringle <sean.pringle@gmail.com>
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -415,6 +415,75 @@ int find_arg_char(const char *const key, char *val) {
   return FALSE;
 }
 
+void helper_token_match_set_pango_attr_on_style(PangoAttrList *retv, int start,
+                                                int end,
+                                                RofiHighlightColorStyle th) {
+  if (th.style & ROFI_HL_BOLD) {
+    PangoAttribute *pa = pango_attr_weight_new(PANGO_WEIGHT_BOLD);
+    pa->start_index = start;
+    pa->end_index = end;
+    pango_attr_list_insert(retv, pa);
+  }
+#if PANGO_VERSION_CHECK(1, 50, 0)
+  if (th.style & ROFI_HL_UPPERCASE) {
+    PangoAttribute *pa =
+        pango_attr_text_transform_new(PANGO_TEXT_TRANSFORM_UPPERCASE);
+    pa->start_index = start;
+    pa->end_index = end;
+    pango_attr_list_insert(retv, pa);
+  }
+  if (th.style & ROFI_HL_LOWERCASE) {
+    PangoAttribute *pa =
+        pango_attr_text_transform_new(PANGO_TEXT_TRANSFORM_LOWERCASE);
+    pa->start_index = start;
+    pa->end_index = end;
+    pango_attr_list_insert(retv, pa);
+  }
+  if (th.style & ROFI_HL_CAPITALIZE) {
+#if 0
+    PangoAttribute *pa =
+          pango_attr_text_transform_new(PANGO_TEXT_TRANSFORM_CAPITALIZE);
+    pa->start_index = start;
+    pa->end_index = end;
+    pango_attr_list_insert(retv, pa);
+#endif
+    // Disabled because of bug in pango
+  }
+#endif
+  if (th.style & ROFI_HL_UNDERLINE) {
+    PangoAttribute *pa = pango_attr_underline_new(PANGO_UNDERLINE_SINGLE);
+    pa->start_index = start;
+    pa->end_index = end;
+    pango_attr_list_insert(retv, pa);
+  }
+  if (th.style & ROFI_HL_STRIKETHROUGH) {
+    PangoAttribute *pa = pango_attr_strikethrough_new(TRUE);
+    pa->start_index = start;
+    pa->end_index = end;
+    pango_attr_list_insert(retv, pa);
+  }
+  if (th.style & ROFI_HL_ITALIC) {
+    PangoAttribute *pa = pango_attr_style_new(PANGO_STYLE_ITALIC);
+    pa->start_index = start;
+    pa->end_index = end;
+    pango_attr_list_insert(retv, pa);
+  }
+  if (th.style & ROFI_HL_COLOR) {
+    PangoAttribute *pa = pango_attr_foreground_new(
+        th.color.red * 65535, th.color.green * 65535, th.color.blue * 65535);
+    pa->start_index = start;
+    pa->end_index = end;
+    pango_attr_list_insert(retv, pa);
+
+    if (th.color.alpha < 1.0) {
+      pa = pango_attr_foreground_alpha_new(th.color.alpha * 65535);
+      pa->start_index = start;
+      pa->end_index = end;
+      pango_attr_list_insert(retv, pa);
+    }
+  }
+}
+
 PangoAttrList *helper_token_match_get_pango_attr(RofiHighlightColorStyle th,
                                                  rofi_int_matcher **tokens,
                                                  const char *input,
@@ -436,53 +505,7 @@ PangoAttrList *helper_token_match_get_pango_attr(RofiHighlightColorStyle th,
         for (int index = (count > 1) ? 1 : 0; index < count; index++) {
           int start, end;
           g_match_info_fetch_pos(gmi, index, &start, &end);
-          if (th.style & ROFI_HL_BOLD) {
-            PangoAttribute *pa = pango_attr_weight_new(PANGO_WEIGHT_BOLD);
-            pa->start_index = start;
-            pa->end_index = end;
-            pango_attr_list_insert(retv, pa);
-          }
-          if (th.style & ROFI_HL_UNDERLINE) {
-            PangoAttribute *pa =
-                pango_attr_underline_new(PANGO_UNDERLINE_SINGLE);
-            pa->start_index = start;
-            pa->end_index = end;
-            pango_attr_list_insert(retv, pa);
-          }
-          if (th.style & ROFI_HL_STRIKETHROUGH) {
-            PangoAttribute *pa = pango_attr_strikethrough_new(TRUE);
-            pa->start_index = start;
-            pa->end_index = end;
-            pango_attr_list_insert(retv, pa);
-          }
-          if (th.style & ROFI_HL_SMALL_CAPS) {
-            PangoAttribute *pa =
-                pango_attr_variant_new(PANGO_VARIANT_SMALL_CAPS);
-            pa->start_index = start;
-            pa->end_index = end;
-            pango_attr_list_insert(retv, pa);
-          }
-          if (th.style & ROFI_HL_ITALIC) {
-            PangoAttribute *pa = pango_attr_style_new(PANGO_STYLE_ITALIC);
-            pa->start_index = start;
-            pa->end_index = end;
-            pango_attr_list_insert(retv, pa);
-          }
-          if (th.style & ROFI_HL_COLOR) {
-            PangoAttribute *pa = pango_attr_foreground_new(
-                th.color.red * 65535, th.color.green * 65535,
-                th.color.blue * 65535);
-            pa->start_index = start;
-            pa->end_index = end;
-            pango_attr_list_insert(retv, pa);
-
-            if (th.color.alpha < 1.0) {
-              pa = pango_attr_foreground_alpha_new(th.color.alpha * 65535);
-              pa->start_index = start;
-              pa->end_index = end;
-              pango_attr_list_insert(retv, pa);
-            }
-          }
+          helper_token_match_set_pango_attr_on_style(retv, start, end, th);
         }
         g_match_info_next(gmi, NULL);
       }
@@ -1061,7 +1084,7 @@ char *helper_get_theme_path(const char *file, const char *ext) {
   const char *cpath = g_get_user_config_dir();
   if (cpath) {
     char *themep = g_build_filename(cpath, "rofi", "themes", filename, NULL);
-    g_debug("Opening theme, testing: %s\n", themep);
+    g_debug("Opening theme, testing: %s", themep);
     if (themep && g_file_test(themep, G_FILE_TEST_EXISTS)) {
       g_free(filename);
       return themep;
@@ -1071,7 +1094,7 @@ char *helper_get_theme_path(const char *file, const char *ext) {
   // Check config directory.
   if (cpath) {
     char *themep = g_build_filename(cpath, "rofi", filename, NULL);
-    g_debug("Opening theme, testing: %s\n", themep);
+    g_debug("Opening theme, testing: %s", themep);
     if (g_file_test(themep, G_FILE_TEST_EXISTS)) {
       g_free(filename);
       return themep;
@@ -1082,8 +1105,8 @@ char *helper_get_theme_path(const char *file, const char *ext) {
   if (datadir) {
     char *theme_path =
         g_build_filename(datadir, "rofi", "themes", filename, NULL);
-    g_debug("Opening theme, testing: %s\n", theme_path);
     if (theme_path) {
+      g_debug("Opening theme, testing: %s", theme_path);
       if (g_file_test(theme_path, G_FILE_TEST_EXISTS)) {
         g_free(filename);
         return theme_path;
@@ -1092,9 +1115,27 @@ char *helper_get_theme_path(const char *file, const char *ext) {
     }
   }
 
+  const gchar *const *system_data_dirs = g_get_system_data_dirs();
+  if (system_data_dirs) {
+    for (uint_fast32_t i = 0; system_data_dirs[i] != NULL; i++) {
+      const char *const sdatadir = system_data_dirs[i];
+      g_debug("Opening theme directory: %s", sdatadir);
+      char *theme_path =
+          g_build_filename(sdatadir, "rofi", "themes", filename, NULL);
+      if (theme_path) {
+        g_debug("Opening theme, testing: %s", theme_path);
+        if (g_file_test(theme_path, G_FILE_TEST_EXISTS)) {
+          g_free(filename);
+          return theme_path;
+        }
+        g_free(theme_path);
+      }
+    }
+  }
+
   char *theme_path = g_build_filename(THEME_DIR, filename, NULL);
   if (theme_path) {
-    g_debug("Opening theme, testing: %s\n", theme_path);
+    g_debug("Opening theme, testing: %s", theme_path);
     if (g_file_test(theme_path, G_FILE_TEST_EXISTS)) {
       g_free(filename);
       return theme_path;

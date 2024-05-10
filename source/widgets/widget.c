@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -526,8 +526,10 @@ widget *widget_find_mouse_target(widget *wid, WidgetType type, gint x, gint y) {
   return NULL;
 }
 
-WidgetTriggerActionResult widget_check_action(widget *wid, guint action, gint x,
-                                              gint y) {
+WidgetTriggerActionResult widget_check_action(widget *wid,
+                                              G_GNUC_UNUSED guint action,
+                                              G_GNUC_UNUSED gint x,
+                                              G_GNUC_UNUSED gint y) {
   if (wid == NULL) {
     return FALSE;
   }

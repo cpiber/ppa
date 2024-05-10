@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -149,11 +149,11 @@ int execute_generator(const char *cmd) __attribute__((nonnull));
 
 /**
  * @param pidfile The pidfile to create.
- * @param kill Try killing running instance.
+ * @param kill_running Try killing running instance.
  *
  * returns file descriptor (or -1 when failed)
  */
-int create_pid_file(const char *pidfile, gboolean kill);
+int create_pid_file(const char *pidfile, gboolean kill_running);
 
 /**
  * Remove pid file

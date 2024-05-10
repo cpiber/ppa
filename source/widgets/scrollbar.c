@@ -2,7 +2,7 @@
  * rofi
  *
  * MIT/X11 License
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -161,9 +161,9 @@ void scrollbar_set_handle_length(scrollbar *sb, unsigned int pos_length) {
  */
 static void scrollbar_draw(widget *wid, cairo_t *draw) {
   scrollbar *sb = (scrollbar *)wid;
-  unsigned int wh = widget_padding_get_remaining_height(wid);
+  double wh = widget_padding_get_remaining_height(wid);
   // Calculate position and size.
-  unsigned int r = (sb->length * wh) / ((double)(sb->length + sb->pos_length));
+  double r = (sb->length * wh) / ((double)(sb->length + sb->pos_length));
   unsigned int handle = wid->h - r;
   double sec = ((r) / (double)(sb->length - 1));
   unsigned int height = handle;

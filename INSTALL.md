@@ -24,11 +24,11 @@ You can also use [Meson](https://mesonbuild.com/) as an alternative.
 
 ### External libraries
 
-*   libpango
+*   libpango >= 1.50
 *   libpangocairo
 *   libcairo
 *   libcairo-xcb
-*   libglib2.0 >= 2.40
+*   libglib2.0 >= 2.68
     *   gmodule-2.0
     *   gio-unix-2.0
 *   libgdk-pixbuf-2.0
@@ -217,3 +217,9 @@ On both openSUSE Leap and openSUSE Tumbleweed rofi can be installed using:
 ### FreeBSD
 
     sudo pkg install rofi
+
+### macOS
+
+On macOS rofi can be installed via [MacPorts](https://www.macports.org):
+
+    sudo port install rofi

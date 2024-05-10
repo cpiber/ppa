@@ -3,7 +3,7 @@
  *
  * MIT/X11 License
  * Copyright © 2012 Sean Pringle <sean.pringle@gmail.com>
- * Copyright © 2013-2021 Qball Cow <qball@gmpclient.org>
+ * Copyright © 2013-2022 Qball Cow <qball@gmpclient.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -63,8 +63,8 @@
 #include "xcb.h"
 #include <libsn/sn.h>
 
-#include "dialogs/window.h"
 #include "mode.h"
+#include "modes/window.h"
 
 #include <rofi.h>
 
@@ -427,6 +427,23 @@ static void x11_monitors_free(void) {
 }
 
 /**
+ * Quick function that tries to fix the size (for dpi calculation)
+ * when monitor is rotate. This assumes the density is kinda equal in both X/Y
+ * direction.
+ */
+static void x11_workarea_fix_rotation(workarea *w) {
+  double ratio_res = w->w / (double)w->h;
+  double ratio_size = w->mw / (double)w->mh;
+
+  if ((ratio_res < 1.0 && ratio_size > 1.0) ||
+      (ratio_res > 1.0 && ratio_size < 1.0)) {
+    // Oposite ratios, swap them.
+    int nh = w->mw;
+    w->mw = w->mh;
+    w->mh = nh;
+  }
+}
+/**
  * Create monitor based on output id
  */
 static workarea *x11_get_monitor_from_output(xcb_randr_output_t out) {
@@ -454,6 +471,7 @@ static workarea *x11_get_monitor_from_output(xcb_randr_output_t out) {
 
   retv->mw = op_reply->mm_width;
   retv->mh = op_reply->mm_height;
+  x11_workarea_fix_rotation(retv);
 
   char *tname = (char *)xcb_randr_get_output_info_name(op_reply);
   int tname_len = xcb_randr_get_output_info_name_length(op_reply);
@@ -504,6 +522,7 @@ x11_get_monitor_from_randr_monitor(xcb_randr_monitor_info_t *mon) {
   // Physical
   retv->mw = mon->width_in_millimeters;
   retv->mh = mon->height_in_millimeters;
+  x11_workarea_fix_rotation(retv);
 
   // Name
   retv->name =
@@ -977,10 +996,8 @@ int monitor_active(workarea *mon) {
   }
   g_debug("Monitor active");
   if (mon_set) {
-    if (mon) {
-      *mon = mon_cache;
-      return TRUE;
-    }
+    *mon = mon_cache;
+    return TRUE;
   }
   if (config.monitor != NULL) {
     g_debug("Monitor lookup  by name : %s", config.monitor);
@@ -1240,9 +1257,15 @@ static void main_loop_x11_event_handler_view(xcb_generic_event_t *event) {
     gchar *text;
 
     xcb->last_timestamp = xkpe->time;
-    text = nk_bindings_seat_handle_key_with_modmask(
-        xcb->bindings_seat, NULL, xkpe->state, xkpe->detail,
-        NK_BINDINGS_KEY_STATE_PRESS);
+    if ( config.xserver_i300_workaround ) {
+      text = nk_bindings_seat_handle_key_with_modmask(
+          xcb->bindings_seat, NULL, xkpe->state, xkpe->detail,
+          NK_BINDINGS_KEY_STATE_PRESS);
+    } else {
+      text = nk_bindings_seat_handle_key(
+          xcb->bindings_seat, NULL, xkpe->detail,
+          NK_BINDINGS_KEY_STATE_PRESS);
+    }
     if (text != NULL) {
       rofi_view_handle_text(state, text);
       g_free(text);
@@ -1271,7 +1294,9 @@ static gboolean main_loop_x11_event_handler(xcb_generic_event_t *ev,
       g_main_loop_quit(xcb->main_loop);
       return G_SOURCE_REMOVE;
     }
-    g_warning("main_loop_x11_event_handler: ev == NULL, status == %d", status);
+    // DD: it seems this handler often gets dispatched while the queue in GWater is empty.
+    // resulting in a NULL for ev. This seems not an error.
+    //g_warning("main_loop_x11_event_handler: ev == NULL, status == %d", status);
     return G_SOURCE_CONTINUE;
   }
   uint8_t type = ev->response_type & ~0x80;
