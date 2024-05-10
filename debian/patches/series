@@ -15,3 +15,4 @@ raspi-bcm43xx-3wire.patch
 raspi-cypress-305-bdaddr.patch
 
 add-bluetoothd-experimential-flag.patch
+ppa-diff
