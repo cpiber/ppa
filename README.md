@@ -15,6 +15,7 @@ Below you can find all upstreams in alphabetical order.
 ```
 git remote add cgdb https://github.com/cgdb/cgdb.git
 git remote add iverilog https://github.com/steveicarus/iverilog.git
+git remote add mcontrolcenter https://github.com/dmitry-s93/MControlCenter.git
 git remote add mpd https://github.com/MusicPlayerDaemon/MPD.git
 git remote add ncmpcpp https://github.com/ncmpcpp/ncmpcpp.git
 git remote add polybar https://github.com/polybar/polybar.git
