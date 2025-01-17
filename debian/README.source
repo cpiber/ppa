@@ -1,0 +1,19 @@
+mcontrolcenter for Debian
+------------------------
+
+MControlCenter is a Free and Open Source GNU/Linux application that allows you to change the settings of MSI laptops.
+
+# Features
+
+- CPU and GPU temperature display
+- Fan speed display
+- Switch between modes (Since version 0.2):
+  - High Performance
+  - Balanced
+  - Silent
+  - Super Battery
+- Change the maximum battery level limit
+- Advanced Fan Speed Control (Since version 0.4)
+- Change other settings such as keyboard backlight mode, USB Power Share, etc.
+
+

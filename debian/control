@@ -1,0 +1,25 @@
+Source: mcontrolcenter
+Section: utils
+Priority: optional
+Maintainer: Constantin Piber <cp.piber@gmail.com>
+Rules-Requires-Root: no
+Build-Depends:
+ debhelper-compat (= 13),
+ cmake,
+ qt6-base-dev,
+ qt6-tools-dev,
+ qt6-tools-dev-tools,
+Standards-Version: 4.6.2
+Homepage: https://github.com/dmitry-s93/MControlCenter
+Vcs-Browser: https://github.com/dmitry-s93/MControlCenter
+Vcs-Git: https://github.com/dmitry-s93/MControlCenter.git
+
+Package: mcontrolcenter
+Architecture: any
+Multi-Arch: foreign
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+Description: MControlCenter allows to change the settings of MSI laptops
+ MControlCenter is a Free and Open Source GNU/Linux application that
+ allows you to change the settings of MSI laptops.
