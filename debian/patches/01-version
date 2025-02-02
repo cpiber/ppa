@@ -1,0 +1,13 @@
+Index: ppa/src/meson.build
+===================================================================
+--- ppa.orig/src/meson.build
++++ ppa/src/meson.build
+@@ -161,7 +161,7 @@ foreach feat : required_wlroots_features
+ endforeach
+ 
+ gamescope_version = vcs_tag(
+-  command : ['git', 'describe', '--always', '--tags', '--dirty=+'],
++  command : ['echo', '3.14.24'],
+   input   : 'GamescopeVersion.h.in',
+   output  : 'GamescopeVersion.h')
+ 

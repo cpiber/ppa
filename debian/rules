@@ -1,0 +1,10 @@
+#!/usr/bin/make -f
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		--bindir /usr/games -D pipewire=enabled -D rt_cap=enabled -D drm_backend=enabled -D sdl2_backend=enabled -D avif_screenshots=enabled -D input_emulation=enabled

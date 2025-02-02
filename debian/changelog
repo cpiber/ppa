@@ -1,0 +1,47 @@
+gamescope (3.14.24-1ppa1) noble; urgency=medium
+
+  * Update to release 3.14.24
+
+ -- Constantin Piber <cp.piber@gmail.com>  Sun, 02 Feb 2025 14:31:41 +0100
+
+gamescope (3.11.52-beta6-1~jammy) jammy; urgency=medium
+
+  * New upstream version 3.11.52-beta6
+
+ -- Alexey Arutyunov <ar.lex@yandex.ru>  Sat, 11 Mar 2023 19:17:11 +0100
+
+gamescope (3.11.51+git20230201-1) UNRELEASED; urgency=medium
+
+  * New upstream version 3.11.51+git20230201
+
+ -- Alexey Arutyunov <ar.lex@yandex.ru>  Sat, 04 Feb 2023 01:26:36 +0100
+
+gamescope (3.11.49-1) unstable; urgency=medium
+
+  * New upstream version 3.11.49
+
+ -- Stephan Lachnit <stephanlachnit@debian.org>  Sun, 22 Jan 2023 15:42:36 +0100
+
+gamescope (3.11.45-1) unstable; urgency=medium
+
+  * New upstream version 3.11.45
+
+ -- Stephan Lachnit <stephanlachnit@debian.org>  Sun, 25 Sep 2022 21:13:51 +0200
+
+gamescope (3.11.39-1) unstable; urgency=medium
+
+  * New upstream version 3.11.39
+
+ -- Stephan Lachnit <stephanlachnit@debian.org>  Mon, 22 Aug 2022 11:38:53 +0200
+
+gamescope (3.11.32-2) unstable; urgency=medium
+
+  * Fix debian/watch
+
+ -- Stephan Lachnit <stephanlachnit@debian.org>  Fri, 05 Aug 2022 10:28:35 +0200
+
+gamescope (3.11.32-1) unstable; urgency=medium
+
+  * Initial release. (Closes: #989085)
+
+ -- Stephan Lachnit <stephanlachnit@debian.org>  Mon, 25 Jul 2022 13:48:23 +0200
